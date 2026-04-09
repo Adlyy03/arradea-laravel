@@ -1,0 +1,50 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class Order extends Model
+{
+    protected $fillable = [
+        'user_id',
+        'store_id',
+        'product_id',
+        'quantity',
+        'total_price',
+        'status',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'total_price' => 'float',
+        ];
+    }
+
+    // ─── Relations ──────────────────────────────────────────────────────────────
+
+    /** Order belongs to a buyer */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /** Order belongs to a store */
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
+    }
+
+    /** Order belongs to a specific product */
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    /** Order has one chat */
+    public function chat()
+    {
+        return $this->hasOne(Chat::class);
+    }
+}
