@@ -15,14 +15,16 @@ class UserSeeder extends Seeder
         $admin = User::firstOrCreate(['email' => 'admin@test.com'], [
             'name' => 'Admin Test',
             'password' => bcrypt('password'),
-            'role' => 'admin'
+            'role' => 'admin',
+            'is_seller' => false,
         ]);
 
         // Create seller
         $seller = User::firstOrCreate(['email' => 'seller@test.com'], [
             'name' => 'Seller Test',
             'password' => bcrypt('password'),
-            'role' => 'seller'
+            'is_seller' => true,
+            'seller_status' => 'approved',
         ]);
 
         // Create store for seller
@@ -50,7 +52,7 @@ class UserSeeder extends Seeder
         $buyer = User::firstOrCreate(['email' => 'buyer@test.com'], [
             'name' => 'Buyer Test',
             'password' => bcrypt('password'),
-            'role' => 'buyer'
+            'is_seller' => false,
         ]);
 
         echo "Test users created:\n";

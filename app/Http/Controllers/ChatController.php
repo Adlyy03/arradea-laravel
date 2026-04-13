@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\MessageSent;
 use App\Models\Chat;
 use App\Models\Message;
 use App\Models\Order;
@@ -60,10 +61,28 @@ class ChatController extends Controller
             'message'   => $request->message,
         ]);
 
+        $message->load('sender:id,name');
+
+        event(new MessageSent($message));
+
         $recipientId = ($user->id === $chat->buyer_id) ? $chat->seller_id : $chat->buyer_id;
         $recipient = \App\Models\User::find($recipientId);
         if ($recipient) {
             $recipient->notify(new \App\Notifications\ChatMessageNotification($message));
+        }
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'id' => $message->id,
+                    'chat_id' => $message->chat_id,
+                    'sender_id' => $message->sender_id,
+                    'sender_name' => $message->sender->name,
+                    'message' => $message->message,
+                    'created_at' => $message->created_at?->toIso8601String(),
+                ],
+            ], 201);
         }
 
         return back();
@@ -76,15 +95,12 @@ class ChatController extends Controller
     {
         $user = auth()->user();
 
-        if ($user->role === 'buyer') {
-            $count = Message::whereHas('chat', function ($q) use ($user) {
-                $q->where('buyer_id', $user->id);
-            })->where('sender_id', '!=', $user->id)->where('is_read', false)->count();
-        } else {
-            $count = Message::whereHas('chat', function ($q) use ($user) {
-                $q->where('seller_id', $user->id);
-            })->where('sender_id', '!=', $user->id)->where('is_read', false)->count();
-        }
+        $count = Message::whereHas('chat', function ($q) use ($user) {
+            $q->where('buyer_id', $user->id)
+                ->orWhere('seller_id', $user->id);
+        })->where('sender_id', '!=', $user->id)
+            ->where('is_read', false)
+            ->count();
 
         return response()->json(['count' => $count]);
     }

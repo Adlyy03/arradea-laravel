@@ -80,17 +80,21 @@
                         </div>
                         <div class="overflow-hidden">
                             <p class="text-xs font-black truncate text-gray-900">{{ Auth::user()->name }}</p>
-                            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">{{ Auth::user()->role }}</p>
+                            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">{{ Auth::user()->is_seller ? 'seller + buyer' : 'buyer' }}</p>
                         </div>
                     </div>
                 </div>
 
-                @if(Auth::user()->role === 'buyer')
-                    <x-sidebar.buyer />
-                @elseif(Auth::user()->role === 'seller')
-                    <x-sidebar.seller />
-                @elseif(Auth::user()->role === 'admin')
+                @if(Auth::user()->role === 'admin')
                     <x-sidebar.admin />
+                @else
+                    <x-sidebar.buyer />
+                    @if(Auth::user()->is_seller)
+                        <div class="pt-6 mt-4 border-t border-gray-100">
+                            <p class="px-6 pb-3 text-[10px] uppercase font-black tracking-widest text-gray-400">Menu Seller</p>
+                            <x-sidebar.seller />
+                        </div>
+                    @endif
                 @endif
             </nav>
 
@@ -146,7 +150,7 @@
     <!-- BOTTOM NAVIGATION (Mobile Only) -->
     <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-safe rounded-t-3xl">
         <div class="flex items-center justify-around px-2 py-3 mx-auto max-w-sm">
-            @if(Auth::user()->role === 'buyer')
+            @if(Auth::user()->role !== 'admin')
                 <!-- Buyer Bottom Tabs -->
                 <a href="{{ route('buyer.dashboard') }}" class="group flex-1 flex flex-col items-center justify-center relative">
                     <div class="p-2 rounded-2xl transition-all duration-300 {{ Request::is('buyer/dashboard') ? 'bg-primary-100 text-primary-600' : 'text-gray-400 group-hover:text-primary-500' }}">
@@ -196,7 +200,7 @@
                 </button>
             @endif
 
-            @if(Auth::user()->role === 'seller')
+            @if(Auth::user()->is_seller)
                 <!-- Seller Bottom Tabs -->
                 <a href="{{ route('seller.dashboard') }}" class="group flex-1 flex flex-col items-center justify-center relative">
                     <div class="p-2 rounded-2xl transition-all duration-300 {{ Request::is('seller/dashboard') ? 'bg-primary-100 text-primary-600' : 'text-gray-400 group-hover:text-primary-500' }}">
@@ -245,7 +249,7 @@
     </nav>
 
     <!-- BUYER CHATS MODAL -->
-    @if(Auth::check() && Auth::user()->role === 'buyer')
+    @if(Auth::check() && Auth::user()->role !== 'admin')
     <div x-show="openChatsModal" x-transition:enter="transition ease-out duration-300" x-transition:leave="transition ease-in duration-200" @click="openChatsModal = false" class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm" x-cloak>
         <div @click.stop class="absolute right-0 top-0 w-full md:w-96 h-full bg-white shadow-xl flex flex-col">
             <!-- Header -->

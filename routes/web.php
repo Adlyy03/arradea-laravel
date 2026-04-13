@@ -1,6 +1,11 @@
 <?php
 
 use App\Http\Controllers\AuthWebController;
+use App\Http\Controllers\Auth\EmailVerificationNotificationController;
+use App\Http\Controllers\Auth\NewPasswordController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\VerifyEmailController;
+use App\Models\AccessCode;
 use App\Http\Controllers\ProductWebController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChatController;
@@ -27,12 +32,22 @@ Route::middleware('guest')->group(function () {
     // Web Auth Handlers
     Route::post('/web/login',    [AuthWebController::class, 'login']);
     Route::post('/web/register', [AuthWebController::class, 'register']);
+    Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
+    Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
 });
+
+Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
+    ->middleware(['auth', 'signed', 'throttle:6,1'])
+    ->name('verification.verify');
+
+Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+    ->middleware(['auth', 'throttle:6,1'])
+    ->name('verification.send');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROTECTED DASHBOARDS (Session-Based Auth)
 // ─────────────────────────────────────────────────────────────────────────────
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'arradea.access'])->group(function () {
 
     // 👨💼 ADMIN
     Route::middleware('role:admin')->prefix('admin')->group(function () {
@@ -106,6 +121,7 @@ Route::middleware(['auth'])->group(function () {
                         'accepted' => 'Diproses',
                         'done' => 'Selesai',
                         'rejected' => 'Ditolak',
+                        'dibatalkan' => 'Dibatalkan',
                     ][$order->status] ?? $order->status;
 
                     fputcsv($file, [
@@ -134,49 +150,79 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/settings', fn() => view('seller.settings'))->name('seller.settings');
     });
 
-    Route::middleware(['role:buyer'])->group(function () {
-        Route::get('/seller/apply', function () {
-            $user = auth()->user();
+    Route::get('/seller/apply', function () {
+        $user = auth()->user();
 
-            return view('seller.apply', [
-                'user' => $user,
-            ]);
-        })->name('seller.apply');
+        return view('seller.apply', [
+            'user' => $user,
+        ]);
+    })->name('seller.apply');
 
-        Route::post('/seller/apply', function (Request $request) {
-            $request->validate([
-                'store_name' => ['required', 'string', 'max:255'],
-                'store_description' => ['nullable', 'string', 'max:2000'],
-                'store_address' => ['nullable', 'string', 'max:500'],
-            ]);
+    Route::post('/seller/apply', function (Request $request) {
+        $request->validate([
+            'store_name' => ['required', 'string', 'max:255'],
+            'store_description' => ['nullable', 'string', 'max:2000'],
+            'store_address' => ['nullable', 'string', 'max:500'],
+        ]);
 
-            $user = $request->user();
+        $user = $request->user();
+        $user->update([
+            'is_seller' => true,
+            'seller_status' => 'approved',
+            'seller_applied_at' => now(),
+            'seller_approved_at' => now(),
+            'seller_rejected_at' => null,
+            'seller_rejection_reason' => null,
+        ]);
+
+        $storeData = [
+            'name' => $request->store_name,
+            'description' => $request->store_description,
+            'address' => $request->store_address,
+            'status' => 'active',
+            'approved_at' => now(),
+        ];
+
+        if ($user->store) {
+            $user->store->update($storeData);
+        } else {
+            $user->store()->create($storeData);
+        }
+
+        return redirect()->route('seller.dashboard')->with('success', 'Mode seller berhasil diaktifkan. Anda sekarang bisa jualan sekaligus belanja.');
+    })->name('seller.apply.store');
+
+    Route::post('/seller/activate', function (Request $request) {
+        $request->validate([
+            'store_name' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $user = $request->user();
+        if (! $user->is_seller) {
             $user->update([
-                'seller_status' => 'pending',
+                'is_seller' => true,
+                'seller_status' => 'approved',
                 'seller_applied_at' => now(),
+                'seller_approved_at' => now(),
                 'seller_rejected_at' => null,
                 'seller_rejection_reason' => null,
             ]);
+        }
 
-            $storeData = [
-                'name' => $request->store_name,
-                'description' => $request->store_description,
-                'address' => $request->store_address,
-                'status' => 'pending',
-            ];
+        if (! $user->store) {
+            $user->store()->create([
+                'name' => $request->store_name ?: 'Toko ' . $user->name,
+                'description' => 'Selamat datang di toko kami.',
+                'status' => 'active',
+                'approved_at' => now(),
+            ]);
+        }
 
-            if ($user->store) {
-                $user->store->update($storeData);
-            } else {
-                $user->store()->create($storeData);
-            }
-
-            return redirect()->route('profile')->with('success', 'Permohonan seller berhasil dikirim. Tunggu persetujuan admin.');
-        })->name('seller.apply.store');
-    });
+        return back()->with('success', 'Mode seller aktif. Anda sekarang dapat mengakses fitur jual.');
+    })->name('seller.activate');
 
     // 🛒 BUYER
-    Route::middleware('role:buyer')->prefix('buyer')->group(function () {
+    Route::prefix('buyer')->group(function () {
         Route::get('/dashboard', function () {
             $totalOrders = auth()->user()->orders()->count();
             $pendingOrders = auth()->user()->orders()->whereIn('status', ['pending', 'accepted'])->count();
@@ -211,6 +257,16 @@ Route::middleware(['auth'])->group(function () {
     // Public product routes (anyone can view products)
     Route::get('/products', function (\Illuminate\Http\Request $request) {
         $query = Product::with('store', 'category')->latest();
+        $keyword = trim((string) $request->query('q', ''));
+
+        if ($keyword !== '') {
+            $query->where(function ($builder) use ($keyword) {
+                $builder->where('name', 'like', "%{$keyword}%")
+                    ->orWhereHas('category', function ($categoryQuery) use ($keyword) {
+                        $categoryQuery->where('name', 'like', "%{$keyword}%");
+                    });
+            });
+        }
         
         if ($request->has('category') && $request->category !== '') {
             $query->whereHas('category', function($q) use ($request) {
@@ -221,7 +277,7 @@ Route::middleware(['auth'])->group(function () {
         $products = $query->paginate(20)->withQueryString();
         $categories = \App\Models\Category::all();
         
-        return view('buyer.products.index', compact('products', 'categories'));
+        return view('buyer.products.index', compact('products', 'categories', 'keyword'));
     })->name('buyer.products');
 
     Route::get('/products/{id}', function ($id) {
@@ -230,7 +286,7 @@ Route::middleware(['auth'])->group(function () {
     })->name('buyer.products.show');
 
     // Web order submission (buyer only)
-    Route::post('/web/order', [OrderController::class, 'store'])->middleware('role:buyer')->name('web.order.store');
+    Route::post('/web/order', [OrderController::class, 'store'])->name('web.order.store');
 
     // Categories routes (public)
     Route::get('/categories', function () {
@@ -250,7 +306,7 @@ Route::middleware(['auth'])->group(function () {
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::post('/sellers/{user}/approve', function (User $user) {
             $user->update([
-                'role' => 'seller',
+                'is_seller' => true,
                 'seller_status' => 'approved',
                 'seller_approved_at' => now(),
                 'seller_rejected_at' => null,
@@ -275,6 +331,7 @@ Route::middleware(['auth'])->group(function () {
             ]);
 
             $user->update([
+                'is_seller' => false,
                 'seller_status' => 'rejected',
                 'seller_rejected_at' => now(),
                 'seller_rejection_reason' => $request->reason,
@@ -292,8 +349,18 @@ Route::middleware(['auth'])->group(function () {
         // User Management
         Route::get('/users', function (\Illuminate\Http\Request $request) {
             $query = User::latest();
-            if ($request->has('role') && in_array($request->role, ['buyer', 'seller', 'admin'])) {
-                $query->where('role', $request->role);
+            if ($request->has('type') && in_array($request->type, ['buyer', 'seller', 'admin'])) {
+                if ($request->type === 'admin') {
+                    $query->where('role', 'admin');
+                }
+
+                if ($request->type === 'seller') {
+                    $query->where('is_seller', true);
+                }
+
+                if ($request->type === 'buyer') {
+                    $query->where('is_seller', false)->where('role', '!=', 'admin');
+                }
             }
             $users = $query->paginate(20)->withQueryString();
             return view('admin.users', compact('users'));
@@ -303,9 +370,24 @@ Route::middleware(['auth'])->group(function () {
             $request->validate([
                 'name' => 'required|string',
                 'email' => 'required|email|unique:users,email,'.$user->id,
-                'role' => 'required|in:admin,seller,buyer',
+                'is_seller' => 'required|boolean',
             ]);
-            $user->update($request->only('name', 'email', 'role'));
+            $payload = $request->only('name', 'email', 'is_seller');
+
+            if ((bool) $payload['is_seller']) {
+                $payload['seller_status'] = 'approved';
+                $payload['seller_approved_at'] = now();
+                $payload['seller_rejected_at'] = null;
+                $payload['seller_rejection_reason'] = null;
+            } else {
+                $payload['seller_status'] = 'none';
+            }
+
+            if ((bool) $payload['is_seller'] === false && $user->store && $user->store->status === 'active') {
+                $user->store->update(['status' => 'pending']);
+            }
+
+            $user->update($payload);
             return back()->with('success', 'Pengguna berhasil diupdate.');
         })->name('admin.users.update');
 
@@ -316,10 +398,58 @@ Route::middleware(['auth'])->group(function () {
             $user->delete();
             return back()->with('success', 'Pengguna berhasil dihapus.');
         })->name('admin.users.destroy');
+
+        Route::get('/access-codes', function () {
+            $codes = AccessCode::withCount('users')->latest()->paginate(15);
+            return view('admin.access-codes', compact('codes'));
+        })->name('admin.access-codes.index');
+
+        Route::post('/access-codes', function (Request $request) {
+            $validated = $request->validate([
+                'code' => ['required', 'string', 'max:100', 'unique:access_codes,code'],
+            ]);
+
+            AccessCode::create([
+                'code' => strtoupper(trim($validated['code'])),
+                'is_active' => true,
+            ]);
+
+            return back()->with('success', 'Kode akses baru berhasil dibuat.');
+        })->name('admin.access-codes.store');
+
+        Route::patch('/access-codes/{accessCode}/toggle', function (AccessCode $accessCode) {
+            $willDeactivate = $accessCode->is_active;
+
+            if ($willDeactivate && AccessCode::where('is_active', true)->count() <= 1) {
+                return back()->withErrors(['message' => 'Minimal harus ada satu kode akses aktif.']);
+            }
+
+            $accessCode->update([
+                'is_active' => ! $accessCode->is_active,
+            ]);
+
+            return back()->with('success', $accessCode->is_active
+                ? 'Kode akses berhasil diaktifkan.'
+                : 'Kode akses berhasil dinonaktifkan.');
+        })->name('admin.access-codes.toggle');
+
+        Route::delete('/access-codes/{accessCode}', function (AccessCode $accessCode) {
+            if ($accessCode->users()->exists()) {
+                return back()->withErrors(['message' => 'Kode akses masih dipakai oleh user dan tidak dapat dihapus.']);
+            }
+
+            if ($accessCode->is_active && AccessCode::where('is_active', true)->count() <= 1) {
+                return back()->withErrors(['message' => 'Kode aktif terakhir tidak dapat dihapus.']);
+            }
+
+            $accessCode->delete();
+
+            return back()->with('success', 'Kode akses berhasil dihapus.');
+        })->name('admin.access-codes.destroy');
     });
 
     // Chat routes (buyer and seller)
-    Route::middleware(['auth', 'role:buyer,seller'])->group(function () {
+    Route::middleware(['auth'])->group(function () {
         Route::get('/chat/{order}', [ChatController::class, 'show'])->name('chat.show');
         Route::post('/chat/{chat}', [ChatController::class, 'store'])->name('chat.store');
         Route::get('/chat/unread/count', [ChatController::class, 'unreadCount'])->name('chat.unread.count');
@@ -328,14 +458,20 @@ Route::middleware(['auth'])->group(function () {
     // ─────────────────────────────────────────────────────────────────────────
     // WEB CRUD HANDLERS
     // ─────────────────────────────────────────────────────────────────────────
-    Route::post('/web/product/store',        [ProductWebController::class, 'store']);
-    Route::put('/web/product/{id}/update',   [ProductWebController::class, 'update']);
-    Route::delete('/web/product/{id}',       [ProductWebController::class, 'destroy']);
+    Route::post('/web/product/store',        [ProductWebController::class, 'store'])->middleware('role:seller');
+    Route::put('/web/product/{id}/update',   [ProductWebController::class, 'update'])->middleware('role:seller');
+    Route::delete('/web/product/{id}',       [ProductWebController::class, 'destroy'])->middleware('role:seller');
 
     // Update status order (seller action)
     Route::put('/web/order/{id}/status', function (\Illuminate\Http\Request $request, $id) {
         $order = Order::findOrFail($id);
         $request->validate(['status' => 'required|in:accepted,rejected,done']);
+
+        $sellerStore = auth()->user()->store;
+        if (! $sellerStore || (int) $order->store_id !== (int) $sellerStore->id) {
+            abort(403, 'Akses ditolak. Pesanan bukan milik toko Anda.');
+        }
+
         $order->update(['status' => $request->status]);
         
         // Notify buyer
@@ -345,6 +481,21 @@ Route::middleware(['auth'])->group(function () {
         
         return redirect('/seller/orders')->with('success', 'Status pesanan berhasil diperbarui.');
     })->middleware('role:seller');
+
+    // Cancel order (buyer action)
+    Route::put('/web/order/{order}/cancel', function (Order $order) {
+        if ($order->user_id !== auth()->id()) {
+            abort(403, 'Akses ditolak.');
+        }
+
+        if ($order->status !== 'pending') {
+            return back()->withErrors(['message' => 'Pesanan tidak bisa dibatalkan karena sudah diproses.']);
+        }
+
+        $order->update(['status' => 'dibatalkan']);
+
+        return back()->with('success', 'Pesanan berhasil dibatalkan.');
+    })->name('buyer.orders.cancel');
 
     // LOGOUT
     Route::post('/logout', [AuthWebController::class, 'logout'])->name('logout');

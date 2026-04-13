@@ -16,7 +16,10 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'wilayah',
+        'access_code_id',
         'password',
+        'is_seller',
         'role',
         'seller_status',
         'seller_applied_at',
@@ -34,8 +37,19 @@ class User extends Authenticatable
     {
         return [
             'email_verified_at' => 'datetime',
+            'is_seller'         => 'boolean',
             'password'          => 'hashed',
         ];
+    }
+
+    public function isSeller(): bool
+    {
+        return (bool) $this->is_seller;
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
     }
 
     // ─── Relations ──────────────────────────────────────────────────────────────
@@ -56,5 +70,10 @@ class User extends Authenticatable
     public function carts()
     {
         return $this->hasMany(Cart::class);
+    }
+
+    public function accessCode()
+    {
+        return $this->belongsTo(AccessCode::class);
     }
 }

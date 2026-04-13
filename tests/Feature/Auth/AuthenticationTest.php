@@ -14,22 +14,24 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->post('/login', [
+        $response = $this->post('/web/login', [
             'email' => $user->email,
             'password' => 'password',
+            'g-recaptcha-response' => 'testing-token',
         ]);
 
         $this->assertAuthenticated();
-        $response->assertNoContent();
+        $response->assertRedirect('/');
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
     {
         $user = User::factory()->create();
 
-        $this->post('/login', [
+        $this->post('/web/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
+            'g-recaptcha-response' => 'testing-token',
         ]);
 
         $this->assertGuest();
@@ -42,6 +44,6 @@ class AuthenticationTest extends TestCase
         $response = $this->actingAs($user)->post('/logout');
 
         $this->assertGuest();
-        $response->assertNoContent();
+        $response->assertRedirect('/');
     }
 }

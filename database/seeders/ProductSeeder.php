@@ -12,7 +12,7 @@ class ProductSeeder extends Seeder
      */
     public function run(): void
     {
-        $sellers = \App\Models\User::where('role', 'seller')->get();
+        $sellers = \App\Models\User::where('is_seller', true)->get();
         $categories = \App\Models\Category::all()->keyBy('slug');
 
         $products = [

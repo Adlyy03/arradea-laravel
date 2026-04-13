@@ -26,8 +26,8 @@
                     </div>
 
                     <div class="rounded-2xl lg:rounded-3xl border border-gray-100 p-6 bg-gray-50">
-                        <h2 class="text-sm uppercase tracking-widest text-gray-400 font-black mb-4">Peran</h2>
-                        <p class="text-lg font-bold text-primary-700 uppercase">{{ auth()->user()->role }}</p>
+                        <h2 class="text-sm uppercase tracking-widest text-gray-400 font-black mb-4">Mode Akun</h2>
+                        <p class="text-lg font-bold text-primary-700 uppercase">{{ auth()->user()->is_seller ? 'Seller + Buyer' : 'Buyer' }}</p>
                     </div>
 
                     <div class="rounded-2xl lg:rounded-3xl border border-gray-100 p-6 bg-gray-50">
@@ -47,18 +47,16 @@
 
             <div class="rounded-2xl lg:rounded-3xl border border-gray-100 p-8 bg-primary-50">
                 <h2 class="text-2xl font-black text-gray-900 mb-4">Ubah ke Seller</h2>
-                @if(auth()->user()->role === 'seller')
+                @if(auth()->user()->is_seller)
                     <p class="text-gray-600 mb-6">Akun Anda sudah disetujui sebagai seller. Anda dapat langsung menuju dashboard seller untuk mengelola toko dan produk.</p>
                     <a href="{{ route('seller.dashboard') }}" class="w-full inline-flex items-center justify-center rounded-2xl lg:rounded-3xl bg-primary-700 text-white font-black px-6 py-4 hover:bg-primary-800 transition">Buka Seller Dashboard</a>
-                @elseif(auth()->user()->seller_status === 'pending')
-                    <p class="text-gray-600 mb-6">Permohonan seller Anda sedang ditinjau oleh admin. Silakan tunggu persetujuan atau cek kembali nanti.</p>
-                    <a href="{{ route('seller.apply') }}" class="w-full inline-flex items-center justify-center rounded-2xl lg:rounded-3xl bg-white text-gray-900 border border-gray-200 font-black px-6 py-4 hover:bg-gray-100 transition">Lihat Status Aplikasi</a>
-                @elseif(auth()->user()->seller_status === 'rejected')
-                    <p class="text-gray-600 mb-6">Permohonan seller Anda ditolak. Silakan perbarui data toko lalu ajukan kembali.</p>
-                    <a href="{{ route('seller.apply') }}" class="w-full inline-flex items-center justify-center rounded-2xl lg:rounded-3xl bg-primary-700 text-white font-black px-6 py-4 hover:bg-primary-800 transition">Ajukan Kembali Seller</a>
                 @else
-                    <p class="text-gray-600 mb-6">Semua pendaftaran baru dibuat sebagai pembeli. Jika Anda ingin mulai berjualan di Arradea, daftarkan toko Anda melalui halaman aplikasi seller.</p>
-                    <a href="{{ route('seller.apply') }}" class="w-full inline-flex items-center justify-center rounded-2xl lg:rounded-3xl bg-primary-700 text-white font-black px-6 py-4 hover:bg-primary-800 transition">Daftar Jadi Seller</a>
+                    <p class="text-gray-600 mb-6">Anda tetap bisa belanja seperti biasa. Aktifkan mode seller kapan saja untuk mulai berjualan tanpa ganti akun.</p>
+                    <form method="POST" action="{{ route('seller.activate') }}" class="space-y-3">
+                        @csrf
+                        <input type="text" name="store_name" class="w-full rounded-2xl border border-gray-200 bg-white px-5 py-3 font-semibold focus:border-primary-600 focus:outline-none" placeholder="Nama toko (opsional)">
+                        <button type="submit" class="w-full inline-flex items-center justify-center rounded-2xl lg:rounded-3xl bg-primary-700 text-white font-black px-6 py-4 hover:bg-primary-800 transition">Jadi Penjual</button>
+                    </form>
                 @endif
             </div>
         </div>

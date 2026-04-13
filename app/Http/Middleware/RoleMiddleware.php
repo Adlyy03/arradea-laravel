@@ -18,7 +18,35 @@ class RoleMiddleware
     {
         $user = $request->user();
 
-        if (! $user || ! in_array($user->role, $roles)) {
+        if (! $user) {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthenticated.',
+                ], Response::HTTP_UNAUTHORIZED);
+            }
+
+            return redirect('/login');
+        }
+
+        $allowed = collect($roles)
+            ->contains(function (string $role) use ($user): bool {
+                if ($role === 'buyer') {
+                    return true;
+                }
+
+                if ($role === 'seller') {
+                    return (bool) $user->is_seller;
+                }
+
+                if ($role === 'admin') {
+                    return $user->role === 'admin';
+                }
+
+                return $user->role === $role;
+            });
+
+        if (! $allowed) {
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,

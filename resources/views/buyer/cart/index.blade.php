@@ -26,7 +26,13 @@
                 <div class="flex-1">
                     <h3 class="text-xl font-black text-gray-900 leading-tight">{{ $cart->product->name }}</h3>
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-widest">{{ $cart->product->store->name }}</p>
-                    <p class="text-lg font-bold text-primary-600 mt-1">Rp {{ number_format($cart->product->price, 0, ',', '.') }}</p>
+                    <p class="text-xs font-medium text-gray-500 mt-1">Varian: {{ data_get($cart->product->getVariant($cart->variant_key), 'name', 'Default') }}</p>
+                    @if(($cart->pricing['discount_percent'] ?? 0) > 0)
+                        <p class="text-xs font-bold text-red-500 mt-1 line-through">Rp {{ number_format($cart->pricing['unit_original'], 0, ',', '.') }}</p>
+                        <p class="text-lg font-bold text-primary-600">Rp {{ number_format($cart->pricing['unit_final'], 0, ',', '.') }} <span class="text-xs text-green-600">(-{{ rtrim(rtrim(number_format($cart->pricing['discount_percent'], 2, '.', ''), '0'), '.') }}%)</span></p>
+                    @else
+                        <p class="text-lg font-bold text-primary-600 mt-1">Rp {{ number_format($cart->pricing['unit_original'], 0, ',', '.') }}</p>
+                    @endif
                 </div>
 
                 <div class="w-full sm:w-auto flex items-center justify-between sm:justify-end gap-6 sm:gap-5 lg:gap-10 pt-4 sm:pt-0 border-t sm:border-t-0 border-gray-50">
@@ -38,7 +44,12 @@
                         </button>
                     </form>
 
-                    <p class="text-xl font-black text-gray-900">Rp {{ number_format($cart->product->price * $cart->quantity, 0, ',', '.') }}</p>
+                    <div class="text-right">
+                        @if(($cart->pricing['discount_percent'] ?? 0) > 0)
+                            <p class="text-xs font-bold text-gray-400 line-through">Rp {{ number_format($cart->pricing['total_original'], 0, ',', '.') }}</p>
+                        @endif
+                        <p class="text-xl font-black text-gray-900">Rp {{ number_format($cart->pricing['total_final'], 0, ',', '.') }}</p>
+                    </div>
 
                     <form action="{{ route('buyer.cart.destroy', $cart) }}" method="POST" onsubmit="return confirm('Hapus item ini?')">
                         @csrf @method('DELETE')
@@ -58,9 +69,15 @@
 
         @if($carts->isNotEmpty())
             <div class="mt-12 pt-8 border-t border-gray-100 flex flex-col sm:flex-row justify-between items-center gap-6">
-                <div class="text-3xl font-black text-gray-900 italic tracking-tighter text-center sm:text-left">Total Pesanan: <br class="sm:hidden"> <span class="text-primary-600">Rp {{ number_format($total, 0, ',', '.') }}</span></div>
-                <form action="{{ route('buyer.cart.checkout') }}" method="POST" class="w-full sm:w-auto">
+                <div class="text-center sm:text-left space-y-1">
+                    @if(($totalOriginal ?? 0) > ($totalFinal ?? 0))
+                        <p class="text-sm font-bold text-gray-400 line-through">Harga Asli: Rp {{ number_format($totalOriginal, 0, ',', '.') }}</p>
+                    @endif
+                    <div class="text-3xl font-black text-gray-900 italic tracking-tighter">Total Bayar: <br class="sm:hidden"> <span class="text-primary-600">Rp {{ number_format($totalFinal ?? 0, 0, ',', '.') }}</span></div>
+                </div>
+                <form action="{{ route('buyer.cart.checkout') }}" method="POST" class="w-full sm:w-auto space-y-3">
                     @csrf
+                    <textarea name="notes" rows="3" maxlength="1000" class="w-full rounded-2xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm font-medium text-gray-700 focus:border-primary-600 focus:outline-none" placeholder="Catatan untuk penjual (opsional), contoh: kirim sore hari.">{{ old('notes') }}</textarea>
                     <button type="submit" class="w-full px-6 lg:px-12 py-5 bg-primary-600 text-white rounded-2xl font-black text-xl hover:bg-primary-700 shadow-2xl shadow-primary-200 transition active:scale-95">Bayar Sekarang →</button>
                 </form>
             </div>

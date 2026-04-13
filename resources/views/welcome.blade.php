@@ -25,7 +25,7 @@
                             Gabung Seller
                         </a>
                     @else
-                        <a href="{{ Auth::user()->role === 'seller' ? route('seller.dashboard') : route('buyer.dashboard') }}" class="px-6 lg:px-14 py-4 lg:py-6 bg-primary-900 text-white rounded-2xl lg:rounded-[2.5rem] font-black text-lg lg:text-2xl hover:bg-black transition-all shadow-xl">
+                        <a href="{{ Auth::user()->is_seller ? route('seller.dashboard') : route('buyer.dashboard') }}" class="px-6 lg:px-14 py-4 lg:py-6 bg-primary-900 text-white rounded-2xl lg:rounded-[2.5rem] font-black text-lg lg:text-2xl hover:bg-black transition-all shadow-xl">
                             Akses Dashboard
                         </a>
                     @endguest

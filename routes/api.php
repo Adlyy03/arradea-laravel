@@ -16,17 +16,20 @@ Route::post('/login',    [AuthController::class, 'login']);
 
 // Public product browsing (no auth required)
 Route::get('/products',        [ProductController::class, 'index']);
+Route::get('/products/search', [ProductController::class, 'search']);
+Route::get('/products/updates', [ProductController::class, 'updates']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Protected Routes — require auth:sanctum
 // ─────────────────────────────────────────────────────────────────────────────
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware(['auth:sanctum', 'arradea.access'])->group(function () {
 
     // Auth
     Route::post('/logout',  [AuthController::class, 'logout']);
     Route::get('/profile',  [AuthController::class, 'profile']);
+    Route::patch('/profile/seller-mode', [AuthController::class, 'toggleSellerMode']);
     
     // Notifications
     Route::get('/notifications', function (\Illuminate\Http\Request $request) {
@@ -59,12 +62,12 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     // ─── Buyer Routes ─────────────────────────────────────────────────────────
-    Route::middleware('role:buyer')->group(function () {
+    Route::middleware([])->group(function () {
         Route::post('/orders', [OrderController::class, 'store']);
     });
 
     // ─── Shared Order Routes (buyer sees own, seller sees store's) ───────────
-    Route::middleware('role:buyer,seller')->group(function () {
+    Route::middleware([])->group(function () {
         Route::get('/orders',        [OrderController::class, 'index']);
         Route::get('/orders/{order}', [OrderController::class, 'show']);
     });

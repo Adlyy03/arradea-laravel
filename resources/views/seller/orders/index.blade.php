@@ -37,6 +37,7 @@
                 <tr>
                     <th class="px-5 lg:px-10 py-8">No. Order / Pembeli</th>
                     <th class="px-5 lg:px-10 py-8">Produk</th>
+                    <th class="px-5 lg:px-10 py-8">Catatan Pembeli</th>
                     <th class="px-5 lg:px-10 py-8">Qty</th>
                     <th class="px-5 lg:px-10 py-8">Total Bayar</th>
                     <th class="px-5 lg:px-10 py-8">Status</th>
@@ -59,11 +60,18 @@
                         </td>
                         <td class="px-5 lg:px-10 py-8">
                             <p class="font-bold text-gray-900">{{ $order->product->name ?? '—' }}</p>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Varian: {{ data_get($order->product?->getVariant($order->variant_key), 'name', 'Default') }}</p>
+                        </td>
+                        <td class="px-5 lg:px-10 py-8">
+                            <p class="max-w-xs text-sm font-medium text-gray-600 line-clamp-2">{{ $order->notes ?: '—' }}</p>
                         </td>
                         <td class="px-5 lg:px-10 py-8">
                             <p class="text-gray-700 font-black text-lg">{{ $order->quantity ?? 1 }}x</p>
                         </td>
                         <td class="px-5 lg:px-10 py-8">
+                            @if(($order->discount_percent_applied ?? 0) > 0 && $order->unit_price_original)
+                                <p class="text-[10px] font-bold text-gray-400 line-through">Rp {{ number_format($order->unit_price_original * $order->quantity, 0, ',', '.') }}</p>
+                            @endif
                             <p class="text-xl font-black text-gray-900">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
                         </td>
                         <td class="px-5 lg:px-10 py-8">
@@ -73,12 +81,14 @@
                                     'accepted' => 'bg-blue-100 text-blue-700',
                                     'done'     => 'bg-green-100 text-green-700',
                                     'rejected' => 'bg-red-100 text-red-700',
+                                    'dibatalkan' => 'bg-gray-200 text-gray-700',
                                 ];
                                 $labels = [
                                     'pending'  => 'Menunggu',
                                     'accepted' => 'Diproses',
                                     'done'     => 'Selesai',
                                     'rejected' => 'Ditolak',
+                                    'dibatalkan' => 'Dibatalkan',
                                 ];
                             @endphp
                             <span class="{{ $colors[$order->status] ?? 'bg-gray-100 text-gray-500' }} px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest">
@@ -119,7 +129,7 @@
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="6" class="px-10 lg:px-20 py-16 lg:py-32 text-center text-gray-400 font-bold">
+                        <td colspan="7" class="px-10 lg:px-20 py-16 lg:py-32 text-center text-gray-400 font-bold">
                             <div class="text-4xl lg:text-6xl mb-6">📭</div>
                             <p class="text-2xl text-gray-900 font-black">Belum Ada Pesanan Masuk.</p>
                             <p class="text-sm font-medium mt-2">Pesanan dari pembeli akan muncul di sini secara otomatis.</p>

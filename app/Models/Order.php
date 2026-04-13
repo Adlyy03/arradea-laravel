@@ -10,8 +10,13 @@ class Order extends Model
         'user_id',
         'store_id',
         'product_id',
+        'variant_key',
         'quantity',
+        'unit_price_original',
+        'unit_price_final',
+        'discount_percent_applied',
         'total_price',
+        'notes',
         'status',
     ];
 
@@ -19,6 +24,9 @@ class Order extends Model
     {
         return [
             'total_price' => 'float',
+            'unit_price_original' => 'float',
+            'unit_price_final' => 'float',
+            'discount_percent_applied' => 'float',
         ];
     }
 

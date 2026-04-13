@@ -25,38 +25,35 @@ class MarketplaceFeatureTest extends TestCase
 
         // 1. Create Users
         $admin = User::factory()->create(['role' => 'admin']);
-        $buyer1 = User::factory()->create(['role' => 'buyer']);
-        $buyer2 = User::factory()->create(['role' => 'buyer']);
+        $buyer1 = User::factory()->create(['is_seller' => false]);
+        $buyer2 = User::factory()->create(['is_seller' => false]);
 
-        // 2. Buyer1 applies to be a seller
-        $response = $this->actingAs($buyer1)->post('/seller/apply', [
-            'store_name' => 'Toko Keren',
-            'store_description' => 'Toko yang keren',
-            'store_address' => 'Jalan A'
-        ]);
+        // 2. Buyer1 activates seller mode
+        $response = $this->actingAs($buyer1)
+            ->from('/profile')
+            ->post('/seller/activate', [
+                'store_name' => 'Toko Keren',
+            ]);
         $response->assertRedirect('/profile');
-        $this->assertEquals('pending', $buyer1->fresh()->seller_status);
+        $this->assertTrue((bool) $buyer1->fresh()->is_seller);
+        $this->assertEquals('approved', $buyer1->fresh()->seller_status);
         $this->assertNotNull($buyer1->fresh()->store);
 
-        // 3. Admin approves Seller
+        // 3. Admin can still approve seller endpoint idempotently
         $response = $this->actingAs($admin)->post('/admin/sellers/' . $buyer1->id . '/approve');
         $response->assertRedirect('/admin/sellers');
-        $this->assertEquals('approved', $buyer1->fresh()->seller_status);
-        $this->assertEquals('seller', $buyer1->fresh()->role);
-        $this->assertEquals('active', $buyer1->fresh()->store->status);
-        
+        $this->assertTrue((bool) $buyer1->fresh()->is_seller);
+
         Notification::assertSentTo($buyer1, SellerApplicationNotification::class);
 
         // 4. Seller (Buyer1) creates a product
         $category = Category::create(['name' => 'Elektronik', 'slug' => 'elektronik', 'sort_order' => 1]);
-        $product = clone $buyer1->fresh()->store->products()->create([
+        $product = $buyer1->fresh()->store->products()->create([
             'category_id' => $category->id,
             'name' => 'Smartphone Canggih',
-            'slug' => 'smartphone-canggih',
             'description' => 'HP Mantap',
             'price' => 5000000,
             'stock' => 10,
-            'is_active' => true,
         ]);
         $this->assertDatabaseHas('products', ['name' => 'Smartphone Canggih']);
 

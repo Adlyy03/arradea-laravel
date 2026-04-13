@@ -52,11 +52,40 @@
                 @error('stock') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
             </div>
 
+            <!-- Discount Percent -->
+            <div class="space-y-3">
+                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Diskon Produk (%)</label>
+                <input type="number" step="0.01" min="0" max="100" name="discount_percent" value="{{ old('discount_percent', $isEdit ? $product->discount_percent : 0) }}" class="w-full h-14 lg:h-18 bg-gray-50 border-none rounded-2xl lg:rounded-2xl lg:rounded-3xl px-6 lg:px-8 focus:ring-2 focus:ring-primary-600 font-bold text-lg lg:text-xl transition-all {{ $errors->has('discount_percent') ? 'ring-2 ring-red-500' : '' }}" placeholder="10">
+                @error('discount_percent') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+            </div>
+
+            <!-- Discount Date Start -->
+            <div class="space-y-3">
+                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Diskon Aktif Dari</label>
+                <input type="datetime-local" name="discount_start_at" value="{{ old('discount_start_at', $isEdit && $product->discount_start_at ? $product->discount_start_at->format('Y-m-d\TH:i') : '') }}" class="w-full h-14 lg:h-18 bg-gray-50 border-none rounded-2xl lg:rounded-2xl lg:rounded-3xl px-6 lg:px-8 focus:ring-2 focus:ring-primary-600 font-bold text-sm lg:text-base transition-all {{ $errors->has('discount_start_at') ? 'ring-2 ring-red-500' : '' }}">
+                @error('discount_start_at') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+            </div>
+
+            <!-- Discount Date End -->
+            <div class="space-y-3 col-span-2 md:col-span-1">
+                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Diskon Aktif Sampai</label>
+                <input type="datetime-local" name="discount_end_at" value="{{ old('discount_end_at', $isEdit && $product->discount_end_at ? $product->discount_end_at->format('Y-m-d\TH:i') : '') }}" class="w-full h-14 lg:h-18 bg-gray-50 border-none rounded-2xl lg:rounded-2xl lg:rounded-3xl px-6 lg:px-8 focus:ring-2 focus:ring-primary-600 font-bold text-sm lg:text-base transition-all {{ $errors->has('discount_end_at') ? 'ring-2 ring-red-500' : '' }}">
+                @error('discount_end_at') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+            </div>
+
             <!-- Description -->
             <div class="space-y-3 col-span-2">
                 <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Deskripsi</label>
                 <textarea name="description" rows="4" class="w-full bg-gray-50 border-none rounded-2xl lg:rounded-2xl lg:rounded-3xl px-6 lg:px-8 py-5 lg:py-6 focus:ring-2 focus:ring-primary-600 font-bold text-base lg:text-lg transition-all {{ $errors->has('description') ? 'ring-2 ring-red-500' : '' }}" placeholder="Detail produk Anda...">{{ old('description', $isEdit ? $product->description : '') }}</textarea>
                 @error('description') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
+            </div>
+
+            <!-- Variant JSON -->
+            <div class="space-y-3 col-span-2">
+                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Varian Produk (JSON)</label>
+                <textarea name="variants_json" rows="8" class="w-full bg-gray-50 border-none rounded-2xl lg:rounded-3xl px-6 lg:px-8 py-5 lg:py-6 focus:ring-2 focus:ring-primary-600 font-mono text-xs transition-all {{ $errors->has('variants_json') ? 'ring-2 ring-red-500' : '' }}" placeholder='[{"name":"Ukuran M","price":120000,"discount_percent":10,"discount_start_at":"2026-04-12 00:00:00","discount_end_at":"2026-04-30 23:59:59"}]'>{{ old('variants_json', $isEdit ? json_encode($product->variants ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : '') }}</textarea>
+                <p class="text-[10px] text-gray-400">Gunakan format array JSON. Setiap varian bisa punya harga + diskon + tanggal aktif sendiri.</p>
+                @error('variants_json') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
             </div>
 
             <!-- Image Upload -->

@@ -28,10 +28,10 @@
             
             <!-- Filters -->
             <div class="flex flex-wrap gap-2 lg:gap-3">
-                <a href="{{ route('admin.users.index') }}" class="px-5 py-2.5 rounded-xl font-bold text-xs lg:text-sm transition-all {{ !request('role') ? 'bg-primary-600 text-white shadow-xl shadow-primary-200' : 'bg-gray-50 text-gray-500 hover:bg-gray-100' }}">Semua</a>
-                <a href="{{ route('admin.users.index', ['role' => 'buyer']) }}" class="px-5 py-2.5 rounded-xl font-bold text-xs lg:text-sm transition-all {{ request('role') == 'buyer' ? 'bg-primary-600 text-white shadow-xl shadow-primary-200' : 'bg-gray-50 text-gray-500 hover:bg-gray-100' }}">Buyer</a>
-                <a href="{{ route('admin.users.index', ['role' => 'seller']) }}" class="px-5 py-2.5 rounded-xl font-bold text-xs lg:text-sm transition-all {{ request('role') == 'seller' ? 'bg-primary-600 text-white shadow-xl shadow-primary-200' : 'bg-gray-50 text-gray-500 hover:bg-gray-100' }}">Seller</a>
-                <a href="{{ route('admin.users.index', ['role' => 'admin']) }}" class="px-5 py-2.5 rounded-xl font-bold text-xs lg:text-sm transition-all {{ request('role') == 'admin' ? 'bg-primary-600 text-white shadow-xl shadow-primary-200' : 'bg-gray-50 text-gray-500 hover:bg-gray-100' }}">Admin</a>
+                <a href="{{ route('admin.users.index') }}" class="px-5 py-2.5 rounded-xl font-bold text-xs lg:text-sm transition-all {{ !request('type') ? 'bg-primary-600 text-white shadow-xl shadow-primary-200' : 'bg-gray-50 text-gray-500 hover:bg-gray-100' }}">Semua</a>
+                <a href="{{ route('admin.users.index', ['type' => 'buyer']) }}" class="px-5 py-2.5 rounded-xl font-bold text-xs lg:text-sm transition-all {{ request('type') == 'buyer' ? 'bg-primary-600 text-white shadow-xl shadow-primary-200' : 'bg-gray-50 text-gray-500 hover:bg-gray-100' }}">Buyer</a>
+                <a href="{{ route('admin.users.index', ['type' => 'seller']) }}" class="px-5 py-2.5 rounded-xl font-bold text-xs lg:text-sm transition-all {{ request('type') == 'seller' ? 'bg-primary-600 text-white shadow-xl shadow-primary-200' : 'bg-gray-50 text-gray-500 hover:bg-gray-100' }}">Seller</a>
+                <a href="{{ route('admin.users.index', ['type' => 'admin']) }}" class="px-5 py-2.5 rounded-xl font-bold text-xs lg:text-sm transition-all {{ request('type') == 'admin' ? 'bg-primary-600 text-white shadow-xl shadow-primary-200' : 'bg-gray-50 text-gray-500 hover:bg-gray-100' }}">Admin</a>
             </div>
         </div>
         
@@ -40,7 +40,7 @@
                 <thead class="text-xs font-black tracking-widest uppercase text-gray-400 border-b border-gray-100 bg-gray-50/50">
                     <tr>
                         <th class="px-5 lg:px-10 py-5 lg:py-10">Data Pengguna</th>
-                        <th class="px-5 lg:px-10 py-5 lg:py-10">Peran (Role)</th>
+                        <th class="px-5 lg:px-10 py-5 lg:py-10">Tipe Akun</th>
                         <th class="px-5 lg:px-10 py-5 lg:py-10">Tgl Daftar</th>
                         <th class="px-5 lg:px-10 py-5 lg:py-10 text-right">Aksi</th>
                     </tr>
@@ -61,9 +61,8 @@
                             </td>
                             <td class="px-5 lg:px-10 py-5 lg:py-10">
                                 <span class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest 
-                                    {{ $user->role === 'admin' ? 'bg-purple-100 text-purple-700' : 
-                                       ($user->role === 'seller' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700') }}">
-                                    {{ $user->role }}
+                                    {{ $user->role === 'admin' ? 'bg-purple-100 text-purple-700' : ($user->is_seller ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700') }}">
+                                    {{ $user->role === 'admin' ? 'admin' : ($user->is_seller ? 'seller + buyer' : 'buyer') }}
                                 </span>
                             </td>
                             <td class="px-5 lg:px-10 py-5 lg:py-10">
@@ -120,13 +119,12 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest pl-2">Peran (Role)</label>
-                    <select name="role" x-model="editUser.role" required class="w-full h-16 bg-gray-50 border-none rounded-2xl px-6 font-bold focus:ring-4 focus:ring-primary-100">
-                        <option value="buyer">Buyer</option>
-                        <option value="seller">Seller</option>
-                        <option value="admin">Admin</option>
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest pl-2">Mode Seller</label>
+                    <select name="is_seller" x-model="editUser.is_seller" required class="w-full h-16 bg-gray-50 border-none rounded-2xl px-6 font-bold focus:ring-4 focus:ring-primary-100">
+                        <option :value="0">Buyer Saja</option>
+                        <option :value="1">Seller + Buyer</option>
                     </select>
-                    <p class="text-[10px] text-gray-400 mt-2 italic px-2">*Mengubah peran pengguna secara paksa dapat memengaruhi hak akses mereka di sistem.</p>
+                    <p class="text-[10px] text-gray-400 mt-2 italic px-2">*Mode seller hanya memengaruhi akses jual. Semua akun tetap bisa membeli.</p>
                 </div>
 
                 <div class="pt-6">

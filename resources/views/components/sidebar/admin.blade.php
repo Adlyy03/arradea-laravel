@@ -16,3 +16,9 @@
     <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
     <span x-show="sidebarOpen || window.innerWidth < 1024" class="truncate">Semua Pengguna</span>
 </a>
+
+<a href="{{ route('admin.access-codes.index') }}" 
+   class="flex items-center gap-4 px-6 py-4 rounded-2xl transition-all font-bold {{ Request::is('admin/access-codes*') ? 'bg-primary-600 text-white shadow-xl shadow-primary-200' : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900' }}">
+    <svg class="w-6 h-6 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2h-1V9a5 5 0 00-10 0v2H6a2 2 0 00-2 2v6a2 2 0 002 2zm3-10V9a3 3 0 016 0v2H9z"/></svg>
+    <span x-show="sidebarOpen || window.innerWidth < 1024" class="truncate">Kode Akses</span>
+</a>

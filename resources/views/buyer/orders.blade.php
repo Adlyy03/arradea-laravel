@@ -49,12 +49,35 @@
                                 <p class="text-2xl font-black text-gray-900 tracking-tight">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
                             </td>
                             <td class="px-5 lg:px-10 py-5 lg:py-10">
-                                <span class="px-5 py-2.5 bg-accent/10 text-accent rounded-2xl lg:rounded-3xl text-[10px] font-black uppercase tracking-widest">{{ $order->status }}</span>
+                                @php
+                                    $orderStatusColors = [
+                                        'pending' => 'bg-amber-100 text-amber-700',
+                                        'accepted' => 'bg-blue-100 text-blue-700',
+                                        'done' => 'bg-green-100 text-green-700',
+                                        'rejected' => 'bg-red-100 text-red-700',
+                                        'dibatalkan' => 'bg-gray-200 text-gray-700',
+                                    ];
+                                    $orderStatusLabels = [
+                                        'pending' => 'Menunggu',
+                                        'accepted' => 'Diproses',
+                                        'done' => 'Selesai',
+                                        'rejected' => 'Ditolak',
+                                        'dibatalkan' => 'Dibatalkan',
+                                    ];
+                                @endphp
+                                <span class="{{ $orderStatusColors[$order->status] ?? 'bg-gray-100 text-gray-500' }} px-5 py-2.5 rounded-2xl lg:rounded-3xl text-[10px] font-black uppercase tracking-widest">{{ $orderStatusLabels[$order->status] ?? $order->status }}</span>
                             </td>
                             <td class="px-5 lg:px-10 py-5 lg:py-10">
                                 <div class="flex gap-4">
                                     <a href="{{ route('chat.show', $order) }}" class="px-6 py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.05] transition-all">Chat Seller</a>
                                     <a href="{{ route('buyer.orders.show', $order) }}" class="px-6 py-3 bg-gray-100 text-gray-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all">Detail Pesanan</a>
+                                    @if($order->status === 'pending')
+                                        <form action="{{ route('buyer.orders.cancel', $order) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pesanan ini?');">
+                                            @csrf
+                                            @method('PUT')
+                                            <button type="submit" class="px-6 py-3 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all">Cancel</button>
+                                        </form>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

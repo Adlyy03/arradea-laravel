@@ -25,6 +25,36 @@ class ProductController extends Controller
     }
 
     /**
+     * GET /api/products/search
+     * Public: search products by name or category using LIKE.
+     */
+    public function search(Request $request)
+    {
+        $validated = $request->validate([
+            'q' => ['required', 'string', 'max:100'],
+        ]);
+
+        $keyword = trim($validated['q']);
+
+        $products = Product::with('store:id,name,address', 'category:id,name')
+            ->where(function ($query) use ($keyword) {
+                $query->where('name', 'like', "%{$keyword}%")
+                    ->orWhereHas('category', function ($categoryQuery) use ($keyword) {
+                        $categoryQuery->where('name', 'like', "%{$keyword}%");
+                    });
+            })
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
+
+        return response()->json([
+            'success' => true,
+            'query' => $keyword,
+            'data' => $products,
+        ]);
+    }
+
+    /**
      * GET /api/products/{product}
      * Public: show product detail.
      */
@@ -35,6 +65,57 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'data'    => $product,
+        ]);
+    }
+
+    /**
+     * GET /api/products/updates
+     * Public: lightweight updates endpoint for visible products.
+     */
+    public function updates(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['nullable', 'array'],
+            'ids.*' => ['integer', 'exists:products,id'],
+            'since' => ['nullable', 'date'],
+        ]);
+
+        $query = Product::query()->select([
+            'id',
+            'store_id',
+            'category_id',
+            'name',
+            'price',
+            'stock',
+            'image',
+            'updated_at',
+        ])->with('store:id,name');
+
+        if (!empty($validated['ids'])) {
+            $query->whereIn('id', $validated['ids']);
+        }
+
+        if (!empty($validated['since'])) {
+            $query->where('updated_at', '>', $validated['since']);
+        }
+
+        $products = $query->get()->map(function (Product $product) {
+            return [
+                'id' => $product->id,
+                'name' => $product->name,
+                'price' => (float) $product->price,
+                'stock' => (int) $product->stock,
+                'status' => $product->stock > 0 ? 'available' : 'out_of_stock',
+                'image' => $product->image,
+                'store_id' => $product->store_id,
+                'store_name' => $product->store?->name,
+                'updated_at' => $product->updated_at?->toIso8601String(),
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'data' => $products,
         ]);
     }
 

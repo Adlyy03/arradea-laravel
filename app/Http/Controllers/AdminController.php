@@ -13,7 +13,7 @@ class AdminController extends Controller
      */
     public function sellers()
     {
-        $sellers = User::where('role', 'seller')
+        $sellers = User::where('is_seller', true)
             ->with('store')
             ->latest()
             ->paginate(15);
@@ -26,11 +26,11 @@ class AdminController extends Controller
 
     /**
      * PUT /api/admin/sellers/{user}
-     * Admin: edit a seller (name, email, role).
+     * Admin: edit a seller (name, email, seller flag).
      */
     public function updateSeller(Request $request, User $user)
     {
-        if ($user->role !== 'seller') {
+        if (! $user->is_seller) {
             return response()->json([
                 'success' => false,
                 'message' => 'User is not a seller.',
@@ -38,10 +38,21 @@ class AdminController extends Controller
         }
 
         $validated = $request->validate([
-            'name'  => ['sometimes', 'string', 'max:255'],
-            'email' => ['sometimes', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
-            'role'  => ['sometimes', 'string', 'in:seller,buyer'],
+            'name'      => ['sometimes', 'string', 'max:255'],
+            'email'     => ['sometimes', 'string', 'email', 'max:255', 'unique:users,email,' . $user->id],
+            'is_seller' => ['sometimes', 'boolean'],
         ]);
+
+        if (array_key_exists('is_seller', $validated)) {
+            if ((bool) $validated['is_seller']) {
+                $validated['seller_status'] = 'approved';
+                $validated['seller_approved_at'] = now();
+                $validated['seller_rejected_at'] = null;
+                $validated['seller_rejection_reason'] = null;
+            } else {
+                $validated['seller_status'] = 'none';
+            }
+        }
 
         $user->update($validated);
 
@@ -59,7 +70,7 @@ class AdminController extends Controller
      */
     public function destroySeller(User $user)
     {
-        if ($user->role !== 'seller') {
+        if (! $user->is_seller) {
             return response()->json([
                 'success' => false,
                 'message' => 'User is not a seller.',

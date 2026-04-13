@@ -16,17 +16,10 @@ class OrderController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
+        $store = $user->store;
+        $hasSellerAccess = $user->is_seller && $store;
 
-        if ($user->role === 'seller') {
-            $store = $user->store;
-
-            if (! $store) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'You do not have a store yet.',
-                ], 404);
-            }
-
+        if ($hasSellerAccess) {
             $orders = $store->orders()
                 ->with('user:id,name,email')
                 ->latest()
@@ -52,8 +45,8 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
-        $canView = ($user->role === 'buyer' && $order->user_id === $user->id)
-            || ($user->role === 'seller' && $user->store && $order->store_id === $user->store->id);
+        $canView = $order->user_id === $user->id
+            || ($user->is_seller && $user->store && $order->store_id === $user->store->id);
 
         if (! $canView) {
             return response()->json([
@@ -80,6 +73,18 @@ class OrderController extends Controller
 
         if ($request->filled('product_id')) {
             $product = Product::findOrFail($request->product_id);
+            $variantKey = $request->input('variant_key', 'default');
+
+            if ($product->store && (int) $product->store->user_id === (int) $user->id) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Anda tidak bisa membeli produk milik sendiri.',
+                    ], 422);
+                }
+
+                return back()->withInput()->withErrors(['product_id' => 'Anda tidak bisa membeli produk milik sendiri.']);
+            }
 
             if ($product->stock < $request->quantity) {
                 if ($request->expectsJson()) {
@@ -92,11 +97,29 @@ class OrderController extends Controller
                 return back()->withInput()->withErrors(['quantity' => 'Stok produk tidak mencukupi.']);
             }
 
+            if ($variantKey !== 'default' && ! $product->getVariant($variantKey)) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Varian tidak valid.',
+                    ], 422);
+                }
+
+                return back()->withInput()->withErrors(['variant_key' => 'Varian tidak valid.']);
+            }
+
+            $pricing = $product->calculatePricing($variantKey, (int) $request->quantity);
+
             $order = $user->orders()->create([
                 'store_id'    => $product->store_id,
                 'product_id'  => $product->id,
+                'variant_key' => $variantKey,
                 'quantity'    => $request->quantity,
-                'total_price' => $product->price * $request->quantity,
+                'unit_price_original' => $pricing['unit_original'],
+                'unit_price_final' => $pricing['unit_final'],
+                'discount_percent_applied' => $pricing['discount_percent'],
+                'total_price' => $pricing['total_final'],
+                'notes'       => $request->notes,
                 'status'      => 'pending',
             ]);
 
@@ -105,6 +128,11 @@ class OrderController extends Controller
             $order = $user->orders()->create([
                 'store_id'    => $request->store_id,
                 'total_price' => $request->total_price,
+                'variant_key' => 'default',
+                'unit_price_original' => $request->total_price,
+                'unit_price_final' => $request->total_price,
+                'discount_percent_applied' => 0,
+                'notes'       => $request->notes,
                 'status'      => 'pending',
             ]);
         }

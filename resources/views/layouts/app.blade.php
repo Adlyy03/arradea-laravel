@@ -88,10 +88,10 @@
                                 </button>
                                 <div x-show="open" @click.away="open = false" x-cloak class="absolute right-0 mt-2 w-48 bg-white rounded-2xl shadow-xl border border-gray-100 py-2">
                                     <div class="px-4 py-2 border-b border-gray-50 mb-2">
-                                        <p class="text-[10px] uppercase font-bold text-gray-400">Role: {{ strtoupper(Auth::user()->role) }}</p>
+                                        <p class="text-[10px] uppercase font-bold text-gray-400">Mode: {{ Auth::user()->is_seller ? 'SELLER + BUYER' : 'BUYER' }}</p>
                                     </div>
                                     
-                                    @if(Auth::user()->role === 'seller')
+                                    @if(Auth::user()->is_seller)
                                         <a href="/seller/dashboard" class="block px-4 py-2 hover:bg-primary-50 text-gray-700">Toko Saya</a>
                                     @elseif(Auth::user()->role === 'admin')
                                         <a href="/admin/dashboard" class="block px-4 py-2 hover:bg-primary-50 text-gray-700">Admin Panel</a>
@@ -106,7 +106,7 @@
                                 </div>
                             </div>
 
-                            @if(Auth::user()->role === 'buyer')
+                            @if(Auth::user()->role !== 'admin')
                                 <a href="{{ route('buyer.cart') }}" class="relative text-gray-600 hover:text-primary-600 transition">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.1 5H19M7 13l-1.1 5M7 13h10m0 0v8a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
                                     @if(Auth::user()->carts->count() > 0)
@@ -123,7 +123,7 @@
                     <!-- Mobile Menu Button -->
                     <div class="md:hidden flex items-center space-x-4">
                         @auth
-                            @if(Auth::user()->role === 'buyer')
+                            @if(Auth::user()->role !== 'admin')
                                 <a href="{{ route('buyer.cart') }}" class="relative text-gray-600">
                                     <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.1 5H19M7 13l-1.1 5M7 13h10m0 0v8a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>
                                     @if(Auth::user()->carts->count() > 0)
@@ -159,11 +159,11 @@
                             </div>
                             <div>
                                 <p class="font-bold text-gray-900">{{ Auth::user()->name }}</p>
-                                <p class="text-[10px] uppercase font-black text-primary-600 tracking-widest">{{ Auth::user()->role }}</p>
+                                <p class="text-[10px] uppercase font-black text-primary-600 tracking-widest">{{ Auth::user()->is_seller ? 'seller + buyer' : 'buyer' }}</p>
                             </div>
                         </div>
 
-                        @if(Auth::user()->role === 'seller')
+                        @if(Auth::user()->is_seller)
                             <a href="/seller/dashboard" class="flex items-center space-x-4 p-4 hover:bg-gray-50 rounded-2xl transition font-bold text-gray-700">
                                 <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                                 <span>Toko Saya (Dashboard)</span>

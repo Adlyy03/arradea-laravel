@@ -29,7 +29,13 @@
                     <div>
                         <p class="text-[10px] font-black uppercase tracking-widest text-gray-400">{{ $product->store->name ?? 'Arradea' }}</p>
                         <h2 class="text-3xl lg:text-5xl font-black text-gray-900 tracking-tight leading-tight">{{ $product->name }}</h2>
-                        <p class="text-2xl lg:text-3xl font-black text-primary-700 mt-2">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
+                        @php $basePricing = $product->calculatePricing('default', 1); @endphp
+                        @if(($basePricing['discount_percent'] ?? 0) > 0)
+                            <p class="text-sm font-bold text-red-500 mt-2 line-through">Rp {{ number_format($basePricing['unit_original'], 0, ',', '.') }}</p>
+                            <p class="text-2xl lg:text-3xl font-black text-primary-700">Rp {{ number_format($basePricing['unit_final'], 0, ',', '.') }}</p>
+                        @else
+                            <p class="text-2xl lg:text-3xl font-black text-primary-700 mt-2">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
+                        @endif
                         <p class="text-xs font-bold text-gray-500 mt-1">Sisa Stok: <span class="text-gray-900">{{ $product->stock }}</span></p>
                     </div>
 
@@ -39,10 +45,31 @@
                 </div>
 
                 @auth
-                    @if(auth()->user()->role === 'buyer')
+                    @if($product->store && (int) auth()->id() === (int) $product->store->user_id)
+                        <div class="p-6 bg-amber-50 border border-amber-200 rounded-2xl">
+                            <p class="text-amber-800 font-bold">Anda tidak bisa membeli produk milik toko sendiri.</p>
+                        </div>
+                    @else
                         <form action="{{ route('buyer.cart.store') }}" method="POST" class="space-y-4">
                             @csrf
                             <input type="hidden" name="product_id" value="{{ $product->id }}">
+
+                            @if(!empty($product->variants))
+                                <div class="space-y-2">
+                                    <label class="block text-sm font-black text-gray-500">Varian</label>
+                                    <select name="variant_key" class="w-full border border-gray-200 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-primary-500">
+                                        <option value="default">Default Produk</option>
+                                        @foreach($product->variants as $variant)
+                                            @php
+                                                $variantPricing = $product->calculatePricing($variant['key'] ?? null, 1);
+                                            @endphp
+                                            <option value="{{ $variant['key'] ?? '' }}">
+                                                {{ $variant['name'] ?? 'Varian' }} - Rp {{ number_format($variantPricing['unit_final'], 0, ',', '.') }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            @endif
 
                             <div class="space-y-2">
                                 <label class="block text-sm font-black text-gray-500">Jumlah</label>
@@ -54,10 +81,6 @@
                                 <a href="{{ route('buyer.cart') }}" class="px-8 py-4 bg-gray-50 text-gray-700 border border-gray-100 rounded-2xl font-black text-lg hover:bg-gray-100 transition text-center italic">Checkout →</a>
                             </div>
                         </form>
-                    @else
-                        <div class="p-6 bg-amber-50 border border-amber-200 rounded-2xl">
-                            <p class="text-amber-800 font-bold">Hanya pembeli yang dapat menambahkan produk ke keranjang.</p>
-                        </div>
                     @endif
                 @else
                     <div class="space-y-4">

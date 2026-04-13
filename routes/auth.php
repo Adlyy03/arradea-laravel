@@ -43,7 +43,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
             return response()->json(['message' => 'Forbidden'], 403);
         }
 
-        return \App\Models\User::where('role', 'seller')->get();
+        return \App\Models\User::where('is_seller', true)->get();
     });
 
 });

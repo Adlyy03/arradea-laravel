@@ -42,7 +42,7 @@
             <div class="w-20 h-20 bg-blue-50 text-blue-500 rounded-[2.5rem] flex items-center justify-center text-4xl group-hover:scale-110 transition duration-500">🏬</div>
             <div class="space-y-1">
                 <p class="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Total Seller</p>
-                <h4 class="text-3xl lg:text-5xl font-black text-gray-900 leading-none tracking-tighter">{{ \App\Models\User::where('role', 'seller')->count() }} Toko</h4>
+                <h4 class="text-3xl lg:text-5xl font-black text-gray-900 leading-none tracking-tighter">{{ \App\Models\User::where('is_seller', true)->count() }} Toko</h4>
                 <a href="/admin/sellers" class="block pt-2 text-sm font-bold text-primary-600 uppercase tracking-widest">Detail Seller →</a>
             </div>
         </div>
@@ -58,7 +58,7 @@
             <div class="w-20 h-20 bg-green-50 text-green-500 rounded-[2.5rem] flex items-center justify-center text-4xl group-hover:scale-110 transition duration-500">👤</div>
             <div class="space-y-1">
                 <p class="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Data Buyer</p>
-                <h4 class="text-3xl lg:text-5xl font-black text-gray-900 leading-none tracking-tighter">{{ \App\Models\User::where('role', 'buyer')->count() }} User</h4>
+                <h4 class="text-3xl lg:text-5xl font-black text-gray-900 leading-none tracking-tighter">{{ \App\Models\User::where('is_seller', false)->where('role', '!=', 'admin')->count() }} User</h4>
                 <p class="block pt-2 text-sm font-bold text-green-500 uppercase tracking-widest">Growth Stabil</p>
             </div>
         </div>
