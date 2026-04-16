@@ -82,9 +82,23 @@
 
             <!-- Variant JSON -->
             <div class="space-y-3 col-span-2">
-                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Varian Produk (JSON)</label>
-                <textarea name="variants_json" rows="8" class="w-full bg-gray-50 border-none rounded-2xl lg:rounded-3xl px-6 lg:px-8 py-5 lg:py-6 focus:ring-2 focus:ring-primary-600 font-mono text-xs transition-all {{ $errors->has('variants_json') ? 'ring-2 ring-red-500' : '' }}" placeholder='[{"name":"Ukuran M","price":120000,"discount_percent":10,"discount_start_at":"2026-04-12 00:00:00","discount_end_at":"2026-04-30 23:59:59"}]'>{{ old('variants_json', $isEdit ? json_encode($product->variants ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : '') }}</textarea>
-                <p class="text-[10px] text-gray-400">Gunakan format array JSON. Setiap varian bisa punya harga + diskon + tanggal aktif sendiri.</p>
+                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Varian Produk</label>
+                
+                <!-- Variant Builder UI -->
+                <div id="variantBuilder" class="space-y-4">
+                    <!-- Variant Input Fields -->
+                    <div id="variantsList" class="space-y-3"></div>
+                    
+                    <!-- Add Variant Button -->
+                    <button type="button" onclick="addVariantField()" class="w-full h-12 border-2 border-dashed border-primary-300 rounded-xl text-primary-600 font-bold hover:bg-primary-50 transition">
+                        + Tambah Varian
+                    </button>
+                </div>
+                
+                <!-- Hidden JSON Textarea (for form submission) -->
+                <textarea name="variants_json" id="variantsJSON" style="display:none;">{{ old('variants_json', $isEdit ? json_encode($product->variants ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : '[]') }}</textarea>
+                
+                <p class="text-[10px] text-gray-400">Biarkan kosong jika produk tidak punya varian.</p>
                 @error('variants_json') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
             </div>
 
@@ -128,6 +142,167 @@
                 document.getElementById('imagePreview').src = event.target.result;
             }
             reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+
+    // Variant Builder Functions
+    let variantCounter = 0;
+
+    function generateUniqueKey(name) {
+        return name.toLowerCase()
+            .replace(/\s+/g, '-')
+            .replace(/[^\w\-]/g, '')
+            .substring(0, 20);
+    }
+
+    function addVariantField(data = null) {
+        const variantsList = document.getElementById('variantsList');
+        const variantId = variantCounter++;
+        
+        const variantHTML = `
+            <div class="variant-item bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-2xl border-2 border-gray-200 space-y-4" data-variant-id="${variantId}">
+                <!-- Header with Delete Button -->
+                <div class="flex justify-between items-center">
+                    <span class="text-sm font-bold text-gray-500">Varian ${variantsList.children.length + 1}</span>
+                    <button type="button" onclick="removeVariantField(${variantId})" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition">Hapus</button>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Variant Name -->
+                    <input type="text" 
+                        placeholder="Nama varian (misal: Ukuran M, Warna Merah)"
+                        class="variant-name bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-600 font-semibold text-sm transition"
+                        value="${data?.name || ''}">
+                    
+                    <!-- Price -->
+                    <input type="number" 
+                        placeholder="Harga varian (Rp)"
+                        class="variant-price bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-600 font-semibold text-sm transition"
+                        value="${data?.price || ''}">
+                    
+                    <!-- Stock (if needed) -->
+                    <input type="number" 
+                        placeholder="Stok varian (opsional)"
+                        class="variant-stock bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-600 font-semibold text-sm transition"
+                        value="${data?.stock || ''}">
+                    
+                    <!-- Discount Percent -->
+                    <input type="number" 
+                        step="0.01"
+                        min="0" 
+                        max="100"
+                        placeholder="Diskon (%, opsional)"
+                        class="variant-discount bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-600 font-semibold text-sm transition"
+                        value="${data?.discount_percent || ''}">
+                </div>
+
+                <!-- Optional: Discount Date Range (collapsed by default) -->
+                <details class="cursor-pointer">
+                    <summary class="text-xs font-bold text-gray-400 hover:text-gray-600">⚙️ Pengaturan Diskon Lanjutan (Opsional)</summary>
+                    <div class="mt-4 space-y-4 pt-4 border-t border-gray-300">
+                        <input type="datetime-local" 
+                            placeholder="Diskon aktif dari"
+                            class="variant-discount-start w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-600 font-semibold text-sm transition"
+                            value="${data?.discount_start_at ? data.discount_start_at.replace(' ', 'T') : ''}">
+                        
+                        <input type="datetime-local" 
+                            placeholder="Diskon aktif sampai"
+                            class="variant-discount-end w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-600 font-semibold text-sm transition"
+                            value="${data?.discount_end_at ? data.discount_end_at.replace(' ', 'T') : ''}">
+                    </div>
+                </details>
+            </div>
+        `;
+        
+        variantsList.insertAdjacentHTML('beforeend', variantHTML);
+        updateVariantsJSON();
+    }
+
+    function removeVariantField(variantId) {
+        const item = document.querySelector(`[data-variant-id="${variantId}"]`);
+        if(item) {
+            item.style.opacity = '0';
+            item.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                item.remove();
+                updateVariantsJSON();
+            }, 200);
+        }
+    }
+
+    function updateVariantsJSON() {
+        const variants = [];
+        document.querySelectorAll('.variant-item').forEach(item => {
+            const name = item.querySelector('.variant-name').value.trim();
+            const price = item.querySelector('.variant-price').value.trim();
+            
+            if(name && price) {
+                const variant = {
+                    key: generateUniqueKey(name),
+                    name: name,
+                    price: parseInt(price) || 0,
+                    stock: parseInt(item.querySelector('.variant-stock').value) || 0
+                };
+                
+                const discount = item.querySelector('.variant-discount').value.trim();
+                if(discount) {
+                    variant.discount_percent = parseFloat(discount) || 0;
+                }
+                
+                const discountStart = item.querySelector('.variant-discount-start').value.trim();
+                if(discountStart) {
+                    variant.discount_start_at = discountStart.replace('T', ' ') + ':00';
+                }
+                
+                const discountEnd = item.querySelector('.variant-discount-end').value.trim();
+                if(discountEnd) {
+                    variant.discount_end_at = discountEnd.replace('T', ' ') + ':00';
+                }
+                
+                variants.push(variant);
+            }
+        });
+        
+        document.getElementById('variantsJSON').value = JSON.stringify(variants);
+    }
+
+    // Auto-update JSON when variant fields change
+    document.addEventListener('change', function(e) {
+        if(e.target.classList.contains('variant-name') ||
+           e.target.classList.contains('variant-price') ||
+           e.target.classList.contains('variant-stock') ||
+           e.target.classList.contains('variant-discount') ||
+           e.target.classList.contains('variant-discount-start') ||
+           e.target.classList.contains('variant-discount-end')) {
+            updateVariantsJSON();
+        }
+    });
+
+    document.addEventListener('input', function(e) {
+        if(e.target.classList.contains('variant-name') ||
+           e.target.classList.contains('variant-price') ||
+           e.target.classList.contains('variant-stock') ||
+           e.target.classList.contains('variant-discount') ||
+           e.target.classList.contains('variant-discount-start') ||
+           e.target.classList.contains('variant-discount-end')) {
+            updateVariantsJSON();
+        }
+    });
+
+    // Initialize with existing variants on page load
+    window.addEventListener('DOMContentLoaded', function() {
+        const existingJSON = document.getElementById('variantsJSON').value.trim();
+        if(existingJSON && existingJSON !== '[]') {
+            try {
+                const variants = JSON.parse(existingJSON);
+                if(Array.isArray(variants)) {
+                    variants.forEach(variant => {
+                        addVariantField(variant);
+                    });
+                }
+            } catch(e) {
+                console.log('Could not parse existing variants');
+            }
         }
     });
 </script>
