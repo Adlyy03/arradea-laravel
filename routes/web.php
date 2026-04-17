@@ -1,10 +1,8 @@
 <?php
 
 use App\Http\Controllers\AuthWebController;
-use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
-use App\Http\Controllers\Auth\VerifyEmailController;
 use App\Models\AccessCode;
 use App\Http\Controllers\ProductWebController;
 use App\Http\Controllers\CartController;
@@ -15,6 +13,7 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\PhoneVerificationController;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Arradea Marketplace — Web Routes (Final Production-Ready Interface)
@@ -28,26 +27,24 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login',    fn() => view('auth.login'))->name('login');
     Route::get('/register', fn() => view('auth.register'))->name('register');
-    
-    // Web Auth Handlers
     Route::post('/web/login',    [AuthWebController::class, 'login']);
     Route::post('/web/register', [AuthWebController::class, 'register']);
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
     Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
 });
 
-Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
-    ->middleware(['auth', 'signed', 'throttle:6,1'])
-    ->name('verification.verify');
+// Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
+//     ->middleware(['auth', 'signed', 'throttle:6,1'])
+//     ->name('verification.verify');
 
-Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
-    ->middleware(['auth', 'throttle:6,1'])
-    ->name('verification.send');
+// Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
+//     ->middleware(['auth', 'throttle:6,1'])
+//     ->name('verification.send');
 
 // ─────────────────────────────────────────────────────────────────────────────
 // PROTECTED DASHBOARDS (Session-Based Auth)
 // ─────────────────────────────────────────────────────────────────────────────
-Route::middleware(['auth', 'arradea.access'])->group(function () {
+Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function () {
 
     // 👨💼 ADMIN
     Route::middleware('role:admin')->prefix('admin')->group(function () {
@@ -496,7 +493,23 @@ Route::middleware(['auth', 'arradea.access'])->group(function () {
 
         return back()->with('success', 'Pesanan berhasil dibatalkan.');
     })->name('buyer.orders.cancel');
+});
 
-    // LOGOUT
+Route::middleware('auth')->group(function () {
+    // Halaman notice verifikasi HP
+    Route::get('/phone/verify', fn() => view('auth.verify-phone'))
+        ->name('verification.phone.notice');
+
+    // Kirim ulang link
+    Route::post('/phone/verification-notification', [PhoneVerificationController::class, 'send'])
+        ->middleware('throttle:6,1')
+        ->name('verification.phone.send');
+
+    // Logout tersedia untuk semua user yang sudah auth, termasuk yang belum verifikasi HP
     Route::post('/logout', [AuthWebController::class, 'logout'])->name('logout');
 });
+
+// Link yang diklik dari WA (di luar auth group)
+Route::get('/phone/verify/{id}/{hash}', [PhoneVerificationController::class, 'verify'])
+    ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.phone.verify');

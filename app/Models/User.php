@@ -15,7 +15,7 @@ class User extends Authenticatable
 
     protected $fillable = [
         'name',
-        'email',
+        'phone',
         'wilayah',
         'access_code_id',
         'password',
@@ -36,7 +36,6 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
             'is_seller'         => 'boolean',
             'password'          => 'hashed',
         ];
@@ -75,5 +74,10 @@ class User extends Authenticatable
     public function accessCode()
     {
         return $this->belongsTo(AccessCode::class);
+    }
+
+    public function username()
+    {
+        return 'phone';
     }
 }

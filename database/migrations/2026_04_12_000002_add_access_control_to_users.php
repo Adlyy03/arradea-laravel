@@ -28,7 +28,7 @@ return new class extends Migration
 
         Schema::table('users', function (Blueprint $table) {
             if (! Schema::hasColumn('users', 'wilayah')) {
-                $table->string('wilayah')->default('Arradea')->after('email');
+                $table->string('wilayah')->default('Arradea')->after('phone');
             }
 
             if (! Schema::hasColumn('users', 'access_code_id')) {
