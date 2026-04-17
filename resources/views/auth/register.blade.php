@@ -35,8 +35,8 @@
                 </div>
 
                 <div class="space-y-4 md:col-span-2">
-                    <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Alamat Email</label>
-                    <input type="email" name="email" value="{{ old('email') }}" required class="w-full h-14 lg:h-20 bg-gray-50 border-none rounded-2xl lg:rounded-[1.8rem] px-5 lg:px-10 focus:ring-4 focus:ring-primary-100 font-black text-base lg:text-xl transition-all" placeholder="yourname@gmail.com">
+                    <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Nomor Telepon</label>
+                    <input type="phone" name="phone" value="{{ old('phone') }}" required class="w-full h-14 lg:h-20 bg-gray-50 border-none rounded-2xl lg:rounded-[1.8rem] px-5 lg:px-10 focus:ring-4 focus:ring-primary-100 font-black text-base lg:text-xl transition-all" placeholder="Contoh: 081234567890">
                 </div>
 
                 <div class="space-y-4 md:col-span-2">

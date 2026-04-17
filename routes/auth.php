@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
-use App\Http\Controllers\Auth\EmailVerificationNotificationController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
@@ -24,13 +23,15 @@ Route::post('/reset-password', [NewPasswordController::class, 'store'])
     ->middleware('guest')
     ->name('password.store');
 
-Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
-    ->middleware(['auth', 'signed', 'throttle:6,1'])
-    ->name('verification.verify');
+// Kirim ulang link verifikasi
+Route::post('/phone/verification-notification', [PhoneVerificationController::class, 'send'])
+    // ->middleware(['auth', 'throttle:6,1'])
+    ->name('verification.phone.send');
 
-Route::post('/email/verification-notification', [EmailVerificationNotificationController::class, 'store'])
-    ->middleware(['auth', 'throttle:6,1'])
-    ->name('verification.send');
+// Link yang diklik user dari WA (tidak perlu auth, pakai signed URL)
+Route::get('/phone/verify/{id}/{hash}', [PhoneVerificationController::class, 'verify'])
+    // ->middleware(['signed', 'throttle:6,1'])
+    ->name('verification.phone.verify');
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->middleware('auth')

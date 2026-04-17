@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use Illuminate\Support\Facades\URL;
 
 class AuthWebController extends Controller
 {
@@ -20,14 +21,14 @@ class AuthWebController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => ['required', 'email'],
+            'phone'    => ['required', 'string'],
             'password' => ['required'],
             'g-recaptcha-response' => ['required'],
         ], [
             'g-recaptcha-response.required' => 'Silakan centang captcha terlebih dahulu.',
         ]);
 
-        $credentials = $request->only(['email', 'password']);
+        $credentials = $request->only(['phone', 'password']);
 
         $throttleKey = $this->throttleKey($request);
 
@@ -35,8 +36,8 @@ class AuthWebController extends Controller
             $seconds = RateLimiter::availableIn($throttleKey);
 
             return back()->withErrors([
-                'email' => 'Terlalu banyak percobaan login. Coba lagi dalam '.$seconds.' detik.',
-            ])->onlyInput('email');
+                'phone' => 'Terlalu banyak percobaan login. Coba lagi dalam '.$seconds.' detik.',
+            ])->onlyInput('phone');
         }
 
         if (! $this->verifyCaptcha($request->input('g-recaptcha-response'), $request->ip())) {
@@ -44,7 +45,7 @@ class AuthWebController extends Controller
 
             return back()->withErrors([
                 'captcha' => 'Captcha gagal. Pastikan Anda bukan robot dan coba lagi.',
-            ])->onlyInput('email');
+            ])->onlyInput('phone');
         }
 
         if (Auth::attempt($credentials, $request->remember)) {
@@ -56,8 +57,8 @@ class AuthWebController extends Controller
             if (! $this->isUserEligibleForAccess($user)) {
                 Auth::logout();
                 return back()->withErrors([
-                    'email' => 'Akses ditolak. Akun Anda tidak memenuhi syarat wilayah Arradea.',
-                ])->onlyInput('email');
+                    'phone' => 'Akses ditolak. Akun Anda tidak memenuhi syarat wilayah Arradea.',
+                ])->onlyInput('phone');
             }
 
             $ipWarning = $this->buildIpWarning($request->ip());
@@ -71,55 +72,72 @@ class AuthWebController extends Controller
         RateLimiter::hit($throttleKey, 60);
 
         return back()->withErrors([
-            'email' => 'Kredensial yang Anda berikan tidak cocok dengan data kami.',
-        ])->onlyInput('email');
+            'phone' => 'Kredensial yang Anda berikan tidak cocok dengan data kami.',
+        ])->onlyInput('phone');
     }
 
     /**
      * Handle Web Registration.
      */
     public function register(Request $request)
-    {
-        $request->validate([
-            'name'     => ['required', 'string', 'max:255'],
-            'email'    => ['required', 'string', 'email', 'max:255', 'unique:users'],
-            'password' => ['required', 'confirmed', Password::defaults()],
-            'access_code' => ['required', 'string', 'max:100'],
-            'g-recaptcha-response' => ['required'],
-        ], [
-            'g-recaptcha-response.required' => 'Silakan centang captcha terlebih dahulu.',
-            'access_code.required' => 'Akses ditolak. Kode tidak valid',
-        ]);
+{
+    $request->validate([
+        'name'        => ['required', 'string', 'max:255'],
+        'phone'       => ['required', 'string', 'max:20', 'unique:users,phone'],
+        'password'    => ['required', 'confirmed', Password::defaults()],
+        'access_code' => ['required', 'string', 'max:100'],
+        'g-recaptcha-response' => ['required'],
+    ], [
+        'g-recaptcha-response.required' => 'Silakan centang captcha terlebih dahulu.',
+        'access_code.required'          => 'Akses ditolak. Kode tidak valid',
+        'phone.unique'                  => 'Nomor HP sudah terdaftar.',
+    ]);
 
-        $accessCode = AccessCode::where('code', trim((string) $request->access_code))
-            ->where('is_active', true)
-            ->first();
+    $accessCode = AccessCode::where('code', trim((string) $request->access_code))
+        ->where('is_active', true)
+        ->first();
 
-        if (! $accessCode) {
-            return back()->withErrors([
-                'access_code' => 'Akses ditolak. Kode tidak valid',
-            ])->withInput($request->except(['password', 'password_confirmation', 'g-recaptcha-response']));
-        }
-
-        if (! $this->verifyCaptcha($request->input('g-recaptcha-response'), $request->ip())) {
-            return back()->withErrors([
-                'captcha' => 'Captcha gagal. Mohon ulangi verifikasi.',
-            ])->withInput($request->except(['password', 'password_confirmation', 'g-recaptcha-response']));
-        }
-
-        $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'wilayah'  => 'Arradea',
-            'access_code_id' => $accessCode->id,
-            'password' => Hash::make($request->password),
-            'is_seller' => false,
-        ]);
-
-        Auth::login($user);
-
-        return $this->redirectUser($user);
+    if (! $accessCode) {
+        return back()->withErrors([
+            'access_code' => 'Akses ditolak. Kode tidak valid',
+        ])->withInput($request->except(['password', 'password_confirmation', 'g-recaptcha-response']));
     }
+
+    if (! $this->verifyCaptcha($request->input('g-recaptcha-response'), $request->ip())) {
+        return back()->withErrors([
+            'captcha' => 'Captcha gagal. Mohon ulangi verifikasi.',
+        ])->withInput($request->except(['password', 'password_confirmation', 'g-recaptcha-response']));
+    }
+
+    $user = User::create([
+        'name'           => $request->name,
+        'phone'          => $request->phone,
+        'wilayah'        => 'Arradea',
+        'access_code_id' => $accessCode->id,
+        'password'       => Hash::make($request->password),
+        'is_seller'      => false,
+    ]);
+
+    Auth::login($user);
+
+    // Kirim link verifikasi WA langsung setelah register ← tambah semua ini
+    $verifyUrl = URL::temporarySignedRoute(
+        'verification.phone.verify',
+        now()->addMinutes(60),
+        [
+            'id'   => $user->id,
+            'hash' => sha1($user->phone),
+        ]
+    );
+
+    Http::withHeaders(['Authorization' => env('FONNTE_TOKEN')])
+        ->post('https://api.fonnte.com/send', [
+            'target'  => $user->phone,
+            'message' => "Halo {$user->name}!\n\nKlik link berikut untuk verifikasi nomor HP kamu:\n\n{$verifyUrl}\n\n_Link berlaku 60 menit._",
+        ]);
+
+    return redirect()->route('verification.phone.notice');
+}
 
     /**
      * Redirect user after authentication.
@@ -134,7 +152,7 @@ class AuthWebController extends Controller
             return redirect('/seller/dashboard')->with('success', 'Selamat berjualan di Arradea!');
         }
 
-        return redirect('/')->with('success', 'Selamat datang di Arradea, ' . explode(' ', $user->name)[0] . '!');
+        return redirect('/')->with('success', '✅ Nomor HP berhasil diverifikasi!');
     }
 
     /**

@@ -28,12 +28,12 @@ class AuthController extends Controller
         }
 
         $user = User::create([
-            'name'     => $request->name,
-            'email'    => $request->email,
-            'wilayah'  => 'Arradea',
+            'name'           => $request->name,
+            'phone'          => $request->phone,
+            'wilayah'        => 'Arradea',
             'access_code_id' => $accessCode->id,
-            'password' => Hash::make($request->password),
-            'is_seller' => false,
+            'password'       => Hash::make($request->password),
+            'is_seller'      => false,
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
@@ -56,15 +56,15 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $request->validate([
-            'email'    => ['required', 'string', 'email'],
+            'phone'    => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
-        $user = User::where('email', $request->email)->first();
+        $user = User::where('phone', $request->phone)->first();
 
         if (! $user || ! Hash::check($request->password, $user->password)) {
             throw ValidationException::withMessages([
-                'email' => ['The provided credentials are incorrect.'],
+                'phone' => ['Kredensial yang Anda berikan tidak cocok.'],
             ]);
         }
 
