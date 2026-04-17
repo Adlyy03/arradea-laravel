@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\AccessCode;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\User;
@@ -19,14 +20,27 @@ class MarketplaceFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // Seed access code untuk test
+        AccessCode::create([
+            'code' => 'TEST-CODE',
+            'is_active' => true,
+        ]);
+    }
+
     public function test_marketplace_full_flow()
     {
         Notification::fake();
 
+        $accessCode = AccessCode::first();
+
         // 1. Create Users
-        $admin = User::factory()->create(['role' => 'admin']);
-        $buyer1 = User::factory()->create(['is_seller' => false]);
-        $buyer2 = User::factory()->create(['is_seller' => false]);
+        $admin = User::factory()->create(['role' => 'admin', 'access_code_id' => $accessCode->id]);
+        $buyer1 = User::factory()->create(['is_seller' => false, 'phone_verified_at' => now(), 'access_code_id' => $accessCode->id]);
+        $buyer2 = User::factory()->create(['is_seller' => false, 'phone_verified_at' => now(), 'access_code_id' => $accessCode->id]);
 
         // 2. Buyer1 activates seller mode
         $response = $this->actingAs($buyer1)

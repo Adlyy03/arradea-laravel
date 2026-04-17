@@ -1,100 +1,143 @@
 @extends('layouts.app')
 
+@section('title', 'Daftar Akun — Arradea')
+
 @section('content')
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-20 flex justify-center items-center h-full">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-20 flex justify-center items-center min-h-screen">
     <div class="w-full max-w-2xl bg-white rounded-[4.5rem] p-8 lg:p-16 shadow-3xl border border-gray-100 relative overflow-hidden">
-        
+
         <div class="absolute -top-12 -right-12 w-48 h-48 bg-primary-100 rounded-full mix-blend-multiply blur-3xl opacity-40 animate-pulse"></div>
         <div class="absolute -bottom-12 -left-12 w-48 h-48 bg-accent rounded-full mix-blend-multiply blur-3xl opacity-20"></div>
 
         <div class="relative z-10">
-            @php
-                $captchaSiteKey = config('services.recaptcha.site_key');
-            @endphp
 
-            <div class="text-center mb-16">
-                <h1 class="text-4xl lg:text-6xl font-black text-gray-900 leading-[0.9] mb-4 tracking-tighter">Buka <span class="text-primary-600 underline underline-offset-8">Akun</span> Baru.</h1>
-                <p class="text-gray-400 font-bold text-lg">Lengkapi data diri Anda untuk memulai pengalaman belanja premium di Arradea.</p>
+            <div class="text-center mb-12">
+                <div class="text-5xl mb-4">🏡</div>
+                <h1 class="text-4xl lg:text-6xl font-black text-gray-900 leading-[0.9] mb-4 tracking-tighter">
+                    Buka <span class="text-primary-600 underline underline-offset-8">Akun</span> Baru.
+                </h1>
+                <p class="text-gray-400 font-bold text-base lg:text-lg">
+                    Lengkapi data diri untuk mulai belanja di Arradea.
+                </p>
             </div>
 
             <div class="mb-6 p-4 bg-primary-50 border border-primary-100 rounded-2xl text-primary-800 font-bold text-xs lg:text-sm">
-                Aplikasi ini hanya untuk warga Komplek Arradea.
+                📍 Aplikasi ini hanya untuk warga Komplek Arradea.
             </div>
 
-            @if($errors->any())
-                <div class="mb-10 p-6 bg-red-50 border border-red-100 rounded-[2.5rem] text-red-600 font-bold text-sm shadow-sm">
-                    {{ $errors->first() }}
+            @if ($errors->any())
+                <div class="mb-6 p-4 lg:p-6 bg-red-50 border border-red-100 rounded-2xl">
+                    @foreach ($errors->all() as $error)
+                        <p class="text-red-700 font-bold text-sm">❌ {{ $error }}</p>
+                    @endforeach
                 </div>
             @endif
 
-            <form id="register-form" method="POST" action="/web/register" class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-10">
+            <form id="register-form" method="POST" action="{{ route('register.post') }}" class="space-y-5">
                 @csrf
-                <div class="space-y-4 md:col-span-2">
-                    <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Nama Lengkap</label>
-                    <input type="text" name="name" value="{{ old('name') }}" required class="w-full h-14 lg:h-20 bg-gray-50 border-none rounded-2xl lg:rounded-[1.8rem] px-5 lg:px-10 focus:ring-4 focus:ring-primary-100 font-black text-base lg:text-xl transition-all" placeholder="Contoh: Arradea Saputra">
+
+                {{-- Nama --}}
+                <div class="space-y-2">
+                    <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">
+                        Nama Lengkap
+                    </label>
+                    <input
+                        type="text"
+                        name="name"
+                        id="name"
+                        value="{{ old('name') }}"
+                        required
+                        autocomplete="name"
+                        class="w-full h-14 lg:h-20 bg-gray-50 border-2 border-transparent rounded-2xl lg:rounded-[1.8rem] px-5 lg:px-10 focus:ring-0 focus:border-primary-500 font-black text-base lg:text-xl transition-all @error('name') border-red-400 bg-red-50 @enderror"
+                        placeholder="Contoh: Budi Santoso"
+                    >
+                    @error('name')
+                        <p class="text-red-500 text-xs font-bold pl-2">{{ $message }}</p>
+                    @enderror
                 </div>
 
-                <div class="space-y-4 md:col-span-2">
-                    <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Nomor Telepon</label>
-                    <input type="phone" name="phone" value="{{ old('phone') }}" required class="w-full h-14 lg:h-20 bg-gray-50 border-none rounded-2xl lg:rounded-[1.8rem] px-5 lg:px-10 focus:ring-4 focus:ring-primary-100 font-black text-base lg:text-xl transition-all" placeholder="Contoh: 081234567890">
+                {{-- Nomor HP --}}
+                <div class="space-y-2">
+                    <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">
+                        Nomor WhatsApp Aktif
+                    </label>
+                    <input
+                        type="tel"
+                        name="phone"
+                        id="phone"
+                        value="{{ old('phone') }}"
+                        required
+                        autocomplete="tel"
+                        class="w-full h-14 lg:h-20 bg-gray-50 border-2 border-transparent rounded-2xl lg:rounded-[1.8rem] px-5 lg:px-10 focus:ring-0 focus:border-primary-500 font-black text-base lg:text-xl transition-all @error('phone') border-red-400 bg-red-50 @enderror"
+                        placeholder="Contoh: 08123456789"
+                    >
+                    @error('phone')
+                        <p class="text-red-500 text-xs font-bold pl-2">{{ $message }}</p>
+                    @enderror
                 </div>
 
-                <div class="space-y-4 md:col-span-2">
-                    <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Kode Akses</label>
-                    <input type="text" name="access_code" value="{{ old('access_code') }}" required class="w-full h-14 lg:h-20 bg-gray-50 border-none rounded-2xl lg:rounded-[1.8rem] px-5 lg:px-10 focus:ring-4 focus:ring-primary-100 font-black text-base lg:text-xl transition-all" placeholder="Contoh: ARRADEA2026">
-                </div>
-
-                <div class="space-y-4 col-span-1">
-                    <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Kata Sandi</label>
-                    <input type="password" name="password" required class="w-full h-14 lg:h-20 bg-gray-50 border-none rounded-2xl lg:rounded-[1.8rem] px-5 lg:px-10 focus:ring-4 focus:ring-primary-100 font-black text-base lg:text-xl transition-all" placeholder="••••••••">
-                </div>
-
-                <div class="space-y-4 col-span-1">
-                    <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Konfirmasi Sandi</label>
-                    <input type="password" name="password_confirmation" required class="w-full h-14 lg:h-20 bg-gray-50 border-none rounded-2xl lg:rounded-[1.8rem] px-5 lg:px-10 focus:ring-4 focus:ring-primary-100 font-black text-base lg:text-xl transition-all" placeholder="••••••••">
-                </div>
-
-                <div class="space-y-4 md:col-span-2">
-                    <p class="text-[10px] lg:text-sm text-gray-500 bg-gray-50 border border-gray-100 rounded-2xl lg:rounded-[2rem] p-4 lg:p-6">Semua pendaftaran baru akan otomatis menjadi <strong>pembeli</strong>. Jika ingin membuka toko sebagai seller, Anda dapat mengajukannya nanti melalui halaman profil setelah login.</p>
-                </div>
-
-                @if($captchaSiteKey)
-                    <div class="md:col-span-2 space-y-3">
-                        <div class="flex items-center gap-3 p-4 bg-gray-50 border border-gray-100 rounded-2xl text-gray-600">
-                            <svg class="w-5 h-5 text-primary-600 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                <path d="M12 2l7 4v6c0 5-3.4 9.7-7 10-3.6-.3-7-5-7-10V6l7-4Z" stroke="currentColor" stroke-width="1.8"/>
-                                <path d="M9.5 12.2l1.9 1.9 3.9-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-                            </svg>
-                            <div>
-                                <p class="text-[10px] lg:text-xs font-black uppercase tracking-widest text-gray-500">Verifikasi captcha aktif</p>
-                                <p class="text-[10px] lg:text-xs text-gray-400 font-medium">Centang kotak di bawah untuk melanjutkan.</p>
-                            </div>
-                        </div>
-                        <div class="flex justify-center">
-                            <div class="g-recaptcha" data-sitekey="{{ $captchaSiteKey }}"></div>
-                        </div>
-                        @if($errors->has('captcha') || $errors->has('recaptcha_token'))
-                            <div class="p-4 bg-red-50 border border-red-100 rounded-2xl text-red-600 font-bold text-xs lg:text-sm">
-                                {{ $errors->first('captcha') ?: $errors->first('g-recaptcha-response') }}
-                            </div>
-                        @endif
+                {{-- Password --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+                    <div class="space-y-2">
+                        <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">
+                            Kata Sandi
+                        </label>
+                        <input
+                            type="password"
+                            name="password"
+                            id="password"
+                            required
+                            autocomplete="new-password"
+                            class="w-full h-14 lg:h-20 bg-gray-50 border-2 border-transparent rounded-2xl lg:rounded-[1.8rem] px-5 lg:px-10 focus:ring-0 focus:border-primary-500 font-black text-base lg:text-xl transition-all @error('password') border-red-400 bg-red-50 @enderror"
+                            placeholder="••••••••"
+                        >
+                        @error('password')
+                            <p class="text-red-500 text-xs font-bold pl-2">{{ $message }}</p>
+                        @enderror
                     </div>
-                @endif
 
-                <div class="md:col-span-2 pt-6 lg:pt-10">
-                    <button type="submit" class="w-full h-16 lg:h-24 bg-primary-900 text-white rounded-2xl lg:rounded-[2.8rem] font-black text-lg lg:text-2xl hover:bg-black shadow-3xl shadow-primary-900/10 transition-all transform hover:scale-[1.02] active:scale-95">
-                        Daftar Akun Sekarang
+                    <div class="space-y-2">
+                        <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">
+                            Konfirmasi Sandi
+                        </label>
+                        <input
+                            type="password"
+                            name="password_confirmation"
+                            id="password_confirmation"
+                            required
+                            autocomplete="new-password"
+                            class="w-full h-14 lg:h-20 bg-gray-50 border-2 border-transparent rounded-2xl lg:rounded-[1.8rem] px-5 lg:px-10 focus:ring-0 focus:border-primary-500 font-black text-base lg:text-xl transition-all"
+                            placeholder="••••••••"
+                        >
+                    </div>
+                </div>
+
+                <p class="text-[10px] lg:text-xs text-gray-500 bg-gray-50 border border-gray-100 rounded-2xl p-4">
+                    💡 Semua pendaftaran baru akan otomatis menjadi <strong>pembeli</strong>. Buka toko bisa dilakukan setelah akun aktif.
+                </p>
+
+                <div class="pt-4">
+                    <button
+                        type="submit"
+                        id="submit-btn"
+                        class="w-full h-16 lg:h-24 bg-primary-900 text-white rounded-2xl lg:rounded-[2.8rem] font-black text-lg lg:text-2xl hover:bg-black shadow-3xl shadow-primary-900/10 transition-all transform hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-3"
+                    >
+                        <span>Daftar & Verifikasi WhatsApp</span>
+                        <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                        </svg>
                     </button>
-                    <p class="text-center mt-8 lg:mt-12 text-gray-400 font-bold text-sm lg:text-lg">Sudah punya akun? 
-                        <a href="{{ route('login') }}" class="text-primary-600 font-black hover:underline underline-offset-[1.5rem] decoration-primary-300">Masuk Sekarang</a>
+
+                    <p class="text-center mt-8 text-gray-400 font-bold text-sm lg:text-base">
+                        Sudah punya akun?
+                        <a href="{{ route('login') }}" class="text-primary-600 font-black hover:underline underline-offset-4 decoration-primary-300">
+                            Masuk Sekarang
+                        </a>
                     </p>
                 </div>
             </form>
+
         </div>
     </div>
 </div>
-
-@if($captchaSiteKey)
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-@endif
 @endsection

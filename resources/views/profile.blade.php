@@ -46,19 +46,51 @@
             </div>
 
             <div class="rounded-2xl lg:rounded-3xl border border-gray-100 p-8 bg-primary-50">
-                <h2 class="text-2xl font-black text-gray-900 mb-4">Ubah ke Seller</h2>
+                <h2 class="text-2xl font-black text-gray-900 mb-4">Upgrade ke Seller</h2>
+
                 @if(auth()->user()->is_seller)
-                    <p class="text-gray-600 mb-6">Akun Anda sudah disetujui sebagai seller. Anda dapat langsung menuju dashboard seller untuk mengelola toko dan produk.</p>
-                    <a href="{{ route('seller.dashboard') }}" class="w-full inline-flex items-center justify-center rounded-2xl lg:rounded-3xl bg-primary-700 text-white font-black px-6 py-4 hover:bg-primary-800 transition">Buka Seller Dashboard</a>
+                    {{-- Sudah jadi seller --}}
+                    <p class="text-gray-600 mb-6">Akun kamu sudah aktif sebagai seller. Langsung kelola toko dan produkmu!</p>
+                    <a href="{{ route('seller.dashboard') }}" class="w-full inline-flex items-center justify-center rounded-2xl bg-primary-700 text-white font-black px-6 py-4 hover:bg-primary-800 transition">
+                        🏪 Buka Seller Dashboard
+                    </a>
+
+                @elseif(auth()->user()->seller_otp_verified)
+                    {{-- OTP sudah verify, nunggu admin --}}
+                    <div class="p-4 bg-orange-50 border border-orange-200 rounded-2xl mb-4">
+                        <p class="text-orange-800 font-bold text-sm">⏳ Pengajuan seller-mu sedang ditinjau admin. Sabar ya!</p>
+                    </div>
+                    <a href="{{ route('seller.pending') }}" class="w-full inline-flex items-center justify-center rounded-2xl bg-orange-500 text-white font-black px-6 py-4 hover:bg-orange-600 transition">
+                        Lihat Status Pengajuan
+                    </a>
+
+                @elseif(auth()->user()->seller_status === 'pending' && !auth()->user()->seller_otp_verified)
+                    {{-- Sudah isi form, OTP belum diverifikasi --}}
+                    <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-2xl mb-4">
+                        <p class="text-yellow-800 font-bold text-sm">📱 Kamu belum menyelesaikan verifikasi OTP. Cek WhatsApp-mu!</p>
+                    </div>
+                    <a href="{{ route('seller.verify-otp') }}" class="w-full inline-flex items-center justify-center rounded-2xl bg-yellow-500 text-white font-black px-6 py-4 hover:bg-yellow-600 transition">
+                        Lanjut Verifikasi OTP
+                    </a>
+
+                @elseif(auth()->user()->seller_status === 'rejected')
+                    {{-- Ditolak --}}
+                    <div class="p-4 bg-red-50 border border-red-200 rounded-2xl mb-4">
+                        <p class="text-red-800 font-bold text-sm">❌ Pengajuan seller-mu sebelumnya ditolak. Kamu bisa mengajukan ulang.</p>
+                    </div>
+                    <a href="{{ route('seller.apply') }}" class="w-full inline-flex items-center justify-center rounded-2xl bg-primary-700 text-white font-black px-6 py-4 hover:bg-primary-800 transition">
+                        Ajukan Ulang Jadi Seller
+                    </a>
+
                 @else
-                    <p class="text-gray-600 mb-6">Anda tetap bisa belanja seperti biasa. Aktifkan mode seller kapan saja untuk mulai berjualan tanpa ganti akun.</p>
-                    <form method="POST" action="{{ route('seller.activate') }}" class="space-y-3">
-                        @csrf
-                        <input type="text" name="store_name" class="w-full rounded-2xl border border-gray-200 bg-white px-5 py-3 font-semibold focus:border-primary-600 focus:outline-none" placeholder="Nama toko (opsional)">
-                        <button type="submit" class="w-full inline-flex items-center justify-center rounded-2xl lg:rounded-3xl bg-primary-700 text-white font-black px-6 py-4 hover:bg-primary-800 transition">Jadi Penjual</button>
-                    </form>
+                    {{-- Belum pernah ajukan --}}
+                    <p class="text-gray-600 mb-6">Kamu tetap bisa belanja seperti biasa. Aktifkan mode seller untuk mulai berjualan di Arradea!</p>
+                    <a href="{{ route('seller.apply') }}" class="w-full inline-flex items-center justify-center rounded-2xl bg-primary-700 text-white font-black px-6 py-4 hover:bg-primary-800 transition">
+                        🚀 Ajukan Jadi Seller
+                    </a>
                 @endif
             </div>
+
         </div>
     </div>
 </div>

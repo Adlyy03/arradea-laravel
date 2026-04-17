@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AccessCode;
+
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
-use Illuminate\Support\Facades\URL;
+
 
 class AuthWebController extends Controller
 {
@@ -54,6 +54,23 @@ class AuthWebController extends Controller
 
             $user = Auth::user();
 
+            // Pastikan nomor HP sudah diverifikasi
+            if (! $user->phone_verified_at) {
+                Auth::logout();
+                return back()->withErrors([
+                    'phone' => 'Akun Anda belum diverifikasi. Silakan klik link verifikasi di WhatsApp kamu.',
+                ])->onlyInput('phone');
+            }
+
+            // Pastikan akun sudah disetujui admin (access code harus aktif)
+            $accessCode = $user->accessCode;
+            if (! $accessCode || ! $accessCode->is_active) {
+                Auth::logout();
+                return back()->withErrors([
+                    'phone' => 'Akun Anda belum disetujui oleh admin. Silakan tunggu persetujuan lebih lanjut.',
+                ])->onlyInput('phone');
+            }
+
             if (! $this->isUserEligibleForAccess($user)) {
                 Auth::logout();
                 return back()->withErrors([
@@ -80,64 +97,38 @@ class AuthWebController extends Controller
      * Handle Web Registration.
      */
     public function register(Request $request)
-{
-    $request->validate([
-        'name'        => ['required', 'string', 'max:255'],
-        'phone'       => ['required', 'string', 'max:20', 'unique:users,phone'],
-        'password'    => ['required', 'confirmed', Password::defaults()],
-        'access_code' => ['required', 'string', 'max:100'],
-        'g-recaptcha-response' => ['required'],
-    ], [
-        'g-recaptcha-response.required' => 'Silakan centang captcha terlebih dahulu.',
-        'access_code.required'          => 'Akses ditolak. Kode tidak valid',
-        'phone.unique'                  => 'Nomor HP sudah terdaftar.',
-    ]);
-
-    $accessCode = AccessCode::where('code', trim((string) $request->access_code))
-        ->where('is_active', true)
-        ->first();
-
-    if (! $accessCode) {
-        return back()->withErrors([
-            'access_code' => 'Akses ditolak. Kode tidak valid',
-        ])->withInput($request->except(['password', 'password_confirmation', 'g-recaptcha-response']));
-    }
-
-    if (! $this->verifyCaptcha($request->input('g-recaptcha-response'), $request->ip())) {
-        return back()->withErrors([
-            'captcha' => 'Captcha gagal. Mohon ulangi verifikasi.',
-        ])->withInput($request->except(['password', 'password_confirmation', 'g-recaptcha-response']));
-    }
-
-    $user = User::create([
-        'name'           => $request->name,
-        'phone'          => $request->phone,
-        'wilayah'        => 'Arradea',
-        'access_code_id' => $accessCode->id,
-        'password'       => Hash::make($request->password),
-        'is_seller'      => false,
-    ]);
-
-    Auth::login($user);
-
-    // Kirim link verifikasi WA langsung setelah register ← tambah semua ini
-    $verifyUrl = URL::temporarySignedRoute(
-        'verification.phone.verify',
-        now()->addMinutes(60),
-        [
-            'id'   => $user->id,
-            'hash' => sha1($user->phone),
-        ]
-    );
-
-    Http::withHeaders(['Authorization' => env('FONNTE_TOKEN')])
-        ->post('https://api.fonnte.com/send', [
-            'target'  => $user->phone,
-            'message' => "Halo {$user->name}!\n\nKlik link berikut untuk verifikasi nomor HP kamu:\n\n{$verifyUrl}\n\n_Link berlaku 60 menit._",
+    {
+        $request->validate([
+            'name'     => ['required', 'string', 'max:255'],
+            'phone'    => ['required', 'string', 'max:20', 'unique:users,phone'],
+            'password' => ['required', 'confirmed', Password::defaults()],
+        ], [
+            'phone.unique' => 'Nomor HP sudah terdaftar.',
         ]);
 
-    return redirect()->route('verification.phone.notice');
-}
+        $user = User::create([
+            'name'           => $request->name,
+            'phone'          => $request->phone,
+            'wilayah'        => 'Arradea',
+            'access_code_id' => null,
+            'password'       => Hash::make($request->password),
+            'is_seller'      => false,
+        ]);
+
+        // Generate & kirim OTP via WhatsApp (user belum login)
+        $otp = \App\Models\Otp::createForPhone($request->phone);
+
+        Http::withHeaders(['Authorization' => env('FONNTE_TOKEN')])
+            ->post('https://api.fonnte.com/send', [
+                'target'  => $request->phone,
+                'message' => "Halo {$user->name}!\n\nKode verifikasi nomor HP kamu untuk daftar di Arradea:\n\n*{$otp->code}*\n\n_Kode berlaku 10 menit. Jangan bagikan kode ini ke siapa pun._",
+            ]);
+
+        // Simpan phone di session untuk halaman verifikasi
+        session(['register_phone' => $request->phone]);
+
+        return redirect()->route('verification.phone.notice');
+    }
 
     /**
      * Redirect user after authentication.
@@ -215,11 +206,11 @@ class AuthWebController extends Controller
     }
 
     /**
-     * Build unique login throttle key by email + IP.
+     * Build unique login throttle key by phone + IP.
      */
     protected function throttleKey(Request $request): string
     {
-        return Str::transliterate(Str::lower((string) $request->input('email'))).'|'.$request->ip();
+        return Str::transliterate(Str::lower((string) $request->input('phone'))).'|'.$request->ip();
     }
 
     protected function isUserEligibleForAccess(User $user): bool

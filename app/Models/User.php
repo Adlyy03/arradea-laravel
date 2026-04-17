@@ -19,6 +19,7 @@ class User extends Authenticatable
         'wilayah',
         'access_code_id',
         'password',
+        'phone_verified_at',
         'is_seller',
         'role',
         'seller_status',
@@ -26,6 +27,7 @@ class User extends Authenticatable
         'seller_approved_at',
         'seller_rejected_at',
         'seller_rejection_reason',
+        'seller_otp_verified',
     ];
 
     protected $hidden = [
@@ -36,8 +38,10 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'is_seller'         => 'boolean',
-            'password'          => 'hashed',
+            'phone_verified_at'  => 'datetime',
+            'is_seller'          => 'boolean',
+            'seller_otp_verified' => 'boolean',
+            'password'           => 'hashed',
         ];
     }
 

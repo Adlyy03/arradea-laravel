@@ -29,7 +29,7 @@
                 </div>
             @endif
 
-            <form id="login-form" method="POST" action="/web/login" class="space-y-6 lg:space-y-8">
+            <form id="login-form" method="POST" action="/login" class="space-y-6 lg:space-y-8">
                 @csrf
                 <div class="space-y-4">
                     <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Nomor HP</label>

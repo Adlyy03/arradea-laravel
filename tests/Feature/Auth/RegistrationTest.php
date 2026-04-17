@@ -13,14 +13,13 @@ class RegistrationTest extends TestCase
     {
         $response = $this->post('/web/register', [
             'name' => 'Test User',
-            'email' => 'test@example.com',
-            'access_code' => 'ARRADEA2026',
+            'phone' => '+628123456789',
             'password' => 'password',
             'password_confirmation' => 'password',
             'g-recaptcha-response' => 'testing-token',
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect('/');
+        $response->assertRedirect('/phone/verify');
     }
 }

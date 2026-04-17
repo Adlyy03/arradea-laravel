@@ -6,6 +6,8 @@ use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\Auth\VerifyEmailController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Request;
 
 Route::post('/register', [RegisteredUserController::class, 'store'])
     ->middleware('guest')
@@ -22,16 +24,6 @@ Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
 Route::post('/reset-password', [NewPasswordController::class, 'store'])
     ->middleware('guest')
     ->name('password.store');
-
-// Kirim ulang link verifikasi
-Route::post('/phone/verification-notification', [PhoneVerificationController::class, 'send'])
-    // ->middleware(['auth', 'throttle:6,1'])
-    ->name('verification.phone.send');
-
-// Link yang diklik user dari WA (tidak perlu auth, pakai signed URL)
-Route::get('/phone/verify/{id}/{hash}', [PhoneVerificationController::class, 'verify'])
-    // ->middleware(['signed', 'throttle:6,1'])
-    ->name('verification.phone.verify');
 
 Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])
     ->middleware('auth')

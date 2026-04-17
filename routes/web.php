@@ -13,11 +13,27 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Auth\PhoneVerificationController;
+use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Http;
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Arradea Marketplace — Web Routes (Final Production-Ready Interface)
 // ─────────────────────────────────────────────────────────────────────────────
+
+// ADMIN: Migration helper (delete after use)
+Route::get('/run-migrations', function () {
+    if (!env('APP_DEBUG')) {
+        return response('Not allowed', 403);
+    }
+    
+    try {
+        Artisan::call('migrate', ['--force' => true]);
+        return '<pre style="white-space: pre-wrap; word-wrap: break-word;">' . Artisan::output() . '</pre>';
+    } catch (\Exception $e) {
+        return '<pre>Error: ' . $e->getMessage() . '</pre>';
+    }
+});
 
 // PUBLIC & GUEST
 Route::get('/', function () {
@@ -27,11 +43,90 @@ Route::get('/', function () {
 Route::middleware('guest')->group(function () {
     Route::get('/login',    fn() => view('auth.login'))->name('login');
     Route::get('/register', fn() => view('auth.register'))->name('register');
-    Route::post('/web/login',    [AuthWebController::class, 'login']);
-    Route::post('/web/register', [AuthWebController::class, 'register']);
+    Route::post('/login',    [AuthWebController::class, 'login'])->name('login.post');
+    Route::post('/register', [AuthWebController::class, 'register'])->name('register.post');
     Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])->name('password.email');
     Route::post('/reset-password', [NewPasswordController::class, 'store'])->name('password.store');
+
+    // ── OTP Verification (setelah register, user belum login) ──────────────
+    Route::get('/phone/verify', function () {
+        if (!session('register_phone')) {
+            return redirect()->route('login');
+        }
+        return view('auth.verify-phone');
+    })->name('verification.phone.notice');
+
+    Route::post('/phone/verify', function (Request $request) {
+        $phone = session('register_phone');
+
+        if (!$phone) {
+            return redirect()->route('login');
+        }
+
+        $request->validate([
+            'code' => ['required', 'string', 'size:6', 'regex:/^[0-9]{6}$/'],
+        ], [
+            'code.required' => 'Kode verifikasi harus diisi.',
+            'code.size'     => 'Kode verifikasi harus 6 digit.',
+            'code.regex'    => 'Kode verifikasi hanya boleh berisi angka.',
+        ]);
+
+        $otp = \App\Models\Otp::where('phone', $phone)
+            ->where('verified_at', null)
+            ->latest()
+            ->first();
+
+        if (!$otp) {
+            return back()->withErrors(['code' => 'Kode verifikasi tidak ditemukan. Silakan minta kode baru.']);
+        }
+
+        if ($otp->isExpired()) {
+            return back()->withErrors(['code' => 'Kode verifikasi sudah kadaluarsa. Silakan minta kode baru.']);
+        }
+
+        if ($otp->attempts >= 5) {
+            return back()->withErrors(['code' => 'Terlalu banyak percobaan salah. Silakan minta kode baru.']);
+        }
+
+        if (!$otp->verify($request->code)) {
+            return back()->withErrors(['code' => '❌ OTP Salah. Coba lagi.']);
+        }
+
+        // OTP benar — tandai nomor sebagai terverifikasi
+        $user = \App\Models\User::where('phone', $phone)->first();
+        if ($user) {
+            $user->update(['phone_verified_at' => now()]);
+        }
+
+        // Simpan session untuk halaman approval (jangan hapus dulu)
+        // session()->forget('register_phone'); // <- hapus SETELAH approval page ditampilkan
+
+        return redirect()->route('verification.admin.approval');
+    })->name('verification.phone.verify');
+
+    Route::get('/phone/admin-approval', function () {
+        return view('auth.verify-admin-approval');
+    })->name('verification.admin.approval');
+
+    Route::post('/phone/verify/resend', function (Request $request) {
+        $phone = session('register_phone');
+
+        if (!$phone) {
+            return redirect()->route('login');
+        }
+
+        $otp = \App\Models\Otp::createForPhone($phone);
+
+        Http::withHeaders(['Authorization' => env('FONNTE_TOKEN')])
+            ->post('https://api.fonnte.com/send', [
+                'target'  => $phone,
+                'message' => "Kode verifikasi baru untuk Arradea:\n\n*{$otp->code}*\n\n_Kode berlaku 10 menit. Jangan bagikan kode ini ke siapa pun._",
+            ]);
+
+        return back()->with('status', '✅ Kode verifikasi baru telah dikirim ke WhatsApp kamu.');
+    })->name('verification.phone.resend');
 });
+
 
 // Route::get('/verify-email/{id}/{hash}', VerifyEmailController::class)
 //     ->middleware(['auth', 'signed', 'throttle:6,1'])
@@ -149,35 +244,25 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function 
 
     Route::get('/seller/apply', function () {
         $user = auth()->user();
-
-        return view('seller.apply', [
-            'user' => $user,
-        ]);
+        return view('seller.apply', ['user' => $user]);
     })->name('seller.apply');
 
+    // Step 1: Buyer isi form toko → buat/update data toko (pending) → kirim OTP → redirect ke verify
     Route::post('/seller/apply', function (Request $request) {
         $request->validate([
-            'store_name' => ['required', 'string', 'max:255'],
+            'store_name'        => ['required', 'string', 'max:255'],
             'store_description' => ['nullable', 'string', 'max:2000'],
-            'store_address' => ['nullable', 'string', 'max:500'],
+            'store_address'     => ['nullable', 'string', 'max:500'],
         ]);
 
         $user = $request->user();
-        $user->update([
-            'is_seller' => true,
-            'seller_status' => 'approved',
-            'seller_applied_at' => now(),
-            'seller_approved_at' => now(),
-            'seller_rejected_at' => null,
-            'seller_rejection_reason' => null,
-        ]);
 
+        // Langsung simpan/update data toko dengan status pending agar data tidak hilang
         $storeData = [
-            'name' => $request->store_name,
+            'name'        => $request->store_name,
             'description' => $request->store_description,
-            'address' => $request->store_address,
-            'status' => 'active',
-            'approved_at' => now(),
+            'address'     => $request->store_address,
+            'status'      => 'pending',
         ];
 
         if ($user->store) {
@@ -186,37 +271,91 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function 
             $user->store()->create($storeData);
         }
 
-        return redirect()->route('seller.dashboard')->with('success', 'Mode seller berhasil diaktifkan. Anda sekarang bisa jualan sekaligus belanja.');
-    })->name('seller.apply.store');
+        // Generate & kirim OTP ke nomor HP buyer yang sudah login
+        $otp = \App\Models\Otp::createForPhone($user->phone);
 
-    Route::post('/seller/activate', function (Request $request) {
-        $request->validate([
-            'store_name' => ['nullable', 'string', 'max:255'],
+        Http::withHeaders(['Authorization' => env('FONNTE_TOKEN')])
+            ->post('https://api.fonnte.com/send', [
+                'target'  => $user->phone,
+                'message' => "Halo {$user->name}!\n\nKamu mengajukan diri jadi Seller di Arradea.\n\nKode OTP verifikasi kamu:\n\n*{$otp->code}*\n\n_Kode berlaku 10 menit. Jangan bagikan ke siapa pun._",
+            ]);
+
+        // Tandai bahwa user sedang dalam proses upgrade seller
+        $user->update([
+            'seller_status'     => 'pending',
+            'seller_applied_at' => now(),
         ]);
 
-        $user = $request->user();
-        if (! $user->is_seller) {
-            $user->update([
-                'is_seller' => true,
-                'seller_status' => 'approved',
-                'seller_applied_at' => now(),
-                'seller_approved_at' => now(),
-                'seller_rejected_at' => null,
-                'seller_rejection_reason' => null,
-            ]);
+        return redirect()->route('seller.verify-otp');
+    })->name('seller.apply.store');
+
+    // Step 2: Halaman input OTP (harus login)
+    Route::get('/seller/verify-otp', function () {
+        $user = auth()->user();
+        if ($user->seller_status !== 'pending') {
+            return redirect()->route('seller.apply')->with('info', 'Silakan isi data toko terlebih dahulu.');
+        }
+        return view('seller.verify-otp', compact('user'));
+    })->name('seller.verify-otp');
+
+    // Step 3: Proses verifikasi OTP seller
+    Route::post('/seller/verify-otp', function (Request $request) {
+        $request->validate([
+            'code' => ['required', 'string', 'size:6', 'regex:/^[0-9]{6}$/'],
+        ], [
+            'code.required' => 'Kode OTP harus diisi.',
+            'code.size'     => 'Kode OTP harus 6 digit.',
+            'code.regex'    => 'Kode OTP hanya boleh berisi angka.',
+        ]);
+
+        $user = auth()->user();
+        $otp  = \App\Models\Otp::where('phone', $user->phone)
+            ->where('verified_at', null)
+            ->latest()
+            ->first();
+
+        if (!$otp) {
+            return back()->withErrors(['code' => 'OTP tidak ditemukan. Coba kirim ulang.']);
+        }
+        if ($otp->isExpired()) {
+            return back()->withErrors(['code' => 'OTP sudah kadaluarsa. Coba kirim ulang.']);
+        }
+        if ($otp->attempts >= 5) {
+            return back()->withErrors(['code' => 'Terlalu banyak percobaan. Kirim ulang kode OTP.']);
+        }
+        if (!$otp->verify($request->code)) {
+            return back()->withErrors(['code' => '❌ OTP Salah. Coba lagi.']);
         }
 
-        if (! $user->store) {
-            $user->store()->create([
-                'name' => $request->store_name ?: 'Toko ' . $user->name,
-                'description' => 'Selamat datang di toko kami.',
-                'status' => 'active',
-                'approved_at' => now(),
-            ]);
-        }
+        // Tandai OTP sudah diverifikasi, nunggu approval admin
+        $user->update(['seller_otp_verified' => true]);
 
-        return back()->with('success', 'Mode seller aktif. Anda sekarang dapat mengakses fitur jual.');
-    })->name('seller.activate');
+        return redirect()->route('seller.pending');
+    })->name('seller.verify-otp.submit');
+
+    // Step 4: Halaman nunggu approval admin
+    Route::get('/seller/pending', function () {
+        $user = auth()->user();
+        if ($user->is_seller) {
+            return redirect()->route('seller.dashboard')->with('success', 'Akun seller kamu sudah aktif!');
+        }
+        return view('seller.pending', compact('user'));
+    })->name('seller.pending');
+
+    // Kirim ulang OTP seller
+    Route::post('/seller/verify-otp/resend', function (Request $request) {
+        $user = auth()->user();
+        $otp  = \App\Models\Otp::createForPhone($user->phone);
+
+        Http::withHeaders(['Authorization' => env('FONNTE_TOKEN')])
+            ->post('https://api.fonnte.com/send', [
+                'target'  => $user->phone,
+                'message' => "Kode OTP baru untuk upgrade Seller di Arradea:\n\n*{$otp->code}*\n\n_Kode berlaku 10 menit._",
+            ]);
+
+        return back()->with('status', '✅ Kode OTP baru telah dikirim ke WhatsApp kamu.');
+    })->name('seller.verify-otp.resend');
+
 
     // 🛒 BUYER
     Route::prefix('buyer')->group(function () {
@@ -342,6 +481,72 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function 
 
             return redirect('/admin/sellers')->with('success', 'Permohonan seller ditolak.');
         })->name('admin.sellers.reject');
+
+        // Verification (New Users & Seller Upgrades)
+        Route::get('/verifications', function () {
+            // Pendaftar buyer baru: phone verified but no access_code_id
+            $pendingBuyers = User::whereNotNull('phone_verified_at')
+                                 ->whereNull('access_code_id')
+                                 ->where('role', '!=', 'admin')
+                                 ->where('seller_otp_verified', false)
+                                 ->latest()
+                                 ->paginate(20, ['*'], 'buyers_page');
+
+            // Calon seller: buyer existing yang sudah verify OTP seller upgrade
+            $pendingSellers = User::whereNotNull('phone_verified_at')
+                                  ->whereNotNull('access_code_id')
+                                  ->where('seller_otp_verified', true)
+                                  ->where('is_seller', false)
+                                  ->latest()
+                                  ->paginate(20, ['*'], 'sellers_page');
+
+            return view('admin.verifications', compact('pendingBuyers', 'pendingSellers'));
+        })->name('admin.verifications.index');
+
+        // Approve buyer baru
+        Route::post('/verifications/{user}/approve', function (User $user) {
+            $ac = AccessCode::where('is_active', true)->first();
+            if (!$ac) {
+                return back()->withErrors(['message' => 'Tidak ada Kode Akses aktif! Buat terlebih dahulu di menu Kode Akses.']);
+            }
+            $user->update(['access_code_id' => $ac->id]);
+            return back()->with('success', "Buyer {$user->name} berhasil disetujui dan sekarang dapat login.");
+        })->name('admin.verifications.approve');
+
+        // Tolak buyer baru (hapus akun)
+        Route::post('/verifications/{user}/reject', function (User $user) {
+            $user->delete();
+            return back()->with('success', 'Pendaftaran pengguna ditolak dan data telah dihapus.');
+        })->name('admin.verifications.reject');
+
+        // Approve upgrade seller
+        Route::post('/verifications/{user}/approve-seller', function (User $user) {
+            $user->update([
+                'is_seller'           => true,
+                'seller_status'       => 'approved',
+                'seller_approved_at'  => now(),
+                'seller_rejected_at'  => null,
+                'seller_rejection_reason' => null,
+                'seller_otp_verified' => false,
+            ]);
+            if ($user->store) {
+                $user->store->update(['status' => 'active', 'approved_at' => now()]);
+            }
+            return back()->with('success', "Seller {$user->name} berhasil disetujui! Mereka sekarang bisa berjualan.");
+        })->name('admin.verifications.approve-seller');
+
+        // Tolak upgrade seller (reset status, hapus toko pending)
+        Route::post('/verifications/{user}/reject-seller', function (User $user) {
+            $user->update([
+                'seller_status'       => 'rejected',
+                'seller_rejected_at'  => now(),
+                'seller_otp_verified' => false,
+            ]);
+            if ($user->store) {
+                $user->store->update(['status' => 'rejected']);
+            }
+            return back()->with('success', "Pengajuan seller {$user->name} ditolak.");
+        })->name('admin.verifications.reject-seller');
 
         // User Management
         Route::get('/users', function (\Illuminate\Http\Request $request) {
@@ -496,20 +701,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function 
 });
 
 Route::middleware('auth')->group(function () {
-    // Halaman notice verifikasi HP
-    Route::get('/phone/verify', fn() => view('auth.verify-phone'))
-        ->name('verification.phone.notice');
-
-    // Kirim ulang link
-    Route::post('/phone/verification-notification', [PhoneVerificationController::class, 'send'])
-        ->middleware('throttle:6,1')
-        ->name('verification.phone.send');
-
-    // Logout tersedia untuk semua user yang sudah auth, termasuk yang belum verifikasi HP
+    // Logout tersedia untuk semua user yang sudah auth
     Route::post('/logout', [AuthWebController::class, 'logout'])->name('logout');
 });
 
-// Link yang diklik dari WA (di luar auth group)
-Route::get('/phone/verify/{id}/{hash}', [PhoneVerificationController::class, 'verify'])
-    ->middleware(['signed', 'throttle:6,1'])
-    ->name('verification.phone.verify');
