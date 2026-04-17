@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
+use App\Http\Middleware\SyncSellerStoreSchedule;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
@@ -140,7 +141,7 @@ Route::middleware('guest')->group(function () {
 // ─────────────────────────────────────────────────────────────────────────────
 // PROTECTED DASHBOARDS (Session-Based Auth)
 // ─────────────────────────────────────────────────────────────────────────────
-Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function () {
+Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSchedule::class])->group(function () {
 
     // 👨💼 ADMIN
     Route::middleware('role:admin')->prefix('admin')->group(function () {
@@ -151,6 +152,8 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function 
     // 🏪 SELLER
     Route::middleware('role:seller')->prefix('seller')->group(function () {
         Route::get('/dashboard', fn() => view('seller.dashboard'))->name('seller.dashboard');
+        Route::post('/store-status', [AuthWebController::class, 'toggleStoreStatus'])->name('seller.store-status');
+        Route::post('/store-schedule', [AuthWebController::class, 'updateStoreSchedule'])->name('seller.store-schedule');
         
         // Products CRUD List
         Route::get('/products', function () {
@@ -393,7 +396,11 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function 
 
     // Public product routes (anyone can view products)
     Route::get('/products', function (\Illuminate\Http\Request $request) {
-        $query = Product::with('store', 'category')->latest();
+        $query = Product::with('store', 'category')
+            ->whereHas('store.user', function ($userQuery) {
+                $userQuery->where('role', 'seller')->where('store_status', 'open');
+            })
+            ->latest();
         $keyword = trim((string) $request->query('q', ''));
 
         if ($keyword !== '') {
@@ -418,7 +425,11 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function 
     })->name('buyer.products');
 
     Route::get('/products/{id}', function ($id) {
-        $product = Product::with('store')->findOrFail($id);
+        $product = Product::with('store')
+            ->whereHas('store.user', function ($userQuery) {
+                $userQuery->where('role', 'seller')->where('store_status', 'open');
+            })
+            ->findOrFail($id);
         return view('buyer.products.show', compact('product'));
     })->name('buyer.products.show');
 
@@ -432,7 +443,12 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function 
     })->name('categories.index');
 
     Route::get('/categories/{category}', function (\App\Models\Category $category) {
-        $products = $category->products()->with('store')->paginate(20);
+        $products = $category->products()
+            ->with('store')
+            ->whereHas('store.user', function ($userQuery) {
+                $userQuery->where('role', 'seller')->where('store_status', 'open');
+            })
+            ->paginate(20);
         return view('categories.show', compact('category', 'products'));
     })->name('categories.show');
 
@@ -441,6 +457,8 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function 
     })->name('profile');
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('/map-users', [AdminUserController::class, 'mapUsers'])->name('admin.map-users');
+
         // New verification routes with AdminUserController
         Route::get('/users-verification', [AdminUserController::class, 'index'])->name('admin.users.verification');
         Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('admin.users.show');

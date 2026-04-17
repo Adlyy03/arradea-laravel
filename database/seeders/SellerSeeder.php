@@ -2,116 +2,138 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\AccessCode;
+use App\Models\Product;
+use App\Models\Store;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class SellerSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
+        $accessCode = AccessCode::firstOrCreate(
+            ['code' => 'ARRADEA-SELLER'],
+            ['is_active' => true]
+        );
+
         $sellers = [
             [
-                'name' => 'Toko Elektronik Jakarta',
-                'email' => 'seller1@arradea.com',
-                'store_name' => 'Jakarta Gadget Store',
-                'store_description' => 'Toko elektronik terpercaya di Jakarta dengan produk original dan bergaransi.',
-                'address' => 'Jl. Sudirman No. 123, Jakarta Pusat'
+                'name' => 'Toko Adli Arradea',
+                'phone' => '081200000001',
+                'store_name' => 'Toko Adli',
+                'store_description' => 'Toko kebutuhan harian di wilayah Arradea.',
+                'address' => 'Komplek Arradea Blok A1',
+                'latitude' => -6.200000,
+                'longitude' => 106.816666,
+                'products' => [
+                    ['name' => 'Paket Sembako Arradea', 'price' => 125000, 'stock' => 20],
+                    ['name' => 'Snack Box Arradea', 'price' => 45000, 'stock' => 35],
+                ],
             ],
             [
-                'name' => 'Fashion Boutique Bandung',
-                'email' => 'seller2@arradea.com',
-                'store_name' => 'Bandung Fashion House',
-                'store_description' => 'Butik fashion dengan koleksi pakaian dan aksesoris terkini dari designer lokal.',
-                'address' => 'Jl. Braga No. 45, Bandung'
+                'name' => 'Toko Sari Arradea',
+                'phone' => '081200000002',
+                'store_name' => 'Toko Sari',
+                'store_description' => 'Aneka perlengkapan rumah tangga dan dapur.',
+                'address' => 'Komplek Arradea Blok B2',
+                'latitude' => -6.199700,
+                'longitude' => 106.816900,
+                'products' => [
+                    ['name' => 'Set Alat Makan', 'price' => 89000, 'stock' => 18],
+                    ['name' => 'Piring Keramik', 'price' => 65000, 'stock' => 24],
+                ],
             ],
             [
-                'name' => 'Rumah Tangga Surabaya',
-                'email' => 'seller3@arradea.com',
-                'store_name' => 'Surabaya Home Store',
-                'store_description' => 'Toko perlengkapan rumah tangga lengkap dengan harga terjangkau.',
-                'address' => 'Jl. Tunjungan No. 78, Surabaya'
+                'name' => 'Toko Maju Arradea',
+                'phone' => '081200000003',
+                'store_name' => 'Toko Maju',
+                'store_description' => 'Produk elektronik kecil dan aksesoris gadget.',
+                'address' => 'Komplek Arradea Blok C3',
+                'latitude' => -6.200250,
+                'longitude' => 106.816350,
+                'products' => [
+                    ['name' => 'Charger Fast Charging', 'price' => 99000, 'stock' => 40],
+                    ['name' => 'Kabel Data Type-C', 'price' => 35000, 'stock' => 50],
+                ],
             ],
             [
-                'name' => 'Kesehatan & Kecantikan Medan',
-                'email' => 'seller4@arradea.com',
-                'store_name' => 'Medan Beauty Center',
-                'store_description' => 'Pusat kecantikan dan kesehatan dengan produk-produk berkualitas tinggi.',
-                'address' => 'Jl. Ahmad Yani No. 56, Medan'
+                'name' => 'Toko Cantik Arradea',
+                'phone' => '081200000004',
+                'store_name' => 'Toko Cantik',
+                'store_description' => 'Produk fashion dan aksesoris wanita.',
+                'address' => 'Komplek Arradea Blok D4',
+                'latitude' => -6.199450,
+                'longitude' => 106.817050,
+                'products' => [
+                    ['name' => 'Tas Selempang', 'price' => 135000, 'stock' => 16],
+                    ['name' => 'Hijab Premium', 'price' => 75000, 'stock' => 30],
+                ],
             ],
             [
-                'name' => 'Olahraga Semarang',
-                'email' => 'seller5@arradea.com',
-                'store_name' => 'Semarang Sport Center',
-                'store_description' => 'Toko olahraga lengkap dengan peralatan fitness dan outdoor.',
-                'address' => 'Jl. Pandanaran No. 89, Semarang'
-            ],
-            [
-                'name' => 'Hobi & Koleksi Yogyakarta',
-                'email' => 'seller6@arradea.com',
-                'store_name' => 'Yogyakarta Hobby Shop',
-                'store_description' => 'Toko hobi dan koleksi unik untuk pecinta barang antik dan kreatif.',
-                'address' => 'Jl. Malioboro No. 34, Yogyakarta'
-            ],
-            [
-                'name' => 'Otomotif Makassar',
-                'email' => 'seller7@arradea.com',
-                'store_name' => 'Makassar Auto Parts',
-                'store_description' => 'Spesialis sparepart dan aksesoris kendaraan bermotor.',
-                'address' => 'Jl. Pettarani No. 67, Makassar'
-            ],
-            [
-                'name' => 'Buku & Alat Tulis Bali',
-                'email' => 'seller8@arradea.com',
-                'store_name' => 'Bali Book Store',
-                'store_description' => 'Toko buku dan alat tulis dengan koleksi lengkap untuk semua usia.',
-                'address' => 'Jl. Legian No. 12, Denpasar, Bali'
-            ],
-            [
-                'name' => 'Fashion Muslim Palembang',
-                'email' => 'seller9@arradea.com',
-                'store_name' => 'Palembang Muslim Fashion',
-                'store_description' => 'Busana muslim modern dengan desain elegan dan nyaman.',
-                'address' => 'Jl. Sudirman No. 90, Palembang'
-            ],
-            [
-                'name' => 'Elektronik Murah Lampung',
-                'email' => 'seller10@arradea.com',
-                'store_name' => 'Lampung Electronic Mart',
-                'store_description' => 'Elektronik murah berkualitas dengan harga terjangkau untuk semua kalangan.',
-                'address' => 'Jl. Teuku Umar No. 45, Bandar Lampung'
-            ],
-            [
-                'name' => 'Dekorasi Rumah Solo',
-                'email' => 'seller11@arradea.com',
-                'store_name' => 'Solo Home Decor',
-                'store_description' => 'Dekorasi rumah dan interior design dengan gaya modern dan klasik.',
-                'address' => 'Jl. Slamet Riyadi No. 78, Solo'
-            ],
-            [
-                'name' => 'Suplemen Kesehatan Malang',
-                'email' => 'seller12@arradea.com',
-                'store_name' => 'Malang Health Store',
-                'store_description' => 'Suplemen kesehatan dan vitamin alami untuk hidup sehat.',
-                'address' => 'Jl. Ijen No. 23, Malang'
+                'name' => 'Toko Segar Arradea',
+                'phone' => '081200000005',
+                'store_name' => 'Toko Segar',
+                'store_description' => 'Minuman, cemilan, dan kebutuhan harian cepat saji.',
+                'address' => 'Komplek Arradea Blok E5',
+                'latitude' => -6.200550,
+                'longitude' => 106.816150,
+                'products' => [
+                    ['name' => 'Kopi Susu Botol', 'price' => 22000, 'stock' => 60],
+                    ['name' => 'Roti Manis', 'price' => 18000, 'stock' => 45],
+                ],
             ],
         ];
 
         foreach ($sellers as $sellerData) {
-            $seller = \App\Models\User::create([
-                'name' => $sellerData['name'],
-                'email' => $sellerData['email'],
-                'password' => \Illuminate\Support\Facades\Hash::make('password'),
-                'role' => 'seller',
-            ]);
+            $seller = User::updateOrCreate(
+                ['phone' => $sellerData['phone']],
+                [
+                    'name' => $sellerData['name'],
+                    'wilayah' => 'Arradea',
+                    'latitude' => $sellerData['latitude'],
+                    'longitude' => $sellerData['longitude'],
+                    'access_code_id' => $accessCode->id,
+                    'password' => Hash::make('password'),
+                    'phone_verified_at' => now(),
+                    'is_seller' => true,
+                    'role' => 'seller',
+                    'seller_status' => 'approved',
+                    'seller_applied_at' => now(),
+                    'seller_approved_at' => now(),
+                    'seller_rejected_at' => null,
+                    'seller_rejection_reason' => null,
+                    'seller_otp_verified' => false,
+                    'store_status' => 'open',
+                ]
+            );
 
-            $seller->store()->create([
-                'name' => $sellerData['store_name'],
-                'description' => $sellerData['store_description'],
-                'address' => $sellerData['address'],
-            ]);
+            $store = Store::updateOrCreate(
+                ['user_id' => $seller->id],
+                [
+                    'name' => $sellerData['store_name'],
+                    'description' => $sellerData['store_description'],
+                    'address' => $sellerData['address'],
+                    'status' => 'active',
+                    'approved_at' => now(),
+                ]
+            );
+
+            foreach ($sellerData['products'] as $productData) {
+                Product::updateOrCreate(
+                    [
+                        'store_id' => $store->id,
+                        'name' => $productData['name'],
+                    ],
+                    [
+                        'description' => $productData['name'] . ' tersedia untuk warga Arradea.',
+                        'price' => $productData['price'],
+                        'stock' => $productData['stock'],
+                        'image' => 'https://via.placeholder.com/600x400?text=' . urlencode($productData['name']),
+                    ]
+                );
+            }
         }
     }
 }

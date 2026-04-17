@@ -6,6 +6,8 @@
 @section('content')
 @php
     $store        = Auth::user()->store;
+    $seller       = Auth::user();
+    $storeStatus  = $seller->store_status ?? 'closed';
     $pendingCount = $store ? $store->orders()->where('status', 'pending')->count() : 0;
     $doneCount    = $store ? $store->orders()->where('status', 'done')->count() : 0;
     $recentOrders = $store ? $store->orders()->with(['user', 'product'])->latest()->take(5)->get() : collect();
@@ -21,10 +23,51 @@
                 <p class="text-[10px] font-black uppercase tracking-widest text-primary-200">Selayang Pandang</p>
                 <h1 class="text-4xl lg:text-6xl font-black tracking-tighter leading-tight lg:leading-none mb-2 lg:mb-4">Toko <span class="text-accent underline underline-offset-4 lg:underline-offset-8">{{ $store->name ?? 'Anda' }}</span>.</h1>
                 <h3 class="text-4xl lg:text-6xl font-black text-white/95">{{ $store ? $store->products()->count() : 0 }} Produk</h3>
+                <p class="pt-2 text-sm font-black uppercase tracking-widest {{ $storeStatus === 'open' ? 'text-green-300' : 'text-gray-300' }}">
+                    Status Toko: {{ $storeStatus === 'open' ? 'Buka' : 'Tutup' }}
+                </p>
                 <div class="flex items-center gap-4 pt-4 text-sm font-bold text-green-300">
                     <span class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-white">↑</span>
                     <span>{{ $doneCount }} Pesanan berhasil diselesaikan</span>
                 </div>
+                <div class="pt-2">
+                    <form method="POST" action="{{ route('seller.store-status') }}">
+                        @csrf
+                        <button type="submit" class="px-5 py-3 rounded-2xl font-black text-sm {{ $storeStatus === 'open' ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-700 text-white hover:bg-gray-800' }} transition-all">
+                            {{ $storeStatus === 'open' ? 'Tutup Toko' : 'Buka Toko' }}
+                        </button>
+                    </form>
+                </div>
+                <form method="POST" action="{{ route('seller.store-schedule') }}" class="mt-5 grid gap-4 max-w-md">
+                    @csrf
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label class="block text-left">
+                            <span class="block text-[10px] font-black uppercase tracking-widest text-primary-200 mb-2">Jam Buka</span>
+                            <input type="time" name="open_time" value="{{ old('open_time', $seller->open_time) }}" class="w-full rounded-2xl border-0 bg-white/10 text-white placeholder-white/50 focus:ring-2 focus:ring-white/40 px-4 py-3 font-semibold">
+                            @error('open_time')
+                                <span class="mt-1 block text-xs font-bold text-red-300">{{ $message }}</span>
+                            @enderror
+                        </label>
+                        <label class="block text-left">
+                            <span class="block text-[10px] font-black uppercase tracking-widest text-primary-200 mb-2">Jam Tutup</span>
+                            <input type="time" name="close_time" value="{{ old('close_time', $seller->close_time) }}" class="w-full rounded-2xl border-0 bg-white/10 text-white placeholder-white/50 focus:ring-2 focus:ring-white/40 px-4 py-3 font-semibold">
+                            @error('close_time')
+                                <span class="mt-1 block text-xs font-bold text-red-300">{{ $message }}</span>
+                            @enderror
+                        </label>
+                    </div>
+                    <label class="inline-flex items-center gap-3 text-sm font-bold text-white/90">
+                        <input type="checkbox" name="auto_schedule" value="1" {{ old('auto_schedule', $seller->auto_schedule ?? true) ? 'checked' : '' }} class="rounded border-white/20 bg-white/10 text-green-500 focus:ring-green-400">
+                        Aktifkan Auto Schedule
+                    </label>
+                    <p class="text-xs font-bold text-primary-200">
+                        Jadwal saat ini: {{ $seller->open_time ? substr($seller->open_time, 0, 5) : '--:--' }} - {{ $seller->close_time ? substr($seller->close_time, 0, 5) : '--:--' }}
+                        (Auto: {{ ($seller->auto_schedule ?? true) ? 'Aktif' : 'Nonaktif' }})
+                    </p>
+                    <button type="submit" class="w-full sm:w-max px-5 py-3 rounded-2xl font-black text-sm bg-white text-primary-900 hover:bg-gray-100 transition-all">
+                        Simpan Jadwal
+                    </button>
+                </form>
             </div>
 
             <div class="grid grid-cols-2 gap-4 w-full lg:w-max">

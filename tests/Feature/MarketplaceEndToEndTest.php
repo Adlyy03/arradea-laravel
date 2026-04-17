@@ -26,6 +26,12 @@ class MarketplaceEndToEndTest extends TestCase
     {
         parent::setUp();
 
+        config([
+            'location.center_lat' => -6.200000,
+            'location.center_lng' => 106.816666,
+            'location.max_radius' => 5,
+        ]);
+
         $this->activeCode = AccessCode::create([
             'code' => 'ARRADEA-E2E',
             'is_active' => true,
@@ -36,26 +42,30 @@ class MarketplaceEndToEndTest extends TestCase
     {
         $okRegister = $this->postJson('/api/register', [
             'name' => 'Buyer One',
-            'email' => 'buyer-one@example.com',
+            'phone' => '+628333330001',
             'password' => 'password',
             'password_confirmation' => 'password',
             'access_code' => $this->activeCode->code,
+            'latitude' => -6.200000,
+            'longitude' => 106.816666,
         ]);
 
         $okRegister->assertCreated()
             ->assertJsonPath('success', true);
 
         $this->assertDatabaseHas('users', [
-            'email' => 'buyer-one@example.com',
+            'phone' => '+628333330001',
             'access_code_id' => $this->activeCode->id,
         ]);
 
         $badRegister = $this->postJson('/api/register', [
             'name' => 'Buyer Two',
-            'email' => 'buyer-two@example.com',
+            'phone' => '+628333330002',
             'password' => 'password',
             'password_confirmation' => 'password',
             'access_code' => 'KODE-SALAH',
+            'latitude' => -6.200000,
+            'longitude' => 106.816666,
         ]);
 
         $badRegister->assertStatus(422)
@@ -63,16 +73,18 @@ class MarketplaceEndToEndTest extends TestCase
 
         $withoutCode = $this->postJson('/api/register', [
             'name' => 'Buyer Three',
-            'email' => 'buyer-three@example.com',
+            'phone' => '+628333330003',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'latitude' => -6.200000,
+            'longitude' => 106.816666,
         ]);
 
         $withoutCode->assertStatus(422)
             ->assertJsonValidationErrors('access_code');
 
         $okLogin = $this->postJson('/api/login', [
-            'email' => 'buyer-one@example.com',
+            'phone' => '+628333330001',
             'password' => 'password',
         ]);
 
@@ -81,12 +93,12 @@ class MarketplaceEndToEndTest extends TestCase
             ->assertJsonStructure(['data' => ['token']]);
 
         $badLogin = $this->postJson('/api/login', [
-            'email' => 'buyer-one@example.com',
+            'phone' => '+628333330001',
             'password' => 'wrong-password',
         ]);
 
         $badLogin->assertStatus(422)
-            ->assertJsonValidationErrors('email');
+            ->assertJsonValidationErrors('phone');
     }
 
     public function test_role_switch_seller_product_creation_and_seller_can_buy_other_store(): void
@@ -316,7 +328,11 @@ class MarketplaceEndToEndTest extends TestCase
 
     public function test_search_and_filter_products(): void
     {
-        $seller = User::factory()->create(['is_seller' => true]);
+        $seller = User::factory()->create([
+            'is_seller' => true,
+            'role' => 'seller',
+            'store_status' => 'open',
+        ]);
         $store = Store::factory()->create(['user_id' => $seller->id, 'status' => 'active']);
 
         $food = Category::create(['name' => 'Makanan', 'slug' => 'makanan']);
@@ -350,7 +366,7 @@ class MarketplaceEndToEndTest extends TestCase
     public function test_error_handling_for_empty_invalid_and_not_found_api(): void
     {
         $emptyLogin = $this->postJson('/api/login', []);
-        $emptyLogin->assertStatus(422)->assertJsonValidationErrors(['email', 'password']);
+        $emptyLogin->assertStatus(422)->assertJsonValidationErrors(['phone', 'password']);
 
         $seller = User::factory()->create(['is_seller' => true]);
         Store::factory()->create(['user_id' => $seller->id, 'status' => 'active']);

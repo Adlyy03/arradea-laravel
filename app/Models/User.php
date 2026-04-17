@@ -30,6 +30,10 @@ class User extends Authenticatable
         'seller_rejected_at',
         'seller_rejection_reason',
         'seller_otp_verified',
+        'store_status',
+        'open_time',
+        'close_time',
+        'auto_schedule',
     ];
 
     protected $hidden = [
@@ -45,6 +49,10 @@ class User extends Authenticatable
             'longitude'          => 'float',
             'is_seller'          => 'boolean',
             'seller_otp_verified' => 'boolean',
+            'store_status'       => 'string',
+            'open_time'          => 'string',
+            'close_time'         => 'string',
+            'auto_schedule'      => 'boolean',
             'password'           => 'hashed',
         ];
     }

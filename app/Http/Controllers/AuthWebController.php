@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
+use App\Support\LocationRadius;
 
 
 class AuthWebController extends Controller
@@ -219,7 +220,22 @@ class AuthWebController extends Controller
 
     protected function isUserEligibleForAccess(User $user): bool
     {
-        return strcasecmp((string) $user->wilayah, 'Arradea') === 0
+        $centerLatitude = (float) config('location.center_lat');
+        $centerLongitude = (float) config('location.center_lng');
+        $maxRadius = (float) config('location.max_radius', 1);
+
+        if (is_null($user->latitude) || is_null($user->longitude)) {
+            return false;
+        }
+
+        $distanceKm = LocationRadius::haversineKm(
+            (float) $user->latitude,
+            (float) $user->longitude,
+            $centerLatitude,
+            $centerLongitude,
+        );
+
+        return $distanceKm <= $maxRadius
             && (bool) optional($user->accessCode)->is_active;
     }
 
@@ -234,5 +250,53 @@ class AuthWebController extends Controller
         }
 
         return 'Peringatan: IP Anda terdeteksi di luar jaringan lokal. Pastikan Anda tetap warga Komplek Arradea.';
+    }
+
+    /**
+     * Toggle seller store status between open and closed.
+     */
+    public function toggleStoreStatus(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user || $user->role !== 'seller') {
+            abort(403, 'Hanya seller yang dapat mengubah status toko.');
+        }
+
+        $nextStatus = $user->store_status === 'open' ? 'closed' : 'open';
+
+        $user->update([
+            'store_status' => $nextStatus,
+        ]);
+
+        return back()->with('success', $nextStatus === 'open' ? 'Toko berhasil dibuka.' : 'Toko berhasil ditutup.');
+    }
+
+    /**
+     * Save seller operating hours for automatic store status scheduling.
+     */
+    public function updateStoreSchedule(Request $request)
+    {
+        $user = $request->user();
+
+        if (! $user || $user->role !== 'seller') {
+            abort(403, 'Hanya seller yang dapat mengatur jadwal toko.');
+        }
+
+        $validated = $request->validate([
+            'open_time' => ['nullable', 'date_format:H:i'],
+            'close_time' => ['nullable', 'date_format:H:i'],
+            'auto_schedule' => ['nullable', 'boolean'],
+        ]);
+
+        $autoSchedule = $request->boolean('auto_schedule');
+
+        $user->update([
+            'open_time' => $validated['open_time'] ?? null,
+            'close_time' => $validated['close_time'] ?? null,
+            'auto_schedule' => $autoSchedule,
+        ]);
+
+        return back()->with('success', 'Jadwal toko berhasil disimpan.');
     }
 }

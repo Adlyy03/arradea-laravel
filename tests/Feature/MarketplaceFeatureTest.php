@@ -11,9 +11,9 @@ use App\Models\Chat;
 use App\Notifications\ChatMessageNotification;
 use App\Notifications\NewOrderNotification;
 use App\Notifications\OrderStatusNotification;
-use App\Notifications\SellerApplicationNotification;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class MarketplaceFeatureTest extends TestCase
@@ -34,6 +34,7 @@ class MarketplaceFeatureTest extends TestCase
     public function test_marketplace_full_flow()
     {
         Notification::fake();
+        Http::fake();
 
         $accessCode = AccessCode::first();
 
@@ -42,23 +43,38 @@ class MarketplaceFeatureTest extends TestCase
         $buyer1 = User::factory()->create(['is_seller' => false, 'phone_verified_at' => now(), 'access_code_id' => $accessCode->id]);
         $buyer2 = User::factory()->create(['is_seller' => false, 'phone_verified_at' => now(), 'access_code_id' => $accessCode->id]);
 
-        // 2. Buyer1 activates seller mode
+        // 2. Buyer1 applies seller mode
         $response = $this->actingAs($buyer1)
             ->from('/profile')
-            ->post('/seller/activate', [
+            ->post('/seller/apply', [
                 'store_name' => 'Toko Keren',
+                'store_description' => 'Deskripsi toko test',
+                'store_address' => 'Alamat test',
             ]);
-        $response->assertRedirect('/profile');
-        $this->assertTrue((bool) $buyer1->fresh()->is_seller);
-        $this->assertEquals('approved', $buyer1->fresh()->seller_status);
+        $response->assertRedirect(route('seller.verify-otp'));
+
+        $otp = \App\Models\Otp::where('phone', $buyer1->phone)->latest()->first();
+        $this->assertNotNull($otp);
+
+        $verify = $this->actingAs($buyer1)
+            ->withSession(['seller_apply_user_id' => $buyer1->id])
+            ->post('/seller/verify-otp', [
+                'code' => $otp->code,
+            ]);
+
+        $verify->assertRedirect(route('seller.pending'));
+        $this->assertFalse((bool) $buyer1->fresh()->is_seller);
+        $this->assertTrue((bool) $buyer1->fresh()->seller_otp_verified);
+        $this->assertEquals('pending', $buyer1->fresh()->seller_status);
         $this->assertNotNull($buyer1->fresh()->store);
 
-        // 3. Admin can still approve seller endpoint idempotently
-        $response = $this->actingAs($admin)->post('/admin/sellers/' . $buyer1->id . '/approve');
+        // 3. Admin approval endpoint remains idempotent
+        $response = $this->actingAs($admin)->post('/admin/sellers/' . $buyer1->id . '/approve', [
+            'access_code' => 'SELLER-CODE-001',
+        ]);
         $response->assertRedirect('/admin/sellers');
         $this->assertTrue((bool) $buyer1->fresh()->is_seller);
-
-        Notification::assertSentTo($buyer1, SellerApplicationNotification::class);
+        $this->assertEquals('approved', $buyer1->fresh()->seller_status);
 
         // 4. Seller (Buyer1) creates a product
         $category = Category::create(['name' => 'Elektronik', 'slug' => 'elektronik', 'sort_order' => 1]);

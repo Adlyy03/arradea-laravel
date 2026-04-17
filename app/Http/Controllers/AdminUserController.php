@@ -9,11 +9,6 @@ use Illuminate\Support\Facades\DB;
 
 class AdminUserController extends Controller
 {
-    public function __construct()
-    {
-        $this->middleware(['auth', 'role:admin']);
-    }
-
     /**
      * Show all users with filter & search
      */
@@ -53,6 +48,40 @@ class AdminUserController extends Controller
         $users = $query->paginate(15);
 
         return view('admin.users-verification', compact('users'));
+    }
+
+    /**
+     * Show all users on a live map.
+     */
+    public function mapUsers()
+    {
+        $users = User::query()
+            ->where('role', 'seller')
+            ->whereNotNull('latitude')
+            ->whereNotNull('longitude')
+            ->with(['accessCode', 'store'])
+            ->orderByDesc('id')
+            ->get(['id', 'name', 'role', 'latitude', 'longitude', 'access_code_id', 'store_status', 'open_time', 'close_time', 'auto_schedule'])
+            ->map(function (User $user) {
+                return [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'store_name' => $user->store?->name ?: $user->name,
+                    'role' => $user->role,
+                    'store_status' => $user->store_status ?? 'closed',
+                    'open_time' => $user->open_time,
+                    'close_time' => $user->close_time,
+                    'auto_schedule' => (bool) ($user->auto_schedule ?? true),
+                    'is_verified' => (bool) ($user->accessCode?->is_active ?? false),
+                    'latitude' => (float) $user->latitude,
+                    'longitude' => (float) $user->longitude,
+                ];
+            })
+            ->values();
+
+        return view('admin.map-users', [
+            'mapUsers' => $users,
+        ]);
     }
 
     /**

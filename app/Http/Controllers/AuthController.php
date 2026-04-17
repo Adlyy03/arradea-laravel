@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use App\Support\LocationRadius;
 
 class AuthController extends Controller
 {
@@ -32,6 +33,8 @@ class AuthController extends Controller
             'phone'          => $request->phone,
             'wilayah'        => 'Arradea',
             'access_code_id' => $accessCode->id,
+            'latitude'       => $request->filled('latitude') ? (float) $request->latitude : null,
+            'longitude'      => $request->filled('longitude') ? (float) $request->longitude : null,
             'password'       => Hash::make($request->password),
             'is_seller'      => false,
         ]);
@@ -68,7 +71,7 @@ class AuthController extends Controller
             ]);
         }
 
-        if (strcasecmp((string) $user->wilayah, 'Arradea') !== 0 || ! optional($user->accessCode)->is_active) {
+        if (! $this->isUserEligibleForAccess($user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Akses ditolak. Akun Anda tidak memenuhi syarat wilayah Arradea.',
@@ -88,6 +91,27 @@ class AuthController extends Controller
                 'token' => $token,
             ],
         ]);
+    }
+
+    protected function isUserEligibleForAccess(User $user): bool
+    {
+        $centerLatitude = (float) config('location.center_lat');
+        $centerLongitude = (float) config('location.center_lng');
+        $maxRadius = (float) config('location.max_radius', 1);
+
+        if (is_null($user->latitude) || is_null($user->longitude)) {
+            return false;
+        }
+
+        $distanceKm = LocationRadius::haversineKm(
+            (float) $user->latitude,
+            (float) $user->longitude,
+            $centerLatitude,
+            $centerLongitude,
+        );
+
+        return $distanceKm <= $maxRadius
+            && (bool) optional($user->accessCode)->is_active;
     }
 
     /**
@@ -180,5 +204,28 @@ class AuthController extends Controller
             'message' => 'Seller mode deactivated successfully.',
             'data' => $user->fresh()->load('store'),
         ]);
+    }
+
+    /**
+     * Toggle seller store status between open and closed.
+     */
+    public function toggleStoreStatus(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'seller') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Hanya seller yang dapat mengubah status toko.',
+            ], 403);
+        }
+
+        $nextStatus = $user->store_status === 'open' ? 'closed' : 'open';
+
+        $user->update([
+            'store_status' => $nextStatus,
+        ]);
+
+        return back()->with('success', $nextStatus === 'open' ? 'Toko berhasil dibuka.' : 'Toko berhasil ditutup.');
     }
 }

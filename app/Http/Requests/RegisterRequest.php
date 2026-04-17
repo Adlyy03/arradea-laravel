@@ -19,6 +19,8 @@ class RegisterRequest extends FormRequest
             'phone'       => ['required', 'string', 'max:20', 'unique:users,phone'],
             'access_code' => ['required', 'string', 'max:100'],
             'password'    => ['required', 'confirmed', Password::defaults()],
+            'latitude'    => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude'   => ['nullable', 'numeric', 'between:-180,180'],
         ];
     }
 }
