@@ -102,6 +102,8 @@ class AuthWebController extends Controller
             'name'     => ['required', 'string', 'max:255'],
             'phone'    => ['required', 'string', 'max:20', 'unique:users,phone'],
             'password' => ['required', 'confirmed', Password::defaults()],
+            'latitude' => ['nullable', 'numeric', 'between:-90,90'],
+            'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ], [
             'phone.unique' => 'Nomor HP sudah terdaftar.',
         ]);
@@ -110,6 +112,8 @@ class AuthWebController extends Controller
             'name'           => $request->name,
             'phone'          => $request->phone,
             'wilayah'        => 'Arradea',
+            'latitude'       => $request->filled('latitude') ? (float) $request->latitude : null,
+            'longitude'      => $request->filled('longitude') ? (float) $request->longitude : null,
             'access_code_id' => null,
             'password'       => Hash::make($request->password),
             'is_seller'      => false,

@@ -36,6 +36,9 @@
             <form id="register-form" method="POST" action="{{ route('register.post') }}" class="space-y-5">
                 @csrf
 
+                <input type="hidden" name="latitude" id="latitude" value="{{ old('latitude') }}">
+                <input type="hidden" name="longitude" id="longitude" value="{{ old('longitude') }}">
+
                 {{-- Nama --}}
                 <div class="space-y-2">
                     <label class="block text-[10px] lg:text-xs font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">
@@ -116,6 +119,10 @@
                     💡 Semua pendaftaran baru akan otomatis menjadi <strong>pembeli</strong>. Buka toko bisa dilakukan setelah akun aktif.
                 </p>
 
+                <p id="location-status" class="text-[10px] lg:text-xs text-gray-400 bg-gray-50 border border-gray-100 rounded-2xl p-4">
+                    📍 Sistem mencoba mengambil lokasi Anda untuk verifikasi area layanan.
+                </p>
+
                 <div class="pt-4">
                     <button
                         type="submit"
@@ -140,4 +147,42 @@
         </div>
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const latInput = document.getElementById('latitude');
+        const lngInput = document.getElementById('longitude');
+        const status = document.getElementById('location-status');
+
+        if (!latInput || !lngInput || !status) {
+            return;
+        }
+
+        if (latInput.value && lngInput.value) {
+            status.textContent = 'Lokasi berhasil didapatkan.';
+            return;
+        }
+
+        if (!navigator.geolocation) {
+            status.textContent = 'Browser tidak mendukung Geolocation. Anda tetap bisa melanjutkan pendaftaran.';
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                latInput.value = position.coords.latitude.toFixed(7);
+                lngInput.value = position.coords.longitude.toFixed(7);
+                status.textContent = 'Lokasi berhasil didapatkan.';
+            },
+            function () {
+                status.textContent = 'Lokasi tidak tersedia. Anda tetap bisa melanjutkan pendaftaran.';
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 300000,
+            }
+        );
+    });
+</script>
 @endsection

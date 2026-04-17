@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthWebController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\AdminUserController;
 use App\Models\AccessCode;
 use App\Http\Controllers\ProductWebController;
 use App\Http\Controllers\CartController;
@@ -440,6 +441,13 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function 
     })->name('profile');
 
     Route::middleware('role:admin')->prefix('admin')->group(function () {
+        // New verification routes with AdminUserController
+        Route::get('/users-verification', [AdminUserController::class, 'index'])->name('admin.users.verification');
+        Route::get('/users/{user}', [AdminUserController::class, 'show'])->name('admin.users.show');
+        Route::post('/users/{user}/approve', [AdminUserController::class, 'approve'])->name('admin.users.approve');
+        Route::post('/users/{user}/reject', [AdminUserController::class, 'reject'])->name('admin.users.reject');
+
+        // Old seller routes (keep for compatibility)
         Route::post('/sellers/{user}/approve', function (User $user) {
             $user->update([
                 'is_seller' => true,
@@ -550,7 +558,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function 
 
         // User Management
         Route::get('/users', function (\Illuminate\Http\Request $request) {
-            $query = User::latest();
+            $query = User::with('accessCode')->latest();
             if ($request->has('type') && in_array($request->type, ['buyer', 'seller', 'admin'])) {
                 if ($request->type === 'admin') {
                     $query->where('role', 'admin');
@@ -568,13 +576,35 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified'])->group(function 
             return view('admin.users', compact('users'));
         })->name('admin.users.index');
 
+        Route::post('/users/{user}/verify', function (User $user) {
+            if ($user->role === 'admin') {
+                return back()->withErrors(['message' => 'Akun admin tidak memerlukan verifikasi.']);
+            }
+
+            if ($user->accessCode && $user->accessCode->is_active) {
+                return back()->with('success', 'Pengguna sudah terverifikasi.');
+            }
+
+            $accessCode = AccessCode::where('is_active', true)->first();
+
+            if (! $accessCode) {
+                return back()->withErrors(['message' => 'Tidak ada kode akses aktif untuk verifikasi user.']);
+            }
+
+            $user->update([
+                'access_code_id' => $accessCode->id,
+            ]);
+
+            return back()->with('success', "Pengguna {$user->name} berhasil diverifikasi.");
+        })->name('admin.users.verify');
+
         Route::put('/users/{user}', function (Request $request, User $user) {
             $request->validate([
                 'name' => 'required|string',
-                'email' => 'required|email|unique:users,email,'.$user->id,
+                'phone' => 'required|string|unique:users,phone,'.$user->id,
                 'is_seller' => 'required|boolean',
             ]);
-            $payload = $request->only('name', 'email', 'is_seller');
+            $payload = $request->only('name', 'phone', 'is_seller');
 
             if ((bool) $payload['is_seller']) {
                 $payload['seller_status'] = 'approved';

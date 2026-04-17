@@ -76,6 +76,7 @@
                                 <th class="px-6 lg:px-10 py-5">Data Pengguna</th>
                                 <th class="px-6 lg:px-10 py-5">No. WhatsApp</th>
                                 <th class="px-6 lg:px-10 py-5">Tgl Verifikasi HP</th>
+                                <th class="px-6 lg:px-10 py-5">Lokasi</th>
                                 <th class="px-6 lg:px-10 py-5 text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -98,6 +99,20 @@
                                     </td>
                                     <td class="px-6 lg:px-10 py-6">
                                         <p class="text-gray-700 font-bold text-sm">{{ $user->phone_verified_at->format('d M Y, H:i') }}</p>
+                                    </td>
+                                    <td class="px-6 lg:px-10 py-6">
+                                        @if(!is_null($user->latitude) && !is_null($user->longitude))
+                                            <div class="space-y-2">
+                                                <p class="text-gray-900 font-black text-xs lg:text-sm leading-tight">{{ number_format((float) $user->latitude, 7) }}, {{ number_format((float) $user->longitude, 7) }}</p>
+                                                <button type="button"
+                                                    onclick='openVerificationLocationModal(@json(["name" => $user->name, "latitude" => $user->latitude, "longitude" => $user->longitude]))'
+                                                    class="px-4 py-2 bg-primary-50 text-primary-700 rounded-xl text-xs font-black hover:bg-primary-100 transition-all">
+                                                    Cek Lokasi
+                                                </button>
+                                            </div>
+                                        @else
+                                            <p class="text-gray-400 font-bold text-xs">Lokasi tidak tersedia</p>
+                                        @endif
                                     </td>
                                     <td class="px-6 lg:px-10 py-6 text-right">
                                         <div class="flex items-center justify-end gap-2">
@@ -148,6 +163,7 @@
                                 <th class="px-6 lg:px-10 py-5">Data Penjual</th>
                                 <th class="px-6 lg:px-10 py-5">Nama Toko</th>
                                 <th class="px-6 lg:px-10 py-5">Tgl Pengajuan</th>
+                                <th class="px-6 lg:px-10 py-5">Lokasi</th>
                                 <th class="px-6 lg:px-10 py-5 text-right">Aksi</th>
                             </tr>
                         </thead>
@@ -178,6 +194,20 @@
                                     <td class="px-6 lg:px-10 py-6">
                                         <p class="text-gray-700 font-bold text-sm">{{ $user->seller_applied_at ? \Carbon\Carbon::parse($user->seller_applied_at)->format('d M Y, H:i') : '—' }}</p>
                                     </td>
+                                    <td class="px-6 lg:px-10 py-6">
+                                        @if(!is_null($user->latitude) && !is_null($user->longitude))
+                                            <div class="space-y-2">
+                                                <p class="text-gray-900 font-black text-xs lg:text-sm leading-tight">{{ number_format((float) $user->latitude, 7) }}, {{ number_format((float) $user->longitude, 7) }}</p>
+                                                <button type="button"
+                                                    onclick='openVerificationLocationModal(@json(["name" => $user->name, "latitude" => $user->latitude, "longitude" => $user->longitude]))'
+                                                    class="px-4 py-2 bg-primary-50 text-primary-700 rounded-xl text-xs font-black hover:bg-primary-100 transition-all">
+                                                    Cek Lokasi
+                                                </button>
+                                            </div>
+                                        @else
+                                            <p class="text-gray-400 font-bold text-xs">Lokasi tidak tersedia</p>
+                                        @endif
+                                    </td>
                                     <td class="px-6 lg:px-10 py-6 text-right">
                                         <div class="flex items-center justify-end gap-2">
                                             <form method="POST" action="{{ route('admin.verifications.approve-seller', $user) }}" onsubmit="return confirm('Setujui {{ $user->name }} jadi Seller?')">
@@ -206,4 +236,114 @@
     </div>
 
 </div>
+
+<div id="verification-location-modal" class="fixed inset-0 z-[120] hidden items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+    <div class="bg-white rounded-[3rem] w-full max-w-3xl p-8 lg:p-10 relative shadow-2xl"
+         x-transition:enter="transition ease-out duration-300 transform"
+         x-transition:enter-start="opacity-0 translate-y-8"
+         x-transition:enter-end="opacity-100 translate-y-0"
+         x-transition:leave="transition ease-in duration-200 transform"
+         x-transition:leave-start="opacity-100 translate-y-0"
+         x-transition:leave-end="opacity-0 translate-y-8">
+
+        <button type="button" onclick="closeVerificationLocationModal()" class="absolute top-8 right-8 text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+
+        <h3 class="text-3xl font-black text-gray-900 mb-3">Cek Lokasi</h3>
+        <p id="verification-location-name" class="text-sm font-medium text-gray-400 mb-6"></p>
+
+        <div id="verification-location-content"></div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script>
+    window.renderVerificationUserMap = function (user) {
+        const contentElement = document.getElementById('verification-location-content');
+        if (!contentElement || !user) {
+            return;
+        }
+
+        const hasLocation = user.latitude !== null && user.latitude !== '' && user.longitude !== null && user.longitude !== '';
+        if (!hasLocation) {
+            contentElement.innerHTML = '<div class="p-6 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800 font-bold text-sm">Lokasi tidak tersedia</div>';
+            return;
+        }
+
+        contentElement.innerHTML = '<div class="space-y-4"><div class="rounded-3xl overflow-hidden border border-gray-100 shadow-sm"><div id="verification-user-map" class="w-full h-80 bg-gray-100"></div></div><p class="text-sm font-bold text-gray-700" id="verification-location-coordinates"></p></div>';
+
+        const mapElement = document.getElementById('verification-user-map');
+        const coordinatesElement = document.getElementById('verification-location-coordinates');
+
+        const latitude = parseFloat(user.latitude);
+        const longitude = parseFloat(user.longitude);
+
+        if (Number.isNaN(latitude) || Number.isNaN(longitude)) {
+            contentElement.innerHTML = '<div class="p-6 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800 font-bold text-sm">Lokasi tidak tersedia</div>';
+            return;
+        }
+
+        if (coordinatesElement) {
+            coordinatesElement.textContent = `📍 ${latitude.toFixed(7)}, ${longitude.toFixed(7)}`;
+        }
+
+        if (!window.L) {
+            contentElement.innerHTML = '<div class="p-6 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800 font-bold text-sm">Peta belum bisa dimuat.</div>';
+            return;
+        }
+
+        contentElement.innerHTML = '<div class="space-y-4"><div class="rounded-3xl overflow-hidden border border-gray-100 shadow-sm"><div id="verification-user-map" class="w-full h-80 bg-gray-100"></div></div><p class="text-sm font-bold text-gray-700" id="verification-location-coordinates"></p></div>';
+
+        const renderMap = function () {
+            const map = L.map('verification-user-map', {
+                scrollWheelZoom: false,
+            }).setView([latitude, longitude], 16);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors',
+            }).addTo(map);
+
+            L.marker([latitude, longitude]).addTo(map).bindPopup(user.name || 'Lokasi User').openPopup();
+
+            setTimeout(function () {
+                map.invalidateSize();
+            }, 150);
+        };
+
+        renderMap();
+    };
+
+    window.openVerificationLocationModal = function (user) {
+        const modal = document.getElementById('verification-location-modal');
+        const nameElement = document.getElementById('verification-location-name');
+
+        if (!modal || !nameElement) {
+            return;
+        }
+
+        nameElement.textContent = user && user.name ? user.name : '';
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        window.renderVerificationUserMap(user);
+    };
+
+    window.closeVerificationLocationModal = function () {
+        const modal = document.getElementById('verification-location-modal');
+        const contentElement = document.getElementById('verification-location-content');
+
+        if (!modal) {
+            return;
+        }
+
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+
+        if (contentElement) {
+            contentElement.innerHTML = '';
+        }
+    };
+</script>
 @endsection

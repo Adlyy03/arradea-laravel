@@ -19,6 +19,12 @@
         </div>
     @endif
 
+    @if(session('success'))
+        <div class="p-6 bg-green-50 border border-green-100 rounded-[2rem] text-green-700 font-bold text-sm shadow-sm">
+            {{ session('success') }}
+        </div>
+    @endif
+
     <!-- Management Table -->
     <div class="bg-white rounded-2xl lg:rounded-[4rem] p-6 lg:p-12 shadow-sm border border-gray-100 space-y-6 lg:space-y-12">
         <div class="flex flex-col lg:flex-row justify-between items-start lg:items-end gap-6 px-2 lg:px-4">
@@ -41,12 +47,16 @@
                     <tr>
                         <th class="px-5 lg:px-10 py-5 lg:py-10">Data Pengguna</th>
                         <th class="px-5 lg:px-10 py-5 lg:py-10">Tipe Akun</th>
+                        <th class="px-5 lg:px-10 py-5 lg:py-10">Verifikasi</th>
                         <th class="px-5 lg:px-10 py-5 lg:py-10">Tgl Daftar</th>
                         <th class="px-5 lg:px-10 py-5 lg:py-10 text-right">Aksi</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-50">
                     @foreach($users as $user)
+                        @php
+                            $isVerified = $user->role === 'admin' || ($user->accessCode && $user->accessCode->is_active);
+                        @endphp
                         <tr class="hover:bg-primary-50/20 transition duration-300">
                             <td class="px-5 lg:px-10 py-5 lg:py-10">
                                 <div class="flex items-center gap-6">
@@ -55,7 +65,7 @@
                                     </div>
                                     <div>
                                         <p class="font-black text-xl text-gray-900 leading-tight">{{ $user->name }}</p>
-                                        <p class="text-sm font-medium text-gray-400 italic">{{ $user->email }}</p>
+                                        <p class="text-sm font-medium text-gray-400 italic">📞 {{ $user->phone }}</p>
                                     </div>
                                 </div>
                             </td>
@@ -66,10 +76,21 @@
                                 </span>
                             </td>
                             <td class="px-5 lg:px-10 py-5 lg:py-10">
+                                <span class="px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest {{ $isVerified ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700' }}">
+                                    {{ $isVerified ? 'terverifikasi' : 'menunggu' }}
+                                </span>
+                            </td>
+                            <td class="px-5 lg:px-10 py-5 lg:py-10">
                                 <p class="text-gray-900 font-bold text-sm">{{ $user->created_at->format('d M Y') }}</p>
                             </td>
                             <td class="px-5 lg:px-10 py-5 lg:py-10 text-right">
                                 <div class="flex items-center justify-end gap-2">
+                                    @if(!$isVerified && $user->role !== 'admin')
+                                        <form method="POST" action="{{ route('admin.users.verify', $user) }}">
+                                            @csrf
+                                            <button type="submit" class="px-5 py-3 bg-green-50 text-green-700 rounded-xl font-bold text-xs hover:bg-green-200 transition-all">Verifikasi</button>
+                                        </form>
+                                    @endif
                                     <button type="button" @click="openEditModal = true; editUser = {{ json_encode($user) }}" class="px-5 py-3 bg-gray-50 text-gray-600 rounded-xl font-bold text-xs hover:bg-gray-200 transition-all">Edit</button>
                                     <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus akun ini secara permanen?')">
                                         @csrf
@@ -114,8 +135,8 @@
                 </div>
 
                 <div class="space-y-2">
-                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest pl-2">Alamat Email</label>
-                    <input type="email" name="email" x-model="editUser.email" required class="w-full h-16 bg-gray-50 border-none rounded-2xl px-6 font-bold focus:ring-4 focus:ring-primary-100">
+                    <label class="block text-xs font-black text-gray-400 uppercase tracking-widest pl-2">Nomor HP</label>
+                    <input type="text" name="phone" x-model="editUser.phone" required class="w-full h-16 bg-gray-50 border-none rounded-2xl px-6 font-bold focus:ring-4 focus:ring-primary-100">
                 </div>
 
                 <div class="space-y-2">
@@ -133,5 +154,126 @@
             </form>
         </div>
     </div>
+
+        <!-- Location Modal -->
+        <div x-show="openLocationModal" x-cloak class="fixed inset-0 z-[110] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+            <div @click.away="openLocationModal = false" class="bg-white rounded-[3rem] w-full max-w-3xl p-8 lg:p-10 relative shadow-2xl"
+                 x-transition:enter="transition ease-out duration-300 transform"
+                 x-transition:enter-start="opacity-0 translate-y-8"
+                 x-transition:enter-end="opacity-100 translate-y-0"
+                 x-transition:leave="transition ease-in duration-200 transform"
+                 x-transition:leave-start="opacity-100 translate-y-0"
+                 x-transition:leave-end="opacity-0 translate-y-8">
+
+                <button @click="openLocationModal = false" class="absolute top-8 right-8 text-gray-400 hover:text-gray-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+
+                <h3 class="text-3xl font-black text-gray-900 mb-3">Cek Lokasi</h3>
+                <p class="text-sm font-medium text-gray-400 mb-6" x-text="locationUser ? locationUser.name : ''"></p>
+
+                <template x-if="locationUser && locationUser.latitude !== null && locationUser.latitude !== '' && locationUser.longitude !== null && locationUser.longitude !== ''">
+                    <div class="space-y-4">
+                        <div class="rounded-3xl overflow-hidden border border-gray-100 shadow-sm">
+                            <div id="user-location-map" class="w-full h-80 bg-gray-100"></div>
+                        </div>
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <p class="text-sm font-bold text-gray-700" x-text="`📍 ${Number(locationUser.latitude).toFixed(7)}, ${Number(locationUser.longitude).toFixed(7)}`"></p>
+                            <a :href="`https://www.google.com/maps?q=${locationUser.latitude},${locationUser.longitude}`" target="_blank" rel="noopener" class="text-sm font-black text-primary-600 hover:underline">Buka di Google Maps</a>
+                        </div>
+                    </div>
+                </template>
+
+                <template x-if="!locationUser || locationUser.latitude === null || locationUser.latitude === '' || locationUser.longitude === null || locationUser.longitude === ''">
+                    <div class="p-6 bg-amber-50 border border-amber-100 rounded-2xl text-amber-800 font-bold text-sm">
+                        Lokasi tidak tersedia
+                    </div>
+                </template>
+            </div>
+        </div>
+
+        <script>
+            window.renderAdminUserLocationMap = function (user) {
+                if (!user || user.latitude === null || user.latitude === '' || user.longitude === null || user.longitude === '') {
+                    return;
+                }
+
+                const mapElement = document.getElementById('user-location-map');
+                if (!mapElement) {
+                    return;
+                }
+
+                const lat = parseFloat(user.latitude);
+                const lng = parseFloat(user.longitude);
+
+                if (Number.isNaN(lat) || Number.isNaN(lng)) {
+                    return;
+                }
+
+                const renderMap = function () {
+                    if (!window.google || !window.google.maps) {
+                        return;
+                    }
+
+                    const map = new google.maps.Map(mapElement, {
+                        center: { lat, lng },
+                        zoom: 16,
+                        mapTypeControl: false,
+                        streetViewControl: false,
+                        fullscreenControl: false,
+                    });
+
+                    new google.maps.Marker({
+                        position: { lat, lng },
+                        map,
+                        title: user.name || 'Lokasi User',
+                    });
+
+                    window.__adminUserLocationMap = map;
+                };
+
+                if (window.google && window.google.maps) {
+                    renderMap();
+                    return;
+                }
+
+                return new Promise(function (resolve, reject) {
+                    if (window.google && window.google.maps) {
+                        renderMap();
+                        resolve();
+                        return;
+                    }
+
+                    const existingScript = document.querySelector('script[data-google-maps]');
+                    if (existingScript) {
+                        existingScript.addEventListener('load', function () {
+                            renderMap();
+                            resolve();
+                        }, { once: true });
+                        existingScript.addEventListener('error', reject, { once: true });
+                        return;
+                    }
+
+                    const apiKey = @json(config('services.google_maps.api_key'));
+                    if (!apiKey) {
+                        reject(new Error('Google Maps API key belum dikonfigurasi.'));
+                        return;
+                    }
+
+                    window.__adminUserLocationInit = function () {
+                    renderMap();
+                        resolve();
+                    };
+
+                    const script = document.createElement('script');
+                    script.setAttribute('data-google-maps', 'true');
+                    script.async = true;
+                    script.defer = true;
+                    script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&callback=__adminUserLocationInit`;
+                    script.onerror = reject;
+                    document.head.appendChild(script);
+                });
+            };
+        </script>
 </div>
 @endsection

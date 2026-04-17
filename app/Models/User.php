@@ -17,6 +17,8 @@ class User extends Authenticatable
         'name',
         'phone',
         'wilayah',
+        'latitude',
+        'longitude',
         'access_code_id',
         'password',
         'phone_verified_at',
@@ -39,6 +41,8 @@ class User extends Authenticatable
     {
         return [
             'phone_verified_at'  => 'datetime',
+            'latitude'           => 'float',
+            'longitude'          => 'float',
             'is_seller'          => 'boolean',
             'seller_otp_verified' => 'boolean',
             'password'           => 'hashed',
