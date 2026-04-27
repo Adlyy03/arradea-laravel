@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             CategorySeeder::class,
             SellerSeeder::class,
+            ClaudlySalesSeeder::class,
         ]);
 
         $activeAccessCode = AccessCode::where('is_active', true)->first()

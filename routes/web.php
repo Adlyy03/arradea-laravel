@@ -1,5 +1,6 @@
 <?php
 
+use App\Exports\OrdersExport;
 use App\Http\Controllers\AuthWebController;
 use App\Http\Controllers\Auth\NewPasswordController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
@@ -14,6 +15,7 @@ use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Middleware\SyncSellerStoreSchedule;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
@@ -196,44 +198,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
             $store = auth()->user()->store;
             if (!$store) abort(403, 'Akses Ditolak');
 
-            $headers = [
-                "Content-type"        => "text/csv",
-                "Content-Disposition" => "attachment; filename=laporan_penjualan_{$store->name}_" . date('Y-m-d') . ".csv",
-                "Pragma"              => "no-cache",
-                "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
-                "Expires"             => "0"
-            ];
-
-            $orders = $store->orders()->with(['user', 'product'])->latest()->get();
-
-            $callback = function() use($orders) {
-                $file = fopen('php://output', 'w');
-                // CSV Header
-                fputcsv($file, ['ID Pesanan', 'Tanggal', 'Nama Pembeli', 'Produk', 'Jumlah', 'Total Harga', 'Status']);
-
-                foreach ($orders as $order) {
-                    $statusLabel = [
-                        'pending' => 'Menunggu',
-                        'accepted' => 'Diproses',
-                        'done' => 'Selesai',
-                        'rejected' => 'Ditolak',
-                        'dibatalkan' => 'Dibatalkan',
-                    ][$order->status] ?? $order->status;
-
-                    fputcsv($file, [
-                        'ARRD-' . str_pad($order->id, 6, '0', STR_PAD_LEFT),
-                        \Carbon\Carbon::parse($order->created_at)->format('d M Y H:i'),
-                        $order->user->name ?? 'Pembeli',
-                        $order->product->name ?? 'Produk Dihapus',
-                        $order->quantity,
-                        $order->total_price,
-                        $statusLabel
-                    ]);
-                }
-                fclose($file);
-            };
-
-            return response()->stream($callback, 200, $headers);
+            return Excel::download(new OrdersExport($store), 'laporan_penjualan.xlsx');
         })->name('seller.analytics.export');
 
         Route::get('/messages', function () {
