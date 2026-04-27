@@ -213,7 +213,7 @@ class AuthController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role !== 'seller') {
+        if (! $user || ! (bool) $user->is_seller) {
             return response()->json([
                 'success' => false,
                 'message' => 'Hanya seller yang dapat mengubah status toko.',

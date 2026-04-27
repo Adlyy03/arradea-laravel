@@ -185,6 +185,10 @@
                     throw new Error(result.message || 'Gagal mengirim pesan.');
                 }
 
+                if (result.data) {
+                    appendMessage(result.data);
+                }
+
                 inputEl.value = '';
                 inputEl.focus();
             } catch (_error) {

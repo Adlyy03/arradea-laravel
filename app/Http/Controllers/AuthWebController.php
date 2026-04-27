@@ -259,7 +259,7 @@ class AuthWebController extends Controller
     {
         $user = $request->user();
 
-        if (! $user || $user->role !== 'seller') {
+        if (! $user || ! (bool) $user->is_seller) {
             abort(403, 'Hanya seller yang dapat mengubah status toko.');
         }
 
@@ -279,7 +279,7 @@ class AuthWebController extends Controller
     {
         $user = $request->user();
 
-        if (! $user || $user->role !== 'seller') {
+        if (! $user || ! (bool) $user->is_seller) {
             abort(403, 'Hanya seller yang dapat mengatur jadwal toko.');
         }
 

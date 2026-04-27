@@ -63,12 +63,20 @@ class ChatController extends Controller
 
         $message->load('sender:id,name');
 
-        event(new MessageSent($message));
+        try {
+            event(new MessageSent($message));
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
 
         $recipientId = ($user->id === $chat->buyer_id) ? $chat->seller_id : $chat->buyer_id;
         $recipient = \App\Models\User::find($recipientId);
         if ($recipient) {
-            $recipient->notify(new \App\Notifications\ChatMessageNotification($message));
+            try {
+                $recipient->notify(new \App\Notifications\ChatMessageNotification($message));
+            } catch (\Throwable $exception) {
+                report($exception);
+            }
         }
 
         if ($request->expectsJson()) {
