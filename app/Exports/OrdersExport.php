@@ -16,17 +16,27 @@ use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 class OrdersExport implements FromCollection, WithHeadings, WithMapping, ShouldAutoSize, WithStyles, WithColumnFormatting
 {
     private Store $store;
+    private ?Carbon $startDate;
+    private ?Carbon $endDate;
 
     private int $rowNumber = 0;
 
-    public function __construct(Store $store)
+    public function __construct(Store $store, ?Carbon $startDate = null, ?Carbon $endDate = null)
     {
         $this->store = $store;
+        $this->startDate = $startDate;
+        $this->endDate = $endDate;
     }
 
     public function collection()
     {
-        return $this->store->orders()->with(['user', 'product'])->latest()->get();
+        $query = $this->store->orders()->with(['user', 'product'])->latest();
+
+        if ($this->startDate && $this->endDate) {
+            $query->whereBetween('created_at', [$this->startDate, $this->endDate]);
+        }
+
+        return $query->get();
     }
 
     public function headings(): array

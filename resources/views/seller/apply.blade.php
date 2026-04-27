@@ -39,7 +39,37 @@
 
                                 <div>
                                     <label class="block text-sm font-black uppercase tracking-widest text-gray-400 mb-3">Alamat Toko</label>
-                                    <input type="text" name="store_address" value="{{ old('store_address', $user->store->address ?? '') }}" class="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 text-lg font-bold focus:border-primary-600 focus:outline-none" placeholder="Contoh: Jalan Merdeka No. 22, Jakarta">
+                                    <input
+                                        type="text"
+                                        id="store_address"
+                                        name="store_address"
+                                        value="{{ old('store_address', $user->store->address ?? '') }}"
+                                        class="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 text-lg font-bold focus:border-primary-600 focus:outline-none"
+                                        placeholder="Contoh: Jalan Merdeka No. 22, Jakarta"
+                                    >
+                                    <input type="hidden" id="latitude" name="latitude" value="{{ old('latitude', $user->latitude) }}">
+                                    <input type="hidden" id="longitude" name="longitude" value="{{ old('longitude', $user->longitude) }}">
+
+                                    <div class="mt-4 space-y-3">
+                                        <button
+                                            type="button"
+                                            id="detect-location-btn"
+                                            class="inline-flex items-center gap-2 rounded-xl bg-primary-700 text-white px-4 py-2 font-black hover:bg-primary-800 transition"
+                                        >
+                                            Ambil Lokasi dari Browser
+                                        </button>
+                                        <p id="location-status" class="text-xs text-gray-500 font-bold">
+                                            Tekan tombol untuk ambil koordinat dan isi alamat otomatis.
+                                        </p>
+
+                                        <div id="location-map-wrapper" class="hidden overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                                            <div class="px-4 py-3 border-b border-gray-100 bg-gray-50">
+                                                <p class="text-xs font-black uppercase tracking-wider text-gray-500">Pratinjau Titik Lokasi</p>
+                                                <p id="location-map-coordinates" class="text-sm font-bold text-gray-700 mt-1">-</p>
+                                            </div>
+                                            <div id="seller-location-map" class="h-64 w-full"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -64,4 +94,144 @@
         </div>
     </div>
 </div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const detectButton = document.getElementById('detect-location-btn');
+        const statusElement = document.getElementById('location-status');
+        const addressInput = document.getElementById('store_address');
+        const latInput = document.getElementById('latitude');
+        const lngInput = document.getElementById('longitude');
+        const mapWrapper = document.getElementById('location-map-wrapper');
+        const mapCoordinates = document.getElementById('location-map-coordinates');
+
+        let mapInstance = null;
+        let mapMarker = null;
+
+        if (!detectButton || !statusElement || !addressInput || !latInput || !lngInput || !mapWrapper || !mapCoordinates) {
+            return;
+        }
+
+        const renderLocationPreview = (latitude, longitude) => {
+            const lat = Number(latitude);
+            const lng = Number(longitude);
+
+            if (Number.isNaN(lat) || Number.isNaN(lng)) {
+                return;
+            }
+
+            mapWrapper.classList.remove('hidden');
+            mapCoordinates.textContent = `📍 ${lat.toFixed(7)}, ${lng.toFixed(7)}`;
+
+            if (typeof window.L === 'undefined') {
+                return;
+            }
+
+            if (!mapInstance) {
+                mapInstance = window.L.map('seller-location-map', {
+                    zoomControl: true,
+                }).setView([lat, lng], 16);
+
+                window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    maxZoom: 19,
+                    attribution: '&copy; OpenStreetMap contributors',
+                }).addTo(mapInstance);
+            }
+
+            if (!mapMarker) {
+                mapMarker = window.L.marker([lat, lng]).addTo(mapInstance);
+            } else {
+                mapMarker.setLatLng([lat, lng]);
+            }
+
+            mapMarker.bindPopup('Lokasi toko Anda').openPopup();
+            mapInstance.setView([lat, lng], 16);
+            setTimeout(() => mapInstance.invalidateSize(), 100);
+        };
+
+        const setStatus = (message, isError = false) => {
+            statusElement.textContent = message;
+            statusElement.classList.toggle('text-red-600', isError);
+            statusElement.classList.toggle('text-gray-500', !isError);
+        };
+
+        if (latInput.value && lngInput.value) {
+            renderLocationPreview(latInput.value, lngInput.value);
+            setStatus('Lokasi sudah tersedia. Anda bisa ambil ulang jika titik berubah.');
+        }
+
+        detectButton.addEventListener('click', function () {
+            if (!navigator.geolocation) {
+                setStatus('Browser tidak mendukung Geolocation.', true);
+                if (window.arradeaPopup) {
+                    window.arradeaPopup.error('Browser tidak mendukung fitur lokasi.');
+                }
+                return;
+            }
+
+            detectButton.disabled = true;
+            detectButton.classList.add('opacity-60', 'cursor-not-allowed');
+            setStatus('Mengambil koordinat lokasi...');
+
+            navigator.geolocation.getCurrentPosition(
+                async function (position) {
+                    const latitude = Number(position.coords.latitude).toFixed(7);
+                    const longitude = Number(position.coords.longitude).toFixed(7);
+
+                    latInput.value = latitude;
+                    lngInput.value = longitude;
+                    renderLocationPreview(latitude, longitude);
+
+                    setStatus(`Koordinat didapatkan: ${latitude}, ${longitude}. Mencari alamat...`);
+
+                    try {
+                        const response = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}&accept-language=id`,
+                            {
+                                headers: {
+                                    'Accept': 'application/json',
+                                },
+                            }
+                        );
+
+                        if (!response.ok) {
+                            throw new Error('Gagal mengambil alamat dari koordinat.');
+                        }
+
+                        const result = await response.json();
+                        const resolvedAddress = result.display_name || '';
+
+                        if (resolvedAddress) {
+                            addressInput.value = resolvedAddress;
+                            setStatus('Lokasi dan alamat toko berhasil diisi otomatis.');
+                            if (window.arradeaPopup) {
+                                window.arradeaPopup.success('Alamat toko berhasil diisi dari lokasi browser.');
+                            }
+                        } else {
+                            setStatus('Koordinat berhasil didapatkan, tapi alamat tidak ditemukan. Isi alamat manual.', true);
+                        }
+                    } catch (error) {
+                        setStatus('Koordinat berhasil didapatkan, tapi gagal mengisi alamat otomatis. Isi alamat manual.', true);
+                    } finally {
+                        detectButton.disabled = false;
+                        detectButton.classList.remove('opacity-60', 'cursor-not-allowed');
+                    }
+                },
+                function () {
+                    setStatus('Izin lokasi ditolak atau lokasi tidak tersedia.', true);
+                    detectButton.disabled = false;
+                    detectButton.classList.remove('opacity-60', 'cursor-not-allowed');
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 300000,
+                }
+            );
+        });
+    });
+</script>
 @endsection

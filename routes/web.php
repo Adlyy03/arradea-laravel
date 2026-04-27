@@ -181,24 +181,157 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
         })->name('seller.orders');
 
         // New Features
-        Route::get('/analytics', function () {
+        Route::get('/analytics', function (Request $request) {
             $store = auth()->user()->store;
+            $now = now();
+
+            $validated = $request->validate([
+                'range' => ['nullable', 'in:7d,30d,custom'],
+                'start_date' => ['nullable', 'date_format:Y-m-d', 'required_if:range,custom'],
+                'end_date' => ['nullable', 'date_format:Y-m-d', 'required_if:range,custom', 'after_or_equal:start_date'],
+            ]);
+
+            $range = $validated['range'] ?? '7d';
+            if ($range === '30d') {
+                $startDate = $now->copy()->subDays(29)->startOfDay();
+                $endDate = $now->copy()->endOfDay();
+                $periodLabel = '30 Hari Terakhir';
+            } elseif ($range === 'custom') {
+                $startDate = \Carbon\Carbon::createFromFormat('Y-m-d', $validated['start_date'])->startOfDay();
+                $endDate = \Carbon\Carbon::createFromFormat('Y-m-d', $validated['end_date'])->endOfDay();
+                $periodLabel = $startDate->format('d M Y') . ' - ' . $endDate->format('d M Y');
+            } else {
+                $startDate = $now->copy()->subDays(6)->startOfDay();
+                $endDate = $now->copy()->endOfDay();
+                $periodLabel = '7 Hari Terakhir';
+                $range = '7d';
+            }
+
+            $baseOrdersQuery = $store ? $store->orders() : null;
+            $filteredOrdersQuery = $baseOrdersQuery
+                ? (clone $baseOrdersQuery)->whereBetween('created_at', [$startDate, $endDate])
+                : null;
+
+            $totalProducts = $store ? $store->products()->count() : 0;
+            $totalOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->count() : 0;
+            $pendingOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'pending')->count() : 0;
+            $acceptedOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'accepted')->count() : 0;
+            $completedOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'done')->count() : 0;
+            $rejectedOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'rejected')->count() : 0;
+            $cancelledOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'dibatalkan')->count() : 0;
+            $totalRevenue = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'done')->sum('total_price') : 0;
+            $ordersInPeriod = $totalOrders;
+
+            $thisPeriodRevenue = $filteredOrdersQuery
+                ? (clone $filteredOrdersQuery)->where('status', 'done')->sum('total_price')
+                : 0;
+
+            $periodDays = (int) $startDate->copy()->startOfDay()->diffInDays($endDate->copy()->startOfDay()) + 1;
+            $previousPeriodStart = $startDate->copy()->subDays($periodDays);
+            $previousPeriodEnd = $startDate->copy()->subSecond();
+
+            $previousPeriodRevenue = $baseOrdersQuery
+                ? (clone $baseOrdersQuery)
+                    ->where('status', 'done')
+                    ->whereBetween('created_at', [$previousPeriodStart, $previousPeriodEnd])
+                    ->sum('total_price')
+                : 0;
+
+            $conversionRate = $totalOrders > 0 ? ($completedOrders / $totalOrders) * 100 : 0;
+            $averageOrderValue = $completedOrders > 0 ? $totalRevenue / $completedOrders : 0;
+            $growthPercent = $previousPeriodRevenue > 0
+                ? (($thisPeriodRevenue - $previousPeriodRevenue) / $previousPeriodRevenue) * 100
+                : ($thisPeriodRevenue > 0 ? 100 : 0);
+
+            $completedOrdersInRange = $baseOrdersQuery
+                ? (clone $baseOrdersQuery)
+                    ->where('status', 'done')
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->get(['created_at', 'total_price'])
+                : collect();
+
+            $trendRevenueByDate = $completedOrdersInRange
+                ->groupBy(function ($order) {
+                    return $order->created_at->format('Y-m-d');
+                })
+                ->map(function ($orders) {
+                    return (float) $orders->sum('total_price');
+                });
+
+            $revenueTrendLabels = [];
+            $revenueTrendValues = [];
+            for ($date = $startDate->copy()->startOfDay(); $date->lte($endDate->copy()->startOfDay()); $date->addDay()) {
+                $dateKey = $date->format('Y-m-d');
+                $revenueTrendLabels[] = $date->format('d M');
+                $revenueTrendValues[] = (float) ($trendRevenueByDate[$dateKey] ?? 0);
+            }
+
+            $topProducts = $store
+                ? (clone $baseOrdersQuery)
+                    ->with('product:id,name')
+                    ->whereBetween('created_at', [$startDate, $endDate])
+                    ->where('status', 'done')
+                    ->select('product_id')
+                    ->selectRaw('SUM(quantity) as total_qty')
+                    ->selectRaw('SUM(total_price) as total_revenue')
+                    ->selectRaw('COUNT(*) as total_orders')
+                    ->whereNotNull('product_id')
+                    ->groupBy('product_id')
+                    ->orderByDesc('total_qty')
+                    ->limit(5)
+                    ->get()
+                : collect();
+
             $analytics = [
-                'total_products' => $store ? $store->products()->count() : 0,
-                'total_orders' => $store ? $store->orders()->count() : 0,
-                'pending_orders' => $store ? $store->orders()->where('status', 'pending')->count() : 0,
-                'completed_orders' => $store ? $store->orders()->where('status', 'done')->count() : 0,
-                'total_revenue' => $store ? $store->orders()->where('status', 'done')->sum('total_price') : 0,
-                'monthly_orders' => $store ? $store->orders()->whereMonth('created_at', now()->month)->count() : 0,
+                'total_products' => $totalProducts,
+                'total_orders' => $totalOrders,
+                'pending_orders' => $pendingOrders,
+                'accepted_orders' => $acceptedOrders,
+                'completed_orders' => $completedOrders,
+                'rejected_orders' => $rejectedOrders,
+                'cancelled_orders' => $cancelledOrders,
+                'total_revenue' => $totalRevenue,
+                'orders_in_period' => $ordersInPeriod,
+                'this_period_revenue' => $thisPeriodRevenue,
+                'previous_period_revenue' => $previousPeriodRevenue,
+                'growth_percent' => $growthPercent,
+                'conversion_rate' => $conversionRate,
+                'average_order_value' => $averageOrderValue,
+                'revenue_trend_labels' => $revenueTrendLabels,
+                'revenue_trend_values' => $revenueTrendValues,
+                'top_products' => $topProducts,
+                'range' => $range,
+                'start_date' => $startDate->toDateString(),
+                'end_date' => $endDate->toDateString(),
+                'period_label' => $periodLabel,
             ];
+
             return view('seller.analytics', compact('analytics'));
         })->name('seller.analytics');
 
-        Route::get('/analytics/export', function () {
+        Route::get('/analytics/export', function (Request $request) {
             $store = auth()->user()->store;
             if (!$store) abort(403, 'Akses Ditolak');
 
-            return Excel::download(new OrdersExport($store), 'laporan_penjualan.xlsx');
+            $validated = $request->validate([
+                'range' => ['nullable', 'in:7d,30d,custom'],
+                'start_date' => ['nullable', 'date_format:Y-m-d', 'required_if:range,custom'],
+                'end_date' => ['nullable', 'date_format:Y-m-d', 'required_if:range,custom', 'after_or_equal:start_date'],
+            ]);
+
+            $range = $validated['range'] ?? '7d';
+            if ($range === '30d') {
+                $startDate = now()->subDays(29)->startOfDay();
+                $endDate = now()->endOfDay();
+            } elseif ($range === 'custom') {
+                $startDate = \Carbon\Carbon::createFromFormat('Y-m-d', $validated['start_date'])->startOfDay();
+                $endDate = \Carbon\Carbon::createFromFormat('Y-m-d', $validated['end_date'])->endOfDay();
+            } else {
+                $startDate = now()->subDays(6)->startOfDay();
+                $endDate = now()->endOfDay();
+            }
+
+            return Excel::download(new OrdersExport($store, $startDate, $endDate), 'laporan_penjualan.xlsx');
         })->name('seller.analytics.export');
 
         Route::get('/messages', function () {
@@ -222,6 +355,8 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
             'store_name'        => ['required', 'string', 'max:255'],
             'store_description' => ['nullable', 'string', 'max:2000'],
             'store_address'     => ['nullable', 'string', 'max:500'],
+            'latitude'          => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
+            'longitude'         => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
         ]);
 
         $user = $request->user();
@@ -238,6 +373,16 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
             $user->store->update($storeData);
         } else {
             $user->store()->create($storeData);
+        }
+
+        $userLocationData = [];
+        if ($request->filled('latitude') && $request->filled('longitude')) {
+            $userLocationData['latitude'] = (float) $request->latitude;
+            $userLocationData['longitude'] = (float) $request->longitude;
+        }
+
+        if (!empty($userLocationData)) {
+            $user->update($userLocationData);
         }
 
         // Generate & kirim OTP ke nomor HP buyer yang sudah login
