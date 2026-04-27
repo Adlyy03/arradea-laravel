@@ -73,7 +73,7 @@
                                         </button>
                                     </form>
 
-                                    <form method="POST" action="{{ route('admin.access-codes.destroy', $code) }}" onsubmit="return confirm('Yakin hapus kode ini?');">
+                                    <form method="POST" action="{{ route('admin.access-codes.destroy', $code) }}" onsubmit="return confirmSubmit(event, @js('Yakin hapus kode ini?'));">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="px-4 py-2 rounded-lg bg-red-50 text-red-700 text-xs font-black hover:bg-red-100 transition">

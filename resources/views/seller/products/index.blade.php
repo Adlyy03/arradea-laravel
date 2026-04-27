@@ -79,7 +79,7 @@
                                 <a href="/seller/products/{{ $product->id }}/edit" class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 hover:bg-primary-600 hover:text-white hover:scale-110 active:scale-95 transition-all shadow-sm border border-gray-100">
                                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                 </a>
-                                <form action="/web/product/{{ $product->id }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus produk ini?');">
+                                <form action="/web/product/{{ $product->id }}" method="POST" onsubmit="return confirmSubmit(event, @js('Apakah Anda yakin ingin menghapus produk ini?'));">
                                     @csrf
                                     @method('DELETE')
                                     <button type="submit" class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-400 hover:bg-red-500 hover:text-white hover:scale-110 active:scale-95 transition-all shadow-sm border border-gray-100">

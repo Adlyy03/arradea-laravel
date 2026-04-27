@@ -92,7 +92,7 @@
                                         </form>
                                     @endif
                                     <button type="button" @click="openEditModal = true; editUser = {{ json_encode($user) }}" class="px-5 py-3 bg-gray-50 text-gray-600 rounded-xl font-bold text-xs hover:bg-gray-200 transition-all">Edit</button>
-                                    <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirm('Apakah Anda yakin ingin menghapus akun ini secara permanen?')">
+                                    <form method="POST" action="{{ route('admin.users.destroy', $user) }}" onsubmit="return confirmSubmit(event, @js('Apakah Anda yakin ingin menghapus akun ini secara permanen?'))">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="px-5 py-3 bg-red-50 text-red-600 rounded-xl font-bold text-xs hover:bg-red-200 transition-all">Hapus</button>

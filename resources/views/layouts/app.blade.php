@@ -257,5 +257,123 @@
             </div>
         </footer>
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        (function () {
+            const hasSwal = () => typeof window.Swal !== 'undefined';
+
+            const baseOptions = {
+                background: '#ffffff',
+                color: '#111827',
+                confirmButtonColor: '#0284c7',
+                customClass: {
+                    popup: 'rounded-3xl px-6 py-6',
+                    title: 'text-xl font-black',
+                    htmlContainer: 'text-sm font-medium text-gray-600',
+                    confirmButton: 'rounded-xl px-5 py-3 font-black',
+                    cancelButton: 'rounded-xl px-5 py-3 font-black',
+                },
+                buttonsStyling: false,
+            };
+
+            window.arradeaPopup = {
+                _firePopup(config) {
+                    if (!hasSwal()) return;
+                    return window.Swal.fire({ ...baseOptions, ...config });
+                },
+
+                success(message, title) {
+                    return this._firePopup({
+                        icon: 'success',
+                        iconColor: '#16a34a',
+                        title: title || '✅ Berhasil',
+                        text: message || 'Operasi berhasil dilakukan.',
+                        confirmButtonColor: '#16a34a',
+                        backdrop: 'rgba(22, 163, 74, 0.1)',
+                    });
+                },
+
+                error(message, title) {
+                    return this._firePopup({
+                        icon: 'error',
+                        iconColor: '#dc2626',
+                        title: title || '❌ Gagal',
+                        text: message || 'Terjadi kesalahan. Silakan coba lagi.',
+                        confirmButtonColor: '#dc2626',
+                        backdrop: 'rgba(220, 38, 38, 0.1)',
+                    });
+                },
+
+                danger(message, options) {
+                    const resolvedOptions = options || {};
+                    return this._firePopup({
+                        icon: 'warning',
+                        iconColor: '#dc2626',
+                        title: resolvedOptions.title || '⚠️ Perhatian',
+                        text: message || 'Aksi ini tidak bisa dibatalkan.',
+                        showCancelButton: true,
+                        confirmButtonText: resolvedOptions.confirmText || 'Ya, hapus',
+                        cancelButtonText: resolvedOptions.cancelText || 'Batal',
+                        confirmButtonColor: '#dc2626',
+                        backdrop: 'rgba(220, 38, 38, 0.1)',
+                        reverseButtons: true,
+                    }).then((result) => Boolean(result.isConfirmed));
+                },
+
+                info(message, title) {
+                    return this._firePopup({
+                        icon: 'info',
+                        iconColor: '#0284c7',
+                        title: title || 'ℹ️ Informasi',
+                        text: message || 'Perhatian informasi penting.',
+                        confirmButtonColor: '#0284c7',
+                        backdrop: 'rgba(2, 132, 199, 0.1)',
+                    });
+                },
+
+                confirm(message, options) {
+                    const safeMessage = message || 'Apakah Anda yakin?';
+                    const resolvedOptions = options || {};
+
+                    if (!hasSwal()) {
+                        return Promise.resolve(false);
+                    }
+
+                    return window.Swal.fire({
+                        ...baseOptions,
+                        icon: resolvedOptions.icon || 'warning',
+                        iconColor: resolvedOptions.iconColor || '#ea580c',
+                        title: resolvedOptions.title || '🤔 Konfirmasi',
+                        text: safeMessage,
+                        showCancelButton: true,
+                        confirmButtonText: resolvedOptions.confirmText || 'Ya, lanjut',
+                        cancelButtonText: resolvedOptions.cancelText || 'Batal',
+                        confirmButtonColor: resolvedOptions.confirmColor || '#0284c7',
+                        backdrop: 'rgba(234, 88, 12, 0.1)',
+                        reverseButtons: true,
+                    }).then((result) => Boolean(result.isConfirmed));
+                },
+            };
+
+            window.confirmSubmit = function (event, message) {
+                if (event) {
+                    event.preventDefault();
+                }
+
+                const form = event && event.target ? event.target : null;
+                if (!form) {
+                    return false;
+                }
+
+                window.arradeaPopup.confirm(message).then((isConfirmed) => {
+                    if (isConfirmed) {
+                        form.submit();
+                    }
+                });
+
+                return false;
+            };
+        })();
+    </script>
 </body>
 </html>

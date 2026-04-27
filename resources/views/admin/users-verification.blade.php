@@ -244,7 +244,7 @@
                     if (data.success) {
                         window.location.reload();
                     } else {
-                        alert(data.message);
+                        window.arradeaPopup.error(data.message || 'Gagal menyetujui seller.');
                     }
                 } finally {
                     loading = false;
@@ -282,7 +282,7 @@
 
             <form @submit.prevent="async () => {
                 if (!reason.trim()) {
-                    alert('Silakan masukkan alasan penolakan');
+                    window.arradeaPopup.error('Silakan masukkan alasan penolakan');
                     return;
                 }
                 loading = true;
@@ -299,7 +299,7 @@
                     if (data.success) {
                         window.location.reload();
                     } else {
-                        alert(data.message);
+                        window.arradeaPopup.error(data.message || 'Gagal menolak seller.');
                     }
                 } finally {
                     loading = false;

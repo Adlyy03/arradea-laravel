@@ -116,14 +116,14 @@
                                     </td>
                                     <td class="px-6 lg:px-10 py-6 text-right">
                                         <div class="flex items-center justify-end gap-2">
-                                            <form method="POST" action="{{ route('admin.verifications.approve', $user) }}" onsubmit="return confirm('Setujui akun buyer ini?')">
+                                            <form method="POST" action="{{ route('admin.verifications.approve', $user) }}" onsubmit="return confirmSubmit(event, @js('Setujui akun buyer ini?'))">
                                                 @csrf
                                                 <button type="submit" class="px-5 py-3 bg-primary-600 text-white rounded-xl font-black text-sm hover:bg-primary-700 shadow-lg shadow-primary-200 transition-all flex items-center gap-2">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                                     Terima
                                                 </button>
                                             </form>
-                                            <form method="POST" action="{{ route('admin.verifications.reject', $user) }}" onsubmit="return confirm('Tolak & hapus akun ini?')">
+                                            <form method="POST" action="{{ route('admin.verifications.reject', $user) }}" onsubmit="return confirmSubmit(event, @js('Tolak & hapus akun ini?'))">
                                                 @csrf
                                                 <button type="submit" class="px-5 py-3 bg-red-50 border border-red-100 text-red-600 rounded-xl font-black text-sm hover:bg-red-100 transition-all">
                                                     Tolak
@@ -210,14 +210,14 @@
                                     </td>
                                     <td class="px-6 lg:px-10 py-6 text-right">
                                         <div class="flex items-center justify-end gap-2">
-                                            <form method="POST" action="{{ route('admin.verifications.approve-seller', $user) }}" onsubmit="return confirm('Setujui {{ $user->name }} jadi Seller?')">
+                                            <form method="POST" action="{{ route('admin.verifications.approve-seller', $user) }}" onsubmit="return confirmSubmit(event, @js('Setujui ' . $user->name . ' jadi Seller?'))">
                                                 @csrf
                                                 <button type="submit" class="px-5 py-3 bg-orange-500 text-white rounded-xl font-black text-sm hover:bg-orange-600 shadow-lg shadow-orange-200 transition-all flex items-center gap-2">
                                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
                                                     Setujui Seller
                                                 </button>
                                             </form>
-                                            <form method="POST" action="{{ route('admin.verifications.reject-seller', $user) }}" onsubmit="return confirm('Tolak pengajuan seller {{ $user->name }}?')">
+                                            <form method="POST" action="{{ route('admin.verifications.reject-seller', $user) }}" onsubmit="return confirmSubmit(event, @js('Tolak pengajuan seller ' . $user->name . '?'))">
                                                 @csrf
                                                 <button type="submit" class="px-5 py-3 bg-red-50 border border-red-100 text-red-600 rounded-xl font-black text-sm hover:bg-red-100 transition-all">
                                                     Tolak

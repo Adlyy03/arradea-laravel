@@ -192,7 +192,7 @@
                 inputEl.value = '';
                 inputEl.focus();
             } catch (_error) {
-                alert('Pesan gagal dikirim. Silakan coba lagi.');
+                window.arradeaPopup.error('Pesan gagal dikirim. Silakan coba lagi.');
             } finally {
                 if (submitButton) {
                     submitButton.disabled = false;

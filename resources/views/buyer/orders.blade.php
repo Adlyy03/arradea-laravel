@@ -72,7 +72,7 @@
                                     <a href="{{ route('chat.show', $order) }}" class="px-6 py-3 bg-blue-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:scale-[1.05] transition-all">Chat Seller</a>
                                     <a href="{{ route('buyer.orders.show', $order) }}" class="px-6 py-3 bg-gray-100 text-gray-500 rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-gray-200 transition-all">Detail Pesanan</a>
                                     @if($order->status === 'pending')
-                                        <form action="{{ route('buyer.orders.cancel', $order) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pesanan ini?');">
+                                        <form action="{{ route('buyer.orders.cancel', $order) }}" method="POST" onsubmit="return confirmSubmit(event, @js('Yakin ingin membatalkan pesanan ini?'));">
                                             @csrf
                                             @method('PUT')
                                             <button type="submit" class="px-6 py-3 bg-red-600 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all">Cancel</button>

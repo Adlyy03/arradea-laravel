@@ -14,7 +14,7 @@
         <div class="flex gap-4 w-full lg:w-auto">
             <a href="{{ route('buyer.orders') }}" class="flex-1 lg:flex-none px-8 lg:px-5 lg:px-10 py-5 bg-black text-white rounded-2xl lg:rounded-2xl lg:rounded-3xl font-black text-lg shadow-xl hover:scale-105 active:scale-95 transition-all text-center">← Kembali</a>
             @if($order->status === 'pending')
-                <form action="{{ route('buyer.orders.cancel', $order) }}" method="POST" onsubmit="return confirm('Yakin ingin membatalkan pesanan ini?');" class="flex-1 lg:flex-none">
+                <form action="{{ route('buyer.orders.cancel', $order) }}" method="POST" onsubmit="return confirmSubmit(event, @js('Yakin ingin membatalkan pesanan ini?'));" class="flex-1 lg:flex-none">
                     @csrf
                     @method('PUT')
                     <button type="submit" class="w-full px-8 lg:px-10 py-5 bg-red-600 text-white rounded-2xl lg:rounded-3xl font-black text-lg shadow-xl hover:bg-red-700 transition-all text-center">Batalkan Pesanan</button>
