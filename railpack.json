@@ -1,4 +1,4 @@
 {
   "$schema": "https://schema.railpack.com",
-  "phpExtensions": ["gd", "pdo", "mbstring", "zip"]
+  "phpExtensions": ["gd", "pdo", "mbstring", "zip", "bcmath"]
 }
