@@ -5,10 +5,7 @@ FROM composer:2 AS vendor
 
 WORKDIR /app
 
-# Cuma butuh zip tools, BUKAN extension PHP
-RUN apt-get update && apt-get install -y \
-    zip unzip git
-
+# GAK USAH install apa-apa di sini (biar ga ribet Alpine vs Debian)
 COPY composer.json composer.lock ./
 
 RUN composer install \
@@ -24,7 +21,7 @@ FROM php:8.2-fpm
 
 WORKDIR /var/www
 
-# Extension WAJIB di sini
+# Install extension WAJIB di sini (Debian based → apt-get aman)
 RUN apt-get update && apt-get install -y \
     git curl zip unzip libzip-dev \
     && docker-php-ext-install pdo pdo_mysql zip
