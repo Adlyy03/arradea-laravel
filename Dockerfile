@@ -1,14 +1,13 @@
 # =========================
-# Stage 1: Composer Vendor (DEBIAN, bukan Alpine!)
+# Stage 1: Composer Vendor
 # =========================
-FROM composer:2-bookworm AS vendor
+FROM composer:2 AS vendor
 
 WORKDIR /app
 
-# Install zip tools (cukup ini, JANGAN install extension PHP di sini)
+# Cuma butuh zip tools, BUKAN extension PHP
 RUN apt-get update && apt-get install -y \
     zip unzip git
-
 
 COPY composer.json composer.lock ./
 
@@ -25,26 +24,24 @@ FROM php:8.2-fpm
 
 WORKDIR /var/www
 
-# Install dependency + extension
+# Extension WAJIB di sini
 RUN apt-get update && apt-get install -y \
     git curl zip unzip libzip-dev \
     && docker-php-ext-install pdo pdo_mysql zip
 
 # Copy composer
-COPY --from=composer:2-bookworm /usr/bin/composer /usr/bin/composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy vendor dari stage sebelumnya
+# Copy vendor
 COPY --from=vendor /app/vendor /var/www/vendor
 
-# Copy semua project
+# Copy project
 COPY . .
 
-# Permission (jangan 777 brutal, tapi ya udah amanin dulu)
+# Permission
 RUN chmod -R 775 storage bootstrap/cache
 
-# =========================
-# Run Laravel (Railway ready)
-# =========================
+# Run Laravel (Railway)
 CMD php artisan config:cache && \
     php artisan route:cache && \
     php artisan migrate --force && \
