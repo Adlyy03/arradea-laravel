@@ -5,15 +5,16 @@ FROM php:8.2-cli AS vendor
 
 WORKDIR /app
 
-# Install dependency + extension (INI YANG PENTING)
 RUN apt-get update && apt-get install -y \
-    git unzip zip libzip-dev curl \
-    && docker-php-ext-install zip
+    git unzip zip curl libzip-dev libpng-dev libonig-dev \
+    && docker-php-ext-install zip mbstring gd
 
-# Install composer manual
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 COPY composer.json composer.lock ./
+
+# Tambahin memory biar ga mati mendadak
+ENV COMPOSER_MEMORY_LIMIT=-1
 
 RUN composer install \
     --no-dev \
