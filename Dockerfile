@@ -1,52 +1,51 @@
-### Production multi-stage Dockerfile for Railway
-
+# =========================
+# Stage 1: Composer Vendor
+# =========================
 FROM composer:2 AS vendor
+
 WORKDIR /app
+
+# Install ext-zip BIAR composer ga error
+RUN apt-get update && apt-get install -y \
+    libzip-dev zip unzip \
+    && docker-php-ext-install zip
+
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --prefer-dist --no-interaction --optimize-autoloader
 
+RUN composer install \
+    --no-dev \
+    --no-interaction \
+    --no-scripts \
+    --prefer-dist
+
+# =========================
+# Stage 2: App (PHP)
+# =========================
 FROM php:8.2-fpm
-ARG USER=www-data
-ENV PORT=8080
 
-# System deps
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    nginx \
-    git \
-    unzip \
-    libzip-dev \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libonig-dev \
-    libxml2-dev \
-    libicu-dev \
-    default-mysql-client \
-  && docker-php-ext-configure gd --with-jpeg --with-freetype \
-  && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql zip bcmath mbstring pcntl intl xml opcache \
-  && rm -rf /var/lib/apt/lists/*
+WORKDIR /var/www
 
-# Copy composer vendor from builder
-WORKDIR /var/www/html
-COPY --from=vendor /app/vendor ./vendor
+# Install dependency + extension
+RUN apt-get update && apt-get install -y \
+    git curl zip unzip libzip-dev \
+    && docker-php-ext-install pdo pdo_mysql zip
 
-# Copy app
-COPY . /var/www/html
-
-# Copy composer binary from composer image (for runtime fallback)
+# Copy composer dari image resmi
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Ensure permissions
-RUN chown -R ${USER}:${USER} /var/www/html/storage /var/www/html/bootstrap/cache \
-  && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Copy vendor dari stage sebelumnya
+COPY --from=vendor /app/vendor /var/www/vendor
 
-# Copy nginx template and entrypoint
-COPY docker/nginx/production.conf.template /etc/nginx/conf.d/default.conf.template
-COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
+# Copy semua project
+COPY . .
 
-EXPOSE 8080
+# Permission (biar ga error storage)
+RUN chmod -R 777 storage bootstrap/cache
 
-STOPSIGNAL SIGTERM
-
-CMD ["/usr/local/bin/entrypoint.sh"]
+# =========================
+# Run Laravel
+# =========================
+CMD php artisan config:cache && \
+    php artisan route:cache && \
+    php artisan migrate --force && \
+    php artisan serve --host=0.0.0.0 --port=${PORT}
