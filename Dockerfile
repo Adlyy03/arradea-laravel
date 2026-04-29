@@ -6,7 +6,7 @@ FROM composer:2 AS vendor
 WORKDIR /app
 
 # Install ext-zip BIAR composer ga error
-RUN apt-get update && apt-get install -y \
+RUN apk add --no-cache \
     libzip-dev zip unzip \
     && docker-php-ext-install zip
 
