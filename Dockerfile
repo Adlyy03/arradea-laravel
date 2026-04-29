@@ -1,11 +1,18 @@
 # =========================
-# Stage 1: Composer Vendor
+# Stage 1: Vendor (PHP + Composer)
 # =========================
-FROM composer:2 AS vendor
+FROM php:8.2-cli AS vendor
 
 WORKDIR /app
 
-# GAK USAH install apa-apa di sini (biar ga ribet Alpine vs Debian)
+# Install dependency + extension (INI YANG PENTING)
+RUN apt-get update && apt-get install -y \
+    git unzip zip libzip-dev curl \
+    && docker-php-ext-install zip
+
+# Install composer manual
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 COPY composer.json composer.lock ./
 
 RUN composer install \
@@ -15,13 +22,13 @@ RUN composer install \
     --prefer-dist
 
 # =========================
-# Stage 2: App (PHP)
+# Stage 2: App (PHP-FPM)
 # =========================
 FROM php:8.2-fpm
 
 WORKDIR /var/www
 
-# Install extension WAJIB di sini (Debian based → apt-get aman)
+# Install extension lagi untuk runtime
 RUN apt-get update && apt-get install -y \
     git curl zip unzip libzip-dev \
     && docker-php-ext-install pdo pdo_mysql zip
@@ -29,7 +36,7 @@ RUN apt-get update && apt-get install -y \
 # Copy composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
-# Copy vendor
+# Copy vendor dari stage vendor
 COPY --from=vendor /app/vendor /var/www/vendor
 
 # Copy project
