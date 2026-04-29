@@ -5,10 +5,10 @@ FROM composer:2-bookworm AS vendor
 
 WORKDIR /app
 
-# Install ext-zip biar composer ga error
+# Install zip tools (cukup ini, JANGAN install extension PHP di sini)
 RUN apt-get update && apt-get install -y \
-    libzip-dev zip unzip \
-    && docker-php-ext-install zip
+    zip unzip git
+
 
 COPY composer.json composer.lock ./
 
