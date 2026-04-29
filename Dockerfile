@@ -1,12 +1,12 @@
 # =========================
-# Stage 1: Composer Vendor
+# Stage 1: Composer Vendor (DEBIAN, bukan Alpine!)
 # =========================
-FROM composer:2 AS vendor
+FROM composer:2-bookworm AS vendor
 
 WORKDIR /app
 
-# Install ext-zip BIAR composer ga error
-RUN apk add --no-cache \
+# Install ext-zip biar composer ga error
+RUN apt-get update && apt-get install -y \
     libzip-dev zip unzip \
     && docker-php-ext-install zip
 
@@ -30,8 +30,8 @@ RUN apt-get update && apt-get install -y \
     git curl zip unzip libzip-dev \
     && docker-php-ext-install pdo pdo_mysql zip
 
-# Copy composer dari image resmi
-COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+# Copy composer
+COPY --from=composer:2-bookworm /usr/bin/composer /usr/bin/composer
 
 # Copy vendor dari stage sebelumnya
 COPY --from=vendor /app/vendor /var/www/vendor
@@ -39,13 +39,13 @@ COPY --from=vendor /app/vendor /var/www/vendor
 # Copy semua project
 COPY . .
 
-# Permission (biar ga error storage)
-RUN chmod -R 777 storage bootstrap/cache
+# Permission (jangan 777 brutal, tapi ya udah amanin dulu)
+RUN chmod -R 775 storage bootstrap/cache
 
 # =========================
-# Run Laravel
+# Run Laravel (Railway ready)
 # =========================
 CMD php artisan config:cache && \
     php artisan route:cache && \
     php artisan migrate --force && \
-    php artisan serve --host=0.0.0.0 --port=${PORT}
+    php -S 0.0.0.0:${PORT} -t public
