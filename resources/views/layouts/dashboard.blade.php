@@ -4,419 +4,242 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>@yield('title', 'Arradea Dashboard')</title>
-
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <!-- Tailwind CSS (CDN) + Alpine -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: { 50: '#f0f9ff', 100: '#e0f2fe', 200: '#bae6fd', 300: '#7dd3fc', 400: '#38bdf8', 500: '#0ea5e9', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' },
-                        accent: '#ff4d00',
-                    }
+                        primary: { 50:'#f0faf1',100:'#d8f3da',200:'#b3e6b8',300:'#7fd189',400:'#4db85a',500:'#72bf77',600:'#3fa348',700:'#2d7a34',800:'#255f2a',900:'#1a4220' },
+                        sage: '#72bf77',
+                        dark: '#0f1911',
+                    },
+                    fontFamily: { sans: ['Plus Jakarta Sans','sans-serif'], dm: ['DM Sans','sans-serif'] },
                 }
             }
         }
     </script>
     <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
     <style>
-        [x-cloak] { display: none !important; }
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .sidebar-active { @apply bg-primary-600 text-white shadow-xl shadow-primary-200; }
+        [x-cloak]{display:none!important}
+        *{-webkit-font-smoothing:antialiased}
+        ::-webkit-scrollbar{width:4px;height:4px}
+        ::-webkit-scrollbar-track{background:transparent}
+        ::-webkit-scrollbar-thumb{background:#2d4a30;border-radius:10px}
+        .sidebar-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;transition:all .2s;font-weight:600;font-size:.8125rem;color:#9db89f;cursor:pointer;text-decoration:none}
+        .sidebar-item:hover{background:rgba(114,191,119,.12);color:#b3e6b8}
+        .sidebar-item.active{background:rgba(114,191,119,.18);color:#72bf77}
+        .sidebar-item.active svg{color:#72bf77}
+        .sidebar-item svg{flex-shrink:0;width:18px;height:18px;transition:color .2s}
+        .topbar-glass{background:rgba(247,250,247,.9);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+        .stat-card{background:rgba(255,255,255,.8);border:1px solid rgba(114,191,119,.15);border-radius:16px;padding:20px;transition:all .25s;cursor:default}
+        .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(114,191,119,.15);border-color:rgba(114,191,119,.35)}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        .fade-up{animation:fadeUp .35s ease both}
+        .badge-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
     </style>
+    @stack('styles')
 </head>
-<body class="bg-gray-50 font-['Plus_Jakarta_Sans'] text-gray-900 overflow-x-hidden antialiased">
-    <div class="flex min-h-screen" x-data="{ sidebarOpen: window.innerWidth > 1024, openChatsModal: false }">
-        
-        <!-- SIDEBAR BACKDROP (Mobile Only) -->
-        <div 
-            x-show="sidebarOpen && window.innerWidth < 1024" 
-            x-transition:enter="transition ease-out duration-300"
-            x-transition:enter-start="opacity-0"
-            x-transition:enter-end="opacity-100"
-            x-transition:leave="transition ease-in duration-200"
-            x-transition:leave-start="opacity-100"
-            x-transition:leave-end="opacity-0"
-            @click="sidebarOpen = false"
-            class="fixed inset-0 bg-primary-900/40 backdrop-blur-sm z-50 lg:hidden"
-            x-cloak
-        ></div>
+<body class="bg-[#f2f5f2] font-sans text-gray-900 overflow-x-hidden" x-data="{ sideOpen: window.innerWidth >= 1024, chatModal: false }">
 
-        <!-- SIDEBAR -->
-        <aside 
-            :class="{
-                'w-80 translate-x-0': sidebarOpen,
-                'w-24 translate-x-0': !sidebarOpen && window.innerWidth >= 1024,
-                '-translate-x-full': !sidebarOpen && window.innerWidth < 1024
-            }"
-            class="bg-white border-r border-gray-100 flex-shrink-0 transition-all duration-300 flex flex-col fixed h-screen top-0 z-[60] overflow-y-auto overflow-x-hidden transform lg:sticky lg:top-0"
-        >
-            <div class="p-8 flex items-center justify-between">
-                <a href="/" class="text-3xl font-black text-primary-600 tracking-tighter" x-show="sidebarOpen || window.innerWidth < 1024">
-                    Arradea<span class="text-accent">.</span>
-                </a>
-                <span class="text-3xl font-black text-primary-600 mx-auto" x-show="!sidebarOpen && window.innerWidth >= 1024">A.</span>
-                
-                <!-- Close Button (Mobile Only) -->
-                <button @click="sidebarOpen = false" class="lg:hidden text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
-            </div>
+{{-- SIDEBAR OVERLAY mobile --}}
+<div x-show="sideOpen && window.innerWidth < 1024" @click="sideOpen=false" x-cloak class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"></div>
 
-            <nav class="flex-1 px-6 space-y-3 mt-4">
-                <!-- User Info -->
-                <div class="p-4 bg-gray-50 rounded-[2rem] mb-8" x-show="sidebarOpen || window.innerWidth < 1024">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-full bg-primary-600 flex items-center justify-center text-white font-black">
-                            {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
-                        </div>
-                        <div class="overflow-hidden">
-                            <p class="text-xs font-black truncate text-gray-900">{{ Auth::user()->name }}</p>
-                            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest">{{ Auth::user()->is_seller ? 'seller + buyer' : 'buyer' }}</p>
-                        </div>
-                    </div>
-                </div>
+{{-- SIDEBAR --}}
+<aside :class="sideOpen ? 'w-[220px]' : 'w-[60px] lg:w-[60px]'"
+    class="fixed top-0 left-0 h-screen z-50 flex flex-col transition-all duration-300 overflow-hidden"
+    style="background:linear-gradient(160deg,#0f1a11 0%,#152218 60%,#0f1a11 100%);border-right:1px solid rgba(114,191,119,.12)">
 
-                @if(Auth::user()->role === 'admin')
-                    <x-sidebar.admin />
-                @else
-                    <x-sidebar.buyer />
-                    @if(Auth::user()->is_seller)
-                        <div class="pt-6 mt-4 border-t border-gray-100">
-                            <p class="px-6 pb-3 text-[10px] uppercase font-black tracking-widest text-gray-400">Menu Seller</p>
-                            <x-sidebar.seller />
-                        </div>
-                    @endif
-                @endif
-            </nav>
-
-            <!-- Logout -->
-            <div class="p-8 mt-auto">
-                <form method="POST" action="{{ route('logout') }}">
-                    @csrf
-                    <button type="submit" class="w-full flex items-center justify-center gap-3 px-6 py-4 bg-red-50 text-red-600 rounded-3xl font-black text-sm hover:bg-red-100 transition-all">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                        <span x-show="sidebarOpen || window.innerWidth < 1024">Keluar</span>
-                    </button>
-                </form>
-            </div>
-        </aside>
-
-        <!-- MAIN LAYOUT -->
-        <main class="flex-1 min-h-screen relative w-full lg:transition-all lg:duration-300 pb-32 lg:pb-8">
-            <!-- TOP BAR -->
-            <header class="h-24 sticky top-0 z-40 bg-white/80 backdrop-blur-md px-6 lg:px-12 flex items-center justify-between border-b border-gray-100">
-                <div class="flex items-center gap-4 lg:gap-6">
-                    <button @click="sidebarOpen = !sidebarOpen" class="w-12 h-12 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-500 hover:bg-gray-100 transition shadow-sm border border-gray-100">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"/></svg>
-                    </button>
-                    <h2 class="text-lg lg:text-xl font-black text-gray-900 tracking-tight line-clamp-1">@yield('page_title', 'Dashboard Monitoring')</h2>
-                </div>
-                
-                <div class="flex items-center gap-4">
-                    <div class="relative w-72 hidden xl:block">
-                        <input type="text" placeholder="Cari di dashboard..." class="w-full h-12 bg-gray-50 border-none rounded-2xl px-6 py-2 text-sm focus:ring-2 focus:ring-primary-500 transition-all">
-                        <div class="absolute right-4 top-3 text-gray-400">
-                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                        </div>
-                    </div>
-                    <div class="w-11 lg:w-12 h-11 lg:h-12 rounded-2xl bg-gray-50 flex items-center justify-center text-gray-400 relative">
-                        <div class="absolute top-3 right-3 w-2 h-2 bg-accent rounded-full"></div>
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 01-6 0v-1m6 0H9"/></svg>
-                    </div>
-                </div>
-            </header>
-
-            <!-- PAGE CONTENT -->
-            <div class="p-6 lg:p-12">
-                @if(session('success'))
-                    <div class="mb-10 p-6 bg-green-50 border border-green-100 rounded-[2rem] flex items-center gap-4 text-green-700 shadow-sm animate-pulse">
-                        <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white">✓</div>
-                        <p class="font-bold">{{ session('success') }}</p>
-                    </div>
-                @endif
-
-                @yield('content')
-            </div>
-        </main>
-    <!-- BOTTOM NAVIGATION (Mobile Only) -->
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-xl border-t border-gray-100 shadow-[0_-10px_40px_rgba(0,0,0,0.05)] pb-safe rounded-t-3xl">
-        <div class="flex items-center justify-around px-2 py-3 mx-auto max-w-sm">
-            @if(Auth::user()->role !== 'admin')
-                <!-- Buyer Bottom Tabs -->
-                <a href="{{ route('buyer.dashboard') }}" class="group flex-1 flex flex-col items-center justify-center relative">
-                    <div class="p-2 rounded-2xl transition-all duration-300 {{ Request::is('buyer/dashboard') ? 'bg-primary-100 text-primary-600' : 'text-gray-400 group-hover:text-primary-500' }}">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                    </div>
-                    <span class="text-[9px] font-bold mt-1 transition-colors {{ Request::is('buyer/dashboard') ? 'text-primary-600' : 'text-gray-400' }}">Beranda</span>
-                </a>
-
-                <a href="{{ route('buyer.products') }}" class="group flex-1 flex flex-col items-center justify-center relative">
-                    <div class="p-2 rounded-2xl transition-all duration-300 {{ Request::is('products*') ? 'bg-primary-100 text-primary-600' : 'text-gray-400 group-hover:text-primary-500' }}">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 21H3V5a2 2 0 012-2h3.28a1 1 0 00.948-.684l1.498-4.493a1 1 0 011.502-.684l1.498 4.493a1 1 0 00.948.684H17a2 2 0 012 2v14zM9 9h6m-6 4h6m-5 5h4"/></svg>
-                    </div>
-                    <span class="text-[9px] font-bold mt-1 transition-colors {{ Request::is('products*') ? 'text-primary-600' : 'text-gray-400' }}">Belanja</span>
-                </a>
-
-                <a href="{{ route('buyer.cart') }}" class="group flex-1 flex flex-col items-center justify-center relative">
-                    <div class="p-2 rounded-2xl transition-all duration-300 relative {{ Request::is('cart*') ? 'bg-primary-100 text-primary-600' : 'text-gray-400 group-hover:text-primary-500' }}">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 6.146A1 1 0 006.7 21h10.6a1 1 0 00.894-.854L19 8m-6 7v6m-4-6v6"/></svg>
-                        @php $cartCount = Auth::user()->carts->count(); @endphp
-                        @if($cartCount > 0)
-                            <span class="absolute -top-1 -right-1 bg-accent text-white text-[9px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-black border-2 border-white">{{ $cartCount > 9 ? '9+' : $cartCount }}</span>
-                        @endif
-                    </div>
-                    <span class="text-[9px] font-bold mt-1 transition-colors {{ Request::is('cart*') ? 'text-primary-600' : 'text-gray-400' }}">Keranjang</span>
-                </a>
-
-                <a href="{{ route('buyer.orders') }}" class="group flex-1 flex flex-col items-center justify-center relative">
-                    <div class="p-2 rounded-2xl transition-all duration-300 relative {{ Request::is('orders*') ? 'bg-primary-100 text-primary-600' : 'text-gray-400 group-hover:text-primary-500' }}">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                        @php $pendingOrderCount = Auth::user()->orders()->whereIn('status', ['pending', 'accepted'])->count(); @endphp
-                        @if($pendingOrderCount > 0)
-                            <span class="absolute -top-1 -right-1 bg-accent text-white text-[9px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-black border-2 border-white">{{ $pendingOrderCount > 9 ? '9+' : $pendingOrderCount }}</span>
-                        @endif
-                    </div>
-                    <span class="text-[9px] font-bold mt-1 transition-colors {{ Request::is('orders*') ? 'text-primary-600' : 'text-gray-400' }}">Pesanan</span>
-                </a>
-
-                <button @click="openChatsModal = true" class="group flex-1 flex flex-col items-center justify-center relative">
-                    <div class="p-2 rounded-2xl transition-all duration-300 relative text-gray-400 group-hover:text-primary-500">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                        @php $unreadMessagesCount = \App\Models\Message::whereHas('chat', function ($q) { $q->where('buyer_id', Auth::id()); })->where('sender_id', '!=', Auth::id())->where('is_read', false)->count(); @endphp
-                        @if($unreadMessagesCount > 0)
-                            <span class="absolute -top-1 -right-1 bg-accent text-white text-[9px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-black border-2 border-white">{{ $unreadMessagesCount > 9 ? '9+' : $unreadMessagesCount }}</span>
-                        @endif
-                    </div>
-                    <span class="text-[9px] font-bold mt-1 text-gray-400">Chat</span>
-                </button>
-            @endif
-
-            @if(Auth::user()->is_seller)
-                <!-- Seller Bottom Tabs -->
-                <a href="{{ route('seller.dashboard') }}" class="group flex-1 flex flex-col items-center justify-center relative">
-                    <div class="p-2 rounded-2xl transition-all duration-300 {{ Request::is('seller/dashboard') ? 'bg-primary-100 text-primary-600' : 'text-gray-400 group-hover:text-primary-500' }}">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                    </div>
-                    <span class="text-[9px] font-bold mt-1 transition-colors {{ Request::is('seller/dashboard') ? 'text-primary-600' : 'text-gray-400' }}">Beranda</span>
-                </a>
-
-                <a href="/seller/products" class="group flex-1 flex flex-col items-center justify-center relative">
-                    <div class="p-2 rounded-2xl transition-all duration-300 {{ Request::is('seller/products*') ? 'bg-primary-100 text-primary-600' : 'text-gray-400 group-hover:text-primary-500' }}">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 11m8 4V21M4 11v10l8 4"/></svg>
-                    </div>
-                    <span class="text-[9px] font-bold mt-1 transition-colors {{ Request::is('seller/products*') ? 'text-primary-600' : 'text-gray-400' }}">Produk</span>
-                </a>
-
-                <a href="/seller/orders" class="group flex-1 flex flex-col items-center justify-center relative">
-                    <div class="p-2 rounded-2xl transition-all duration-300 relative {{ Request::is('seller/orders*') ? 'bg-primary-100 text-primary-600' : 'text-gray-400 group-hover:text-primary-500' }}">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                        @php $pendingOrderCount = Auth::user()->store ? Auth::user()->store->orders()->where('status', 'pending')->count() : 0; @endphp
-                        @if($pendingOrderCount > 0)
-                            <span class="absolute -top-1 -right-1 bg-accent text-white text-[9px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-black border-2 border-white">{{ $pendingOrderCount > 9 ? '9+' : $pendingOrderCount }}</span>
-                        @endif
-                    </div>
-                    <span class="text-[9px] font-bold mt-1 transition-colors {{ Request::is('seller/orders*') ? 'text-primary-600' : 'text-gray-400' }}">Order</span>
-                </a>
-
-                <a href="{{ route('seller.analytics') }}" class="group flex-1 flex flex-col items-center justify-center relative">
-                    <div class="p-2 rounded-2xl transition-all duration-300 {{ Request::is('seller/analytics*') ? 'bg-primary-100 text-primary-600' : 'text-gray-400 group-hover:text-primary-500' }}">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-                    </div>
-                    <span class="text-[9px] font-bold mt-1 transition-colors {{ Request::is('seller/analytics*') ? 'text-primary-600' : 'text-gray-400' }}">Data</span>
-                </a>
-
-                <a href="{{ route('seller.messages') }}" class="group flex-1 flex flex-col items-center justify-center relative">
-                    <div class="p-2 rounded-2xl transition-all duration-300 relative {{ Request::is('seller/messages*') ? 'bg-primary-100 text-primary-600' : 'text-gray-400 group-hover:text-primary-500' }}">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
-                        @php $unreadMessagesCount = \App\Models\Message::whereHas('chat', function ($q) { $q->where('seller_id', Auth::id()); })->where('sender_id', '!=', Auth::id())->where('is_read', false)->count(); @endphp
-                        @if($unreadMessagesCount > 0)
-                            <span class="absolute -top-1 -right-1 bg-accent text-white text-[9px] rounded-full min-w-[18px] h-[18px] flex items-center justify-center font-black border-2 border-white">{{ $unreadMessagesCount > 9 ? '9+' : $unreadMessagesCount }}</span>
-                        @endif
-                    </div>
-                    <span class="text-[9px] font-bold mt-1 transition-colors {{ Request::is('seller/messages*') ? 'text-primary-600' : 'text-gray-400' }}">Pesan</span>
-                </a>
-            @endif
+    {{-- Logo area --}}
+    <div class="flex items-center gap-3 px-4 py-5 border-b border-white/5">
+        <div class="w-8 h-8 rounded-xl bg-[#72bf77] flex items-center justify-center shadow-lg shadow-green-900/50 flex-shrink-0">
+            <span class="text-white font-black text-sm">A</span>
         </div>
-    </nav>
+        <span x-show="sideOpen" x-cloak class="text-white font-black text-lg tracking-tight truncate" style="text-shadow:0 1px 8px rgba(114,191,119,.3)">Arradea<span style="color:#72bf77">.</span></span>
+    </div>
 
-    <!-- BUYER CHATS MODAL -->
-    @if(Auth::check() && Auth::user()->role !== 'admin')
-    <div x-show="openChatsModal" x-transition:enter="transition ease-out duration-300" x-transition:leave="transition ease-in duration-200" @click="openChatsModal = false" class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm" x-cloak>
-        <div @click.stop class="absolute right-0 top-0 w-full md:w-96 h-full bg-white shadow-xl flex flex-col">
-            <!-- Header -->
-            <div class="flex items-center justify-between p-6 border-b border-gray-100">
-                <h3 class="text-lg font-black">💬 Chat Seller</h3>
-                <button @click="openChatsModal = false" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+    {{-- User info --}}
+    <div x-show="sideOpen" x-cloak class="mx-3 mt-4 mb-2 p-3 rounded-2xl" style="background:rgba(114,191,119,.08);border:1px solid rgba(114,191,119,.12)">
+        <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm flex-shrink-0" style="background:rgba(114,191,119,.25);color:#72bf77">
+                {{ strtoupper(substr(Auth::user()->name,0,1)) }}
             </div>
-
-            <!-- Chats List -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-2">
-                @php
-                    $chats = \App\Models\Chat::where('buyer_id', Auth::id())
-                        ->with(['order.product', 'order.store.user', 'messages'])
-                        ->latest()
-                        ->get();
-                @endphp
-
-                @forelse($chats as $chat)
-                    @php
-                        $unreadCount = $chat->messages()
-                            ->where('sender_id', '!=', Auth::id())
-                            ->where('is_read', false)
-                            ->count();
-                        $lastMessage = $chat->messages()->latest()->first();
-                    @endphp
-                    <a href="{{ route('chat.show', $chat->order) }}" @click="openChatsModal = false" class="block p-4 rounded-xl hover:bg-gray-50 border border-gray-100 transition">
-                        <div class="flex items-start gap-3">
-                            <div class="w-10 h-10 rounded-full bg-primary-100 flex items-center justify-center text-primary-600 font-black flex-shrink-0">
-                                {{ strtoupper(substr($chat->order->store->user->name, 0, 1)) }}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <p class="font-bold text-sm truncate">{{ $chat->order->store->user->name }}</p>
-                                <p class="text-xs text-gray-500 truncate">{{ $lastMessage->message ?? 'Mulai berbincang' }}</p>
-                            </div>
-                            @if($unreadCount > 0)
-                                <span class="bg-accent text-white text-[10px] font-black px-2 py-1 rounded-lg flex-shrink-0">{{ $unreadCount }}</span>
-                            @endif
-                        </div>
-                    </a>
-                @empty
-                    <div class="text-center py-12 text-gray-500">
-                        <p class="text-sm">Belum ada percakapan</p>
-                    </div>
-                @endforelse
+            <div class="overflow-hidden">
+                <p class="text-white text-xs font-bold truncate">{{ Auth::user()->name }}</p>
+                <p class="text-[10px] uppercase tracking-widest font-semibold truncate" style="color:#72bf77">
+                    @if(Auth::user()->role==='admin') Admin @elseif(Auth::user()->is_seller) Seller @else Buyer @endif
+                </p>
             </div>
         </div>
     </div>
-    @endif
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <script>
-        (function () {
-            const hasSwal = () => typeof window.Swal !== 'undefined';
 
-            const baseOptions = {
-                background: '#ffffff',
-                color: '#111827',
-                confirmButtonColor: '#0284c7',
-                customClass: {
-                    popup: 'rounded-3xl px-6 py-6',
-                    title: 'text-xl font-black',
-                    htmlContainer: 'text-sm font-medium text-gray-600',
-                    confirmButton: 'rounded-xl px-5 py-3 font-black',
-                    cancelButton: 'rounded-xl px-5 py-3 font-black',
-                },
-                buttonsStyling: false,
-            };
+    {{-- Nav --}}
+    <nav class="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
+        @if(Auth::user()->role === 'admin')
+            @include('components.sidebar.admin')
+        @else
+            @include('components.sidebar.buyer')
+            @if(Auth::user()->is_seller)
+                <div class="pt-3 mt-2" style="border-top:1px solid rgba(114,191,119,.1)">
+                    <p x-show="sideOpen" x-cloak class="text-[9px] uppercase font-black tracking-widest px-3 pb-2" style="color:#4a7a4e">Menu Seller</p>
+                    @include('components.sidebar.seller')
+                </div>
+            @endif
+        @endif
+    </nav>
 
-            window.arradeaPopup = {
-                _firePopup(config) {
-                    if (!hasSwal()) return;
-                    return window.Swal.fire({ ...baseOptions, ...config });
-                },
+    {{-- Logout --}}
+    <div class="p-3 border-t" style="border-color:rgba(114,191,119,.1)">
+        <form method="POST" action="{{ route('logout') }}">
+            @csrf
+            <button type="submit" class="sidebar-item w-full hover:!bg-red-900/30 hover:!text-red-400 group">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                <span x-show="sideOpen" x-cloak>Keluar</span>
+            </button>
+        </form>
+    </div>
+</aside>
 
-                success(message, title) {
-                    return this._firePopup({
-                        icon: 'success',
-                        iconColor: '#16a34a',
-                        title: title || '✅ Berhasil',
-                        text: message || 'Operasi berhasil dilakukan.',
-                        confirmButtonColor: '#16a34a',
-                        backdrop: 'rgba(22, 163, 74, 0.1)',
-                    });
-                },
+{{-- MAIN --}}
+<div :style="sideOpen ? 'margin-left:220px' : 'margin-left:60px'" class="min-h-screen flex flex-col transition-all duration-300 lg:block" style="margin-left:60px" x-init="$watch('sideOpen', v => {})">
 
-                error(message, title) {
-                    return this._firePopup({
-                        icon: 'error',
-                        iconColor: '#dc2626',
-                        title: title || '❌ Gagal',
-                        text: message || 'Terjadi kesalahan. Silakan coba lagi.',
-                        confirmButtonColor: '#dc2626',
-                        backdrop: 'rgba(220, 38, 38, 0.1)',
-                    });
-                },
+    {{-- TOPBAR --}}
+    <header class="sticky top-0 z-30 h-14 topbar-glass border-b border-green-100/40 flex items-center justify-between px-4 lg:px-6">
+        <div class="flex items-center gap-3">
+            <button @click="sideOpen=!sideOpen" class="w-8 h-8 rounded-xl bg-white border border-gray-200/60 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-sage/40 transition shadow-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"/></svg>
+            </button>
+            <div class="hidden sm:flex items-center gap-1.5 text-xs text-gray-400">
+                <a href="{{ url('/') }}" class="hover:text-sage transition">Beranda</a>
+                <span>/</span>
+                <span class="text-gray-700 font-semibold">@yield('page_title','Dashboard')</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <div class="hidden lg:flex relative">
+                <svg class="absolute left-3 top-2 w-3.5 h-3.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                <input type="text" placeholder="Cari..." class="h-8 w-48 bg-gray-100/80 border border-gray-200/60 rounded-lg pl-8 pr-3 text-xs focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage/50 transition">
+            </div>
+            <div class="w-8 h-8 rounded-xl bg-white border border-gray-200/60 flex items-center justify-center text-gray-400 relative shadow-sm hover:border-sage/40 transition cursor-pointer">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+            </div>
+            <div class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm" style="background:rgba(114,191,119,.2);color:#3fa348">
+                {{ strtoupper(substr(Auth::user()->name,0,1)) }}
+            </div>
+        </div>
+    </header>
 
-                danger(message, options) {
-                    const resolvedOptions = options || {};
-                    return this._firePopup({
-                        icon: 'warning',
-                        iconColor: '#dc2626',
-                        title: resolvedOptions.title || '⚠️ Perhatian',
-                        text: message || 'Aksi ini tidak bisa dibatalkan.',
-                        showCancelButton: true,
-                        confirmButtonText: resolvedOptions.confirmText || 'Ya, hapus',
-                        cancelButtonText: resolvedOptions.cancelText || 'Batal',
-                        confirmButtonColor: '#dc2626',
-                        backdrop: 'rgba(220, 38, 38, 0.1)',
-                        reverseButtons: true,
-                    }).then((result) => Boolean(result.isConfirmed));
-                },
+    {{-- CONTENT --}}
+    <main class="flex-1 p-4 lg:p-6">
+        @if(session('success'))
+            <div class="mb-4 flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-2xl text-green-700 text-sm font-semibold fade-up">
+                <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white flex-shrink-0">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                {{ session('success') }}
+            </div>
+        @endif
+        @if(session('error') || $errors->any())
+            <div class="mb-4 flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm font-semibold fade-up">
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                {{ session('error') ?? $errors->first() }}
+            </div>
+        @endif
+        @yield('content')
+    </main>
+</div>
 
-                info(message, title) {
-                    return this._firePopup({
-                        icon: 'info',
-                        iconColor: '#0284c7',
-                        title: title || 'ℹ️ Informasi',
-                        text: message || 'Perhatian informasi penting.',
-                        confirmButtonColor: '#0284c7',
-                        backdrop: 'rgba(2, 132, 199, 0.1)',
-                    });
-                },
+{{-- BOTTOM NAV mobile --}}
+<nav class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bg-white/95 backdrop-blur-xl border-t border-gray-100 shadow-xl">
+    <div class="flex items-center justify-around px-2 py-2 max-w-sm mx-auto">
+        @if(Auth::user()->role !== 'admin')
+            <a href="{{ route('buyer.dashboard') }}" class="flex flex-col items-center gap-0.5 flex-1 py-1 {{ Request::is('buyer/dashboard') ? 'text-sage' : 'text-gray-400' }} hover:text-sage transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                <span class="text-[9px] font-bold">Home</span>
+            </a>
+            <a href="{{ route('buyer.products') }}" class="flex flex-col items-center gap-0.5 flex-1 py-1 {{ Request::is('products*') ? 'text-sage' : 'text-gray-400' }} hover:text-sage transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                <span class="text-[9px] font-bold">Belanja</span>
+            </a>
+            <a href="{{ route('buyer.cart') }}" class="flex flex-col items-center gap-0.5 flex-1 py-1 relative {{ Request::is('cart*') ? 'text-sage' : 'text-gray-400' }} hover:text-sage transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 5h12"/></svg>
+                @php $cc=Auth::user()->carts->count(); @endphp
+                @if($cc>0)<span class="absolute top-0 right-3 bg-sage text-white text-[8px] font-black w-4 h-4 rounded-full flex items-center justify-center">{{$cc>9?'9+':$cc}}</span>@endif
+                <span class="text-[9px] font-bold">Keranjang</span>
+            </a>
+            <a href="{{ route('buyer.orders') }}" class="flex flex-col items-center gap-0.5 flex-1 py-1 {{ Request::is('orders*') ? 'text-sage' : 'text-gray-400' }} hover:text-sage transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                <span class="text-[9px] font-bold">Pesanan</span>
+            </a>
+            <button @click="chatModal=true" class="flex flex-col items-center gap-0.5 flex-1 py-1 text-gray-400 hover:text-sage transition">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                <span class="text-[9px] font-bold">Chat</span>
+            </button>
+        @else
+            <a href="/admin/dashboard" class="flex flex-col items-center gap-0.5 flex-1 py-1 text-sage"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg><span class="text-[9px] font-bold">Panel</span></a>
+            <a href="{{ route('admin.users.index') }}" class="flex flex-col items-center gap-0.5 flex-1 py-1 text-gray-400 hover:text-sage transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg><span class="text-[9px] font-bold">Users</span></a>
+            <a href="{{ route('admin.verifications.index') }}" class="flex flex-col items-center gap-0.5 flex-1 py-1 text-gray-400 hover:text-sage transition"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg><span class="text-[9px] font-bold">Verifikasi</span></a>
+        @endif
+    </div>
+</nav>
 
-                confirm(message, options) {
-                    const safeMessage = message || 'Apakah Anda yakin?';
-                    const resolvedOptions = options || {};
+{{-- CHAT MODAL (buyer) --}}
+@if(Auth::check() && Auth::user()->role !== 'admin')
+<div x-show="chatModal" @click="chatModal=false" x-cloak class="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm" style="display:none">
+    <div @click.stop class="absolute right-0 top-0 w-full sm:w-80 h-full bg-white shadow-2xl flex flex-col">
+        <div class="flex items-center justify-between p-4 border-b border-gray-100">
+            <h3 class="font-black text-gray-900">Chat Seller</h3>
+            <button @click="chatModal=false" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-3 space-y-2">
+            @php
+                $chats = \App\Models\Chat::where('buyer_id', Auth::id())->with(['order.product','order.store.user','messages'])->latest()->get();
+            @endphp
+            @forelse($chats as $chat)
+                @php
+                    $unread = $chat->messages()->where('sender_id','!=',Auth::id())->where('is_read',false)->count();
+                    $last   = $chat->messages()->latest()->first();
+                @endphp
+                <a href="{{ route('chat.show', $chat->order) }}" @click="chatModal=false" class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 border border-gray-100 transition">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center font-bold text-sm flex-shrink-0" style="background:rgba(114,191,119,.15);color:#3fa348">
+                        {{ strtoupper(substr($chat->order->store->user->name??'?',0,1)) }}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="font-bold text-xs text-gray-900 truncate">{{ $chat->order->store->user->name ?? '-' }}</p>
+                        <p class="text-[11px] text-gray-400 truncate">{{ $last->message ?? 'Mulai chat' }}</p>
+                    </div>
+                    @if($unread>0)<span class="bg-sage text-white text-[9px] font-black px-1.5 py-0.5 rounded-full flex-shrink-0">{{$unread}}</span>@endif
+                </a>
+            @empty
+                <div class="flex flex-col items-center justify-center h-40 text-gray-400">
+                    <svg class="w-10 h-10 mb-2 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    <p class="text-sm font-medium">Belum ada percakapan</p>
+                </div>
+            @endforelse
+        </div>
+    </div>
+</div>
+@endif
 
-                    if (!hasSwal()) {
-                        return Promise.resolve(false);
-                    }
-
-                    return window.Swal.fire({
-                        ...baseOptions,
-                        icon: resolvedOptions.icon || 'warning',
-                        iconColor: resolvedOptions.iconColor || '#ea580c',
-                        title: resolvedOptions.title || '🤔 Konfirmasi',
-                        text: safeMessage,
-                        showCancelButton: true,
-                        confirmButtonText: resolvedOptions.confirmText || 'Ya, lanjut',
-                        cancelButtonText: resolvedOptions.cancelText || 'Batal',
-                        confirmButtonColor: resolvedOptions.confirmColor || '#0284c7',
-                        backdrop: 'rgba(234, 88, 12, 0.1)',
-                        reverseButtons: true,
-                    }).then((result) => Boolean(result.isConfirmed));
-                },
-            };
-
-            window.confirmSubmit = function (event, message) {
-                if (event) {
-                    event.preventDefault();
-                }
-
-                const form = event && event.target ? event.target : null;
-                if (!form) {
-                    return false;
-                }
-
-                window.arradeaPopup.confirm(message).then((isConfirmed) => {
-                    if (isConfirmed) {
-                        form.submit();
-                    }
-                });
-
-                return false;
-            };
-        })();
-    </script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+(function(){
+    const base={background:'#fff',color:'#111827',customClass:{popup:'rounded-2xl shadow-2xl',title:'text-lg font-black',htmlContainer:'text-sm text-gray-500',confirmButton:'rounded-xl px-5 py-2.5 font-bold text-sm',cancelButton:'rounded-xl px-5 py-2.5 font-bold text-sm'},buttonsStyling:false};
+    window.arradeaPopup={
+        _fire(c){return typeof Swal!=='undefined'?Swal.fire({...base,...c}):null},
+        success(msg,title){return this._fire({icon:'success',iconColor:'#72bf77',title:title||'✅ Berhasil',text:msg,confirmButtonColor:'#72bf77'})},
+        error(msg,title){return this._fire({icon:'error',iconColor:'#dc2626',title:title||'❌ Gagal',text:msg,confirmButtonColor:'#dc2626'})},
+        confirm(msg,opts={}){if(typeof Swal==='undefined')return Promise.resolve(false);return Swal.fire({...base,icon:'warning',iconColor:'#f59e0b',title:opts.title||'Konfirmasi',text:msg||'Lanjutkan?',showCancelButton:true,confirmButtonText:opts.confirmText||'Ya, lanjut',cancelButtonText:'Batal',confirmButtonColor:opts.confirmColor||'#72bf77',reverseButtons:true}).then(r=>r.isConfirmed)},
+        danger(msg,opts={}){if(typeof Swal==='undefined')return Promise.resolve(false);return Swal.fire({...base,icon:'warning',iconColor:'#dc2626',title:opts.title||'⚠️ Hapus?',text:msg,showCancelButton:true,confirmButtonText:opts.confirmText||'Ya, hapus',cancelButtonText:'Batal',confirmButtonColor:'#dc2626',reverseButtons:true}).then(r=>r.isConfirmed)}
+    };
+    window.confirmSubmit=function(e,msg){e&&e.preventDefault();const f=e&&e.target;if(!f)return false;window.arradeaPopup.danger(msg).then(ok=>{if(ok)f.submit()});return false};
+})();
+</script>
+@stack('scripts')
 </body>
 </html>

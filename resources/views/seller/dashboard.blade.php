@@ -1,189 +1,170 @@
 @extends('layouts.dashboard')
-
-@section('title', 'Dashboard Seller - Arradea')
-@section('page_title', 'Performa Toko Penjual')
+@section('title', 'Dashboard Seller — Arradea')
+@section('page_title', 'Dashboard Seller')
 
 @section('content')
 @php
     $store        = Auth::user()->store;
     $seller       = Auth::user();
     $storeStatus  = $seller->store_status ?? 'closed';
-    $pendingCount = $store ? $store->orders()->where('status', 'pending')->count() : 0;
-    $doneCount    = $store ? $store->orders()->where('status', 'done')->count() : 0;
-    $recentOrders = $store ? $store->orders()->with(['user', 'product'])->latest()->take(5)->get() : collect();
+    $pendingCount = $store ? $store->orders()->where('status','pending')->count() : 0;
+    $acceptedCount= $store ? $store->orders()->where('status','accepted')->count() : 0;
+    $doneCount    = $store ? $store->orders()->where('status','done')->count() : 0;
+    $productCount = $store ? $store->products()->count() : 0;
+    $recentOrders = $store ? $store->orders()->with(['user','product'])->latest()->take(5)->get() : collect();
 @endphp
-<div class="space-y-6 lg:space-y-12">
-    <!-- Header Summary -->
-    <div class="bg-primary-900 p-8 lg:p-10 lg:p-20 rounded-2xl lg:rounded-3xl lg:rounded-2xl lg:rounded-3xl lg:rounded-[4rem] text-white overflow-hidden relative shadow-2xl">
-        <div class="absolute -top-32 -right-32 w-80 h-80 bg-white/10 rounded-full blur-3xl opacity-40"></div>
-        <div class="absolute -bottom-32 -left-32 w-80 h-80 bg-accent rounded-full blur-3xl opacity-20"></div>
 
-        <div class="relative z-10 flex flex-col lg:flex-row justify-between items-center gap-6 lg:gap-12">
-            <div class="space-y-4 text-center lg:text-left">
-                <p class="text-[10px] font-black uppercase tracking-widest text-primary-200">Selayang Pandang</p>
-                <h1 class="text-4xl lg:text-6xl font-black tracking-tighter leading-tight lg:leading-none mb-2 lg:mb-4">Toko <span class="text-accent underline underline-offset-4 lg:underline-offset-8">{{ $store->name ?? 'Anda' }}</span>.</h1>
-                <h3 class="text-4xl lg:text-6xl font-black text-white/95">{{ $store ? $store->products()->count() : 0 }} Produk</h3>
-                <p class="pt-2 text-sm font-black uppercase tracking-widest {{ $storeStatus === 'open' ? 'text-green-300' : 'text-gray-300' }}">
-                    Status Toko: {{ $storeStatus === 'open' ? 'Buka' : 'Tutup' }}
-                </p>
-                <div class="flex items-center gap-4 pt-4 text-sm font-bold text-green-300">
-                    <span class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center text-white">↑</span>
-                    <span>{{ $doneCount }} Pesanan berhasil diselesaikan</span>
-                </div>
-                <div class="pt-2">
-                    <form method="POST" action="{{ route('seller.store-status') }}">
-                        @csrf
-                        <button type="submit" class="px-5 py-3 rounded-2xl font-black text-sm {{ $storeStatus === 'open' ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-700 text-white hover:bg-gray-800' }} transition-all">
-                            {{ $storeStatus === 'open' ? 'Tutup Toko' : 'Buka Toko' }}
-                        </button>
-                    </form>
-                </div>
-                <form method="POST" action="{{ route('seller.store-schedule') }}" class="mt-5 grid gap-4 max-w-md">
+<div class="space-y-5 fade-up">
+
+    {{-- Hero Banner --}}
+    <div class="relative overflow-hidden rounded-3xl p-6 lg:p-8" style="background:linear-gradient(135deg,#0f1a11 0%,#1e3a22 50%,#0f1a11 100%)">
+        <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-10" style="background:#72bf77;filter:blur(60px)"></div>
+        <div class="absolute -bottom-20 -left-10 w-48 h-48 rounded-full opacity-10" style="background:#4db85a;filter:blur(40px)"></div>
+        <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+            <div class="text-white">
+                <p class="text-[10px] font-black uppercase tracking-widest mb-2" style="color:#72bf77">Seller Center</p>
+                <h1 class="text-2xl lg:text-3xl font-black tracking-tight">
+                    {{ $store->name ?? 'Toko '.$seller->name }}
+                    <span class="inline-flex items-center gap-1.5 ml-2 px-3 py-1 rounded-full text-xs font-black {{ $storeStatus==='open' ? '' : '' }}" style="{{ $storeStatus==='open' ? 'background:rgba(34,197,94,.2);color:#4ade80' : 'background:rgba(255,255,255,.1);color:#9ca3af' }}">
+                        <span class="w-1.5 h-1.5 rounded-full {{ $storeStatus==='open' ? 'bg-green-400' : 'bg-gray-500' }} animate-pulse"></span>
+                        {{ $storeStatus==='open' ? 'Buka' : 'Tutup' }}
+                    </span>
+                </h1>
+                <p class="text-white/50 text-sm mt-1">{{ now()->locale('id')->isoFormat('dddd, D MMMM Y') }}</p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+                <form method="POST" action="{{ route('seller.store-status') }}" class="inline">
                     @csrf
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        <label class="block text-left">
-                            <span class="block text-[10px] font-black uppercase tracking-widest text-primary-200 mb-2">Jam Buka</span>
-                            <input type="time" name="open_time" value="{{ old('open_time', $seller->open_time) }}" class="w-full rounded-2xl border-0 bg-white/10 text-white placeholder-white/50 focus:ring-2 focus:ring-white/40 px-4 py-3 font-semibold">
-                            @error('open_time')
-                                <span class="mt-1 block text-xs font-bold text-red-300">{{ $message }}</span>
-                            @enderror
-                        </label>
-                        <label class="block text-left">
-                            <span class="block text-[10px] font-black uppercase tracking-widest text-primary-200 mb-2">Jam Tutup</span>
-                            <input type="time" name="close_time" value="{{ old('close_time', $seller->close_time) }}" class="w-full rounded-2xl border-0 bg-white/10 text-white placeholder-white/50 focus:ring-2 focus:ring-white/40 px-4 py-3 font-semibold">
-                            @error('close_time')
-                                <span class="mt-1 block text-xs font-bold text-red-300">{{ $message }}</span>
-                            @enderror
-                        </label>
-                    </div>
-                    <label class="inline-flex items-center gap-3 text-sm font-bold text-white/90">
-                        <input type="checkbox" name="auto_schedule" value="1" {{ old('auto_schedule', $seller->auto_schedule ?? true) ? 'checked' : '' }} class="rounded border-white/20 bg-white/10 text-green-500 focus:ring-green-400">
-                        Aktifkan Auto Schedule
-                    </label>
-                    <p class="text-xs font-bold text-primary-200">
-                        Jadwal saat ini: {{ $seller->open_time ? substr($seller->open_time, 0, 5) : '--:--' }} - {{ $seller->close_time ? substr($seller->close_time, 0, 5) : '--:--' }}
-                        (Auto: {{ ($seller->auto_schedule ?? true) ? 'Aktif' : 'Nonaktif' }})
-                    </p>
-                    <button type="submit" class="w-full sm:w-max px-5 py-3 rounded-2xl font-black text-sm bg-white text-primary-900 hover:bg-gray-100 transition-all">
-                        Simpan Jadwal
+                    <button type="submit" class="px-4 py-2 rounded-xl text-sm font-bold transition hover:opacity-90"
+                        style="{{ $storeStatus==='open' ? 'background:rgba(220,38,38,.2);color:#f87171;border:1px solid rgba(220,38,38,.3)' : 'background:rgba(114,191,119,.2);color:#72bf77;border:1px solid rgba(114,191,119,.3)' }}">
+                        {{ $storeStatus==='open' ? '🔴 Tutup Toko' : '🟢 Buka Toko' }}
                     </button>
                 </form>
+                <a href="{{ route('seller.products.create') }}" class="px-4 py-2 rounded-xl text-sm font-bold text-white transition hover:opacity-90" style="background:#72bf77">+ Tambah Produk</a>
             </div>
+        </div>
 
-            <div class="grid grid-cols-2 gap-4 w-full lg:w-max">
-                <div class="p-6 lg:p-8 bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl lg:rounded-[2.5rem] text-center">
-                    <p class="text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-primary-200 mb-1">Sukses</p>
-                    <p class="text-3xl lg:text-4xl font-black leading-none">{{ $doneCount }}</p>
-                </div>
-                <div class="p-6 lg:p-8 bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl lg:rounded-[2.5rem] text-center">
-                    <p class="text-[9px] lg:text-[10px] font-black uppercase tracking-widest text-primary-200 mb-1">Pending</p>
-                    <p class="text-3xl lg:text-4xl font-black leading-none">{{ $pendingCount }}</p>
-                </div>
+        {{-- Quick stats --}}
+        <div class="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-3 mt-6 pt-6" style="border-top:1px solid rgba(255,255,255,.08)">
+            <div class="text-center text-white">
+                <p class="text-2xl font-black">{{ $productCount }}</p>
+                <p class="text-[10px] uppercase tracking-widest font-bold mt-0.5" style="color:#72bf77">Produk</p>
+            </div>
+            <div class="text-center text-white">
+                <p class="text-2xl font-black text-amber-400">{{ $pendingCount }}</p>
+                <p class="text-[10px] uppercase tracking-widest font-bold mt-0.5" style="color:#72bf77">Menunggu</p>
+            </div>
+            <div class="text-center text-white">
+                <p class="text-2xl font-black text-blue-400">{{ $acceptedCount }}</p>
+                <p class="text-[10px] uppercase tracking-widest font-bold mt-0.5" style="color:#72bf77">Diproses</p>
+            </div>
+            <div class="text-center text-white">
+                <p class="text-2xl font-black text-green-400">{{ $doneCount }}</p>
+                <p class="text-[10px] uppercase tracking-widest font-bold mt-0.5" style="color:#72bf77">Selesai</p>
             </div>
         </div>
     </div>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div class="bg-white p-5 lg:p-10 rounded-2xl lg:rounded-3xl lg:rounded-[3rem] shadow-sm border border-gray-100 space-y-6">
-            <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-2xl flex items-center justify-center text-3xl">📦</div>
+    {{-- Pending Alert --}}
+    @if($pendingCount > 0)
+    <div class="flex items-center justify-between p-4 bg-amber-50 border border-amber-200 rounded-2xl">
+        <div class="flex items-center gap-3">
+            <span class="text-xl">⚡</span>
             <div>
-                <p class="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Produk Aktif</p>
-                <h4 class="text-4xl font-black text-gray-900 leading-none">{{ $store ? $store->products()->count() : 0 }} Item</h4>
-                <a href="/seller/products" class="inline-block pt-4 text-sm font-bold text-primary-600 hover:translate-x-1 transition-all">Kelola Produk &rarr;</a>
+                <p class="text-sm font-black text-amber-800">{{ $pendingCount }} Pesanan Menunggu Konfirmasi</p>
+                <p class="text-xs text-amber-600">Segera proses agar pembeli tidak menunggu lama.</p>
             </div>
         </div>
-        <div class="bg-white p-5 lg:p-10 rounded-2xl lg:rounded-3xl lg:rounded-[3rem] shadow-sm border border-gray-100 space-y-6">
-            <div class="w-16 h-16 bg-orange-50 text-orange-500 rounded-2xl flex items-center justify-center text-3xl">🕒</div>
+        <a href="{{ route('seller.orders') }}" class="px-4 py-2 rounded-xl text-xs font-bold text-white flex-shrink-0" style="background:#72bf77">Proses Sekarang</a>
+    </div>
+    @endif
+
+    {{-- Store Schedule --}}
+    <div class="bg-white rounded-2xl border border-gray-100 p-5">
+        <h2 class="text-sm font-black text-gray-700 uppercase tracking-widest mb-4">⏰ Jadwal Toko</h2>
+        <form method="POST" action="{{ route('seller.store-schedule') }}" class="flex flex-wrap items-end gap-4">
+            @csrf
             <div>
-                <p class="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Order Menunggu</p>
-                <h4 class="text-4xl font-black text-gray-900 leading-none">{{ $pendingCount }} Order</h4>
-                <a href="/seller/orders" class="inline-block pt-4 text-sm font-bold text-accent hover:translate-x-1 transition-all">Segera Proses &rarr;</a>
+                <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Jam Buka</label>
+                <input type="time" name="open_time" value="{{ old('open_time', $seller->open_time) }}"
+                    class="h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-medium focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)">
+                @error('open_time')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
             </div>
-        </div>
-        <div class="bg-white p-5 lg:p-10 rounded-2xl lg:rounded-3xl lg:rounded-[3rem] shadow-sm border border-gray-100 space-y-6">
-            <div class="w-16 h-16 bg-green-50 text-green-500 rounded-2xl flex items-center justify-center text-3xl">✅</div>
             <div>
-                <p class="text-xs font-black uppercase tracking-widest text-gray-400 mb-1">Pesanan Selesai</p>
-                <h4 class="text-4xl font-black text-gray-900 leading-none">{{ $doneCount }} Selesai</h4>
-                <p class="pt-4 text-sm font-bold text-gray-400 uppercase tracking-widest">Total Riwayat Sukses</p>
+                <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Jam Tutup</label>
+                <input type="time" name="close_time" value="{{ old('close_time', $seller->close_time) }}"
+                    class="h-10 bg-gray-50 border border-gray-200 rounded-xl px-3 text-sm font-medium focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)">
+                @error('close_time')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
             </div>
-        </div>
+            <label class="flex items-center gap-2 text-sm font-medium text-gray-700">
+                <input type="checkbox" name="auto_schedule" value="1" {{ old('auto_schedule', $seller->auto_schedule ?? true) ? 'checked' : '' }}
+                    class="w-4 h-4 rounded border-gray-300 text-[#72bf77]">
+                Auto Schedule
+            </label>
+            <button type="submit" class="h-10 px-5 rounded-xl text-sm font-bold text-white transition hover:opacity-90" style="background:#72bf77">Simpan</button>
+        </form>
     </div>
 
-    <!-- Recent Orders Table (dari DB nyata) -->
-    <div class="space-y-8">
-        <div class="flex justify-between items-end px-4">
-            <div>
-                <h2 class="text-3xl font-black text-gray-900 tracking-tight">Pesanan <span class="text-primary-600">Terbaru</span>.</h2>
-                <p class="text-gray-400 font-medium">Monitoring transaksi masuk dari pelanggan Anda.</p>
-            </div>
-            <a href="/seller/orders" class="text-sm font-black text-primary-600 uppercase tracking-widest border-b-2 border-primary-600 pb-1">Lihat Semua</a>
+    {{-- Recent Orders --}}
+    <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+            <h2 class="text-sm font-black text-gray-700 uppercase tracking-widest">Pesanan Terbaru</h2>
+            <a href="{{ route('seller.orders') }}" class="text-xs font-bold" style="color:#72bf77">Lihat Semua →</a>
         </div>
+        @php
+            $statusMap = ['pending'=>['Menunggu','bg-amber-100 text-amber-700'],'accepted'=>['Diproses','bg-blue-100 text-blue-700'],'done'=>['Selesai','bg-green-100 text-green-700'],'rejected'=>['Ditolak','bg-red-100 text-red-700'],'dibatalkan'=>['Dibatalkan','bg-gray-100 text-gray-500']];
+        @endphp
+        @forelse($recentOrders as $order)
+        @php [$statusLabel,$statusClass] = $statusMap[$order->status] ?? [$order->status,'bg-gray-100 text-gray-600']; @endphp
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-50/60 hover:bg-gray-50/40 transition">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black flex-shrink-0" style="background:rgba(114,191,119,.1);color:#3fa348">{{ strtoupper(substr($order->user->name??'?',0,1)) }}</div>
+                <div class="min-w-0">
+                    <p class="text-sm font-bold text-gray-900 truncate">{{ $order->user->name ?? 'Pembeli' }}</p>
+                    <p class="text-xs text-gray-400 truncate">{{ $order->product->name ?? 'Produk' }} · {{ $order->created_at->diffForHumans() }}</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 ml-3 flex-shrink-0">
+                <p class="text-sm font-black text-gray-900 hidden sm:block">Rp {{ number_format($order->total_price,0,',','.') }}</p>
+                <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase {{ $statusClass }}">{{ $statusLabel }}</span>
+                @if($order->status === 'pending')
+                <form method="POST" action="/web/order/{{ $order->id }}/status" class="inline">
+                    @csrf @method('PUT')
+                    <input type="hidden" name="status" value="accepted">
+                    <button type="submit" class="px-3 py-1.5 rounded-lg text-[10px] font-black text-white transition hover:opacity-80" style="background:#72bf77">Proses</button>
+                </form>
+                @endif
+            </div>
+        </div>
+        @empty
+        <div class="flex flex-col items-center justify-center py-16 text-center">
+            <span class="text-4xl mb-3">📭</span>
+            <p class="font-bold text-gray-700">Belum ada pesanan</p>
+            <p class="text-sm text-gray-400 mt-1">Pesanan dari pembeli akan muncul di sini.</p>
+        </div>
+        @endforelse
+    </div>
 
-        <div class="bg-white rounded-2xl lg:rounded-3xl lg:rounded-[3.5rem] shadow-sm border border-gray-100 overflow-hidden">
-            <div class="overflow-x-auto">
-            <table class="w-full text-left">
-                <thead class="bg-gray-50/50 text-[10px] font-black tracking-widest uppercase text-gray-400">
-                    <tr>
-                        <th class="px-5 lg:px-10 py-8">Pelanggan</th>
-                        <th class="px-5 lg:px-10 py-8">Produk Dipesan</th>
-                        <th class="px-5 lg:px-10 py-8">Total Bayar</th>
-                        <th class="px-5 lg:px-10 py-8">Status</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-gray-50">
-                    @forelse($recentOrders as $order)
-                        <tr class="hover:bg-gray-50/50 transition">
-                            <td class="px-5 lg:px-10 py-8">
-                                <div class="flex items-center gap-4">
-                                    <div class="w-12 h-12 rounded-full bg-primary-100 text-primary-600 flex items-center justify-center text-sm font-black">
-                                        {{ strtoupper(substr($order->user->name ?? '?', 0, 1)) }}
-                                    </div>
-                                    <div>
-                                        <p class="font-black text-gray-900">{{ $order->user->name ?? 'Pembeli' }}</p>
-                                        <p class="text-[10px] font-bold text-gray-400 tracking-widest uppercase">ARRD-{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}</p>
-                                    </div>
-                                </div>
-                            </td>
-                            <td class="px-5 lg:px-10 py-8">
-                                <p class="font-bold text-gray-900 text-sm">{{ $order->product->name ?? 'Produk' }}</p>
-                                <p class="text-[10px] text-gray-400 uppercase tracking-widest">Qty: {{ $order->quantity ?? 1 }}</p>
-                            </td>
-                            <td class="px-5 lg:px-10 py-8 text-lg font-black text-gray-900">Rp {{ number_format($order->total_price, 0, ',', '.') }}</td>
-                            <td class="px-5 lg:px-10 py-8">
-                                @php
-                                    $statusColors = [
-                                        'pending'  => 'bg-amber-100 text-amber-700',
-                                        'accepted' => 'bg-blue-100 text-blue-700',
-                                        'done'     => 'bg-green-100 text-green-700',
-                                        'rejected' => 'bg-red-100 text-red-700',
-                                    ];
-                                    $statusLabels = [
-                                        'pending'  => 'Menunggu',
-                                        'accepted' => 'Diproses',
-                                        'done'     => 'Selesai',
-                                        'rejected' => 'Ditolak',
-                                    ];
-                                @endphp
-                                <span class="{{ $statusColors[$order->status] ?? 'bg-gray-100 text-gray-500' }} px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest">
-                                    {{ $statusLabels[$order->status] ?? $order->status }}
-                                </span>
-                            </td>
-                        </tr>
-                    @empty
-                        <tr>
-                            <td colspan="4" class="px-10 lg:px-20 py-12 lg:py-24 text-center text-gray-400 font-bold">
-                                <div class="text-3xl lg:text-5xl mb-4">📭</div>
-                                <p class="text-xl text-gray-900 font-black">Belum Ada Pesanan Masuk.</p>
-                                <p class="text-sm font-medium mt-2">Pesanan dari pembeli akan muncul di sini secara otomatis.</p>
-                            </td>
-                        </tr>
-                    @endforelse
-                </tbody>
-            </table>
-            </div>
-        </div>
+    {{-- Quick Links --}}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <a href="{{ route('seller.products') }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl text-center bg-white border border-gray-100 hover:border-green-200 hover:shadow-md transition group">
+            <span class="text-2xl group-hover:scale-110 transition">📦</span>
+            <span class="text-xs font-black text-gray-700">Produk Saya</span>
+            <span class="text-[10px] font-bold" style="color:#72bf77">{{ $productCount }} item</span>
+        </a>
+        <a href="{{ route('seller.orders') }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl text-center bg-white border border-gray-100 hover:border-green-200 hover:shadow-md transition group">
+            <span class="text-2xl group-hover:scale-110 transition">🛒</span>
+            <span class="text-xs font-black text-gray-700">Order Masuk</span>
+            @if($pendingCount > 0)<span class="text-[10px] font-black text-amber-500">{{ $pendingCount }} pending</span>@endif
+        </a>
+        <a href="{{ route('seller.analytics') }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl text-center bg-white border border-gray-100 hover:border-green-200 hover:shadow-md transition group">
+            <span class="text-2xl group-hover:scale-110 transition">📊</span>
+            <span class="text-xs font-black text-gray-700">Analitik</span>
+        </a>
+        <a href="{{ route('seller.settings') }}" class="flex flex-col items-center gap-2 p-4 rounded-2xl text-center bg-white border border-gray-100 hover:border-green-200 hover:shadow-md transition group">
+            <span class="text-2xl group-hover:scale-110 transition">⚙️</span>
+            <span class="text-xs font-black text-gray-700">Pengaturan</span>
+        </a>
     </div>
 </div>
 @endsection
