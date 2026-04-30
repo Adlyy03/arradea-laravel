@@ -121,7 +121,7 @@
                         class="w-full h-12 rounded-2xl font-black text-sm text-white transition hover:opacity-90 active:scale-95 flex items-center justify-center gap-2 shadow-lg"
                         style="background:#72bf77;box-shadow:0 8px 24px rgba(114,191,119,.3)">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                    Terima & Proses Order
+                    Terima &amp; Proses Order
                 </button>
             </form>
             <form action="/web/order/{{ $order->id }}/status" method="POST">

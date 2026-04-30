@@ -21,9 +21,9 @@
                 <p class="text-white/50 text-sm mt-1.5">Tambah, edit, dan pantau stok produk toko Anda secara real-time.</p>
             </div>
             <div class="flex items-center gap-3 w-full lg:w-auto">
-                <a href="/seller/products/create"
+                <a href="{{ route('seller.products.create') }}"
                    class="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold text-white transition hover:opacity-90 active:scale-95"
-                   style="background:#72bf77">
+                   style="background:#72bf77;transition:all 0.18s cubic-bezier(0.4,0,0.2,1)">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
                     Produk Baru
                 </a>
@@ -151,21 +151,19 @@
                         </td>
                         <td class="px-5 py-4">
                             <div class="flex items-center gap-2">
-                                <a href="/seller/products/{{ $product->id }}/edit"
+                                <a href="{{ route('seller.products.edit', $product->id) }}"
                                    class="w-9 h-9 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-gray-400 hover:bg-green-500 hover:text-white hover:border-transparent hover:scale-110 active:scale-95 transition-all"
+                                   style="transition:all 0.18s cubic-bezier(0.4,0,0.2,1)"
                                    title="Edit Produk">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                 </a>
-                                <form action="/web/product/{{ $product->id }}" method="POST"
-                                      onsubmit="return confirmSubmit(event, @js('Yakin hapus produk ini? Tindakan tidak bisa dibatalkan.'))">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit"
-                                            class="w-9 h-9 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-gray-400 hover:bg-red-500 hover:text-white hover:border-transparent hover:scale-110 active:scale-95 transition-all"
-                                            title="Hapus Produk">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                                    </button>
-                                </form>
+                                <button type="button"
+                                        onclick="openDeleteModal({{ $product->id }}, @js($product->name))"
+                                        class="w-9 h-9 bg-gray-50 border border-gray-200 rounded-xl flex items-center justify-center text-gray-400 hover:bg-red-500 hover:text-white hover:border-transparent hover:scale-110 active:scale-95 transition-all"
+                                        style="transition:all 0.18s cubic-bezier(0.4,0,0.2,1)"
+                                        title="Hapus Produk">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -208,14 +206,11 @@
                     </div>
                     <p class="product-price text-sm font-black text-gray-900 mt-1">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
                     <div class="flex items-center gap-2 mt-2">
-                        <a href="/seller/products/{{ $product->id }}/edit"
+                        <a href="{{ route('seller.products.edit', $product->id) }}"
                            class="px-3 py-1.5 rounded-lg text-xs font-bold bg-gray-100 text-gray-700 hover:bg-green-100 hover:text-green-700 transition">Edit</a>
-                        <form action="/web/product/{{ $product->id }}" method="POST"
-                              onsubmit="return confirmSubmit(event, @js('Yakin hapus produk ini?'))">
-                            @csrf
-                            @method('DELETE')
-                            <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 transition">Hapus</button>
-                        </form>
+                        <button type="button"
+                                onclick="openDeleteModal({{ $product->id }}, @js($product->name))"
+                                class="px-3 py-1.5 rounded-lg text-xs font-bold bg-red-50 text-red-600 hover:bg-red-100 transition">Hapus</button>
                     </div>
                 </div>
             </div>
@@ -223,7 +218,7 @@
             <div class="p-12 text-center">
                 <span class="text-4xl">📦</span>
                 <p class="font-black text-gray-900 mt-3">Belum Ada Produk</p>
-                <a href="/seller/products/create" class="mt-3 inline-block px-5 py-2 rounded-xl text-sm font-bold text-white" style="background:#72bf77">Tambah</a>
+                <a href="{{ route('seller.products.create') }}" class="mt-3 inline-block px-5 py-2 rounded-xl text-sm font-bold text-white" style="background:#72bf77">Tambah</a>
             </div>
             @endforelse
         </div>
@@ -233,6 +228,32 @@
             <span class="text-4xl">🔍</span>
             <p class="font-black text-gray-900 mt-2">Produk tidak ditemukan</p>
             <p class="text-sm text-gray-400 mt-1">Coba kata kunci yang berbeda.</p>
+        </div>
+    </div>
+</div>
+
+{{-- ── Custom Delete Modal ── --}}
+<div id="delete-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4" style="background:rgba(0,0,0,0.45);backdrop-filter:blur(4px)">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm p-6 space-y-5" style="animation:fadeInUp .2s ease">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </div>
+            <div>
+                <p class="font-black text-gray-900">Hapus Produk?</p>
+                <p class="text-xs text-gray-400 mt-0.5">Tindakan ini tidak dapat dibatalkan.</p>
+            </div>
+        </div>
+        <div class="p-3 bg-red-50 rounded-2xl border border-red-100">
+            <p class="text-sm font-bold text-red-700" id="delete-product-name">—</p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="closeDeleteModal()" class="flex-1 h-11 rounded-2xl font-bold text-sm text-gray-500 bg-gray-100 hover:bg-gray-200 transition">Batal</button>
+            <form id="delete-form" method="POST" class="flex-1">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="w-full h-11 rounded-2xl font-black text-sm text-white bg-red-500 hover:bg-red-600 transition active:scale-95">Hapus Sekarang</button>
+            </form>
         </div>
     </div>
 </div>
@@ -399,5 +420,34 @@
     pollProductUpdates();
     setInterval(() => { pollProductUpdates().catch(() => {}); }, 5000);
 })();
+
+// ── Delete Modal ──────────────────────────────
+function openDeleteModal(productId, productName) {
+    const modal   = document.getElementById('delete-modal');
+    const form    = document.getElementById('delete-form');
+    const nameEl  = document.getElementById('delete-product-name');
+
+    form.action = '/web/product/' + productId;
+    if (nameEl) nameEl.textContent = productName;
+
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('delete-modal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = '';
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeDeleteModal();
+});
+
+document.getElementById('delete-modal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeDeleteModal();
+});
 </script>
 @endsection

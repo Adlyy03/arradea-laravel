@@ -3,7 +3,22 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Arradea Marketplace')</title>
+    
+    {{-- Flash Messages for Toast System --}}
+    @if(session('success'))
+        <meta name="flash-success" content="{{ session('success') }}">
+    @endif
+    @if(session('error'))
+        <meta name="flash-error" content="{{ session('error') }}">
+    @endif
+    @if(session('warning'))
+        <meta name="flash-warning" content="{{ session('warning') }}">
+    @endif
+    @if(session('info'))
+        <meta name="flash-info" content="{{ session('info') }}">
+    @endif
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">

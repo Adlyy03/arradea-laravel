@@ -1,13 +1,39 @@
+@import './app-modern.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
     body {
-        @apply bg-[#f8fafc] text-slate-900 antialiased;
+        @apply bg-[#f8faf8] text-slate-900 antialiased;
     }
 }
 
+/* Legacy glass class for backward compatibility */
 .glass {
     @apply bg-white/70 backdrop-blur-xl border-b border-white/20;
+}
+
+/* Enhanced Tailwind utilities with Arradea design system */
+@layer utilities {
+    .text-sage {
+        color: #72bf77;
+    }
+    
+    .bg-sage {
+        background-color: #72bf77;
+    }
+    
+    .border-sage {
+        border-color: #72bf77;
+    }
+    
+    .hover\:bg-sage:hover {
+        background-color: #72bf77;
+    }
+    
+    .focus\:ring-sage:focus {
+        --tw-ring-color: rgba(114, 191, 119, 0.5);
+    }
 }
