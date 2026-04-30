@@ -2,308 +2,357 @@
 
 @php $isEdit = isset($product); @endphp
 @section('title', ($isEdit ? 'Edit Produk' : 'Tambah Produk') . ' - Arradea')
-@section('page_title', ($isEdit ? 'Pembaruan Data Produk' : 'Input Katalog Baru'))
+@section('page_title', $isEdit ? 'Edit Produk' : 'Produk Baru')
 
 @section('content')
-<div class="max-w-4xl mx-auto space-y-8">
+<div class="max-w-3xl mx-auto space-y-5 fade-up">
+
+    {{-- Back Link --}}
+    <a href="/seller/products" class="inline-flex items-center gap-2 text-sm font-bold text-gray-500 hover:text-gray-900 transition group">
+        <svg class="w-4 h-4 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        Kembali ke Produk
+    </a>
+
+    {{-- Error Alert --}}
     @if($errors->any())
-        <div class="bg-red-50 border border-red-200 rounded-2xl p-6 space-y-2">
-            <p class="font-black text-red-700">❌ Ada kesalahan:</p>
-            <ul class="list-disc list-inside text-red-600 text-sm space-y-1">
+    <div class="flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl">
+        <span class="text-lg flex-shrink-0">❌</span>
+        <div>
+            <p class="text-sm font-black text-red-700 mb-1">Ada kesalahan input:</p>
+            <ul class="text-xs text-red-600 space-y-0.5 list-disc list-inside">
                 @foreach($errors->all() as $error)
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
         </div>
+    </div>
     @endif
 
-    <!-- Header -->
-    <div class="bg-white p-8 lg:p-6 lg:p-12 rounded-2xl lg:rounded-3xl lg:rounded-[3.5rem] shadow-sm border border-gray-100 text-center lg:text-left">
-        <h1 class="text-4xl lg:text-5xl font-black text-gray-900 tracking-tighter leading-tight mb-4">
-            {{ $isEdit ? 'Ubah Detail' : 'Input' }} <span class="text-primary-600">Produk</span>{{ $isEdit ? '' : ' Baru' }}.
-        </h1>
-        <p class="text-gray-500 text-sm lg:text-base font-medium">Berikan deskripsi menarik dan foto kualitas tinggi untuk jualan Anda.</p>
+    {{-- Hero --}}
+    <div class="relative overflow-hidden rounded-3xl p-6 lg:p-8" style="background:linear-gradient(135deg,#0f1a11 0%,#1e3a22 50%,#0f1a11 100%)">
+        <div class="absolute -top-16 -right-16 w-56 h-56 rounded-full opacity-10" style="background:#72bf77;filter:blur(50px)"></div>
+        <div class="absolute -bottom-16 -left-8 w-40 h-40 rounded-full opacity-10" style="background:#4db85a;filter:blur(35px)"></div>
+        <div class="relative z-10 text-white">
+            <p class="text-[10px] font-black uppercase tracking-widest mb-2" style="color:#72bf77">
+                {{ $isEdit ? 'Edit Katalog' : 'Tambah Katalog' }}
+            </p>
+            <h1 class="text-2xl lg:text-3xl font-black tracking-tight">
+                {{ $isEdit ? 'Perbarui' : 'Input' }} <span style="color:#a3e4a6">Produk</span>{{ $isEdit ? '' : ' Baru' }}
+            </h1>
+            <p class="text-white/50 text-sm mt-1.5">Berikan foto berkualitas tinggi dan deskripsi menarik.</p>
+        </div>
     </div>
 
-    <!-- Form -->
-    <form action="{{ $isEdit ? '/web/product/'.$product->id.'/update' : '/web/product/store' }}" method="POST" enctype="multipart/form-data" class="bg-white rounded-2xl lg:rounded-3xl lg:rounded-2xl lg:rounded-3xl lg:rounded-[4rem] p-8 lg:p-8 lg:p-16 shadow-2xl border border-gray-100 space-y-8 lg:space-y-6 lg:space-y-12 relative overflow-hidden">
+    {{-- Form --}}
+    <form action="{{ $isEdit ? '/web/product/'.$product->id.'/update' : '/web/product/store' }}"
+          method="POST"
+          enctype="multipart/form-data"
+          class="space-y-4">
         @csrf
         @if($isEdit) @method('PUT') @endif
-        
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 relative z-10">
-            <!-- Product Name -->
-            <div class="space-y-3 col-span-2">
-                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Nama Produk *</label>
-                <input type="text" name="name" value="{{ old('name', $isEdit ? $product->name : '') }}" required class="w-full h-14 lg:h-18 bg-gray-50 border-none rounded-2xl lg:rounded-2xl lg:rounded-3xl px-6 lg:px-8 focus:ring-2 focus:ring-primary-600 font-bold text-lg lg:text-xl transition-all {{ $errors->has('name') ? 'ring-2 ring-red-500' : '' }}" placeholder="Elite Hyper Sprint">
-                @error('name') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
 
-            <!-- Price -->
-            <div class="space-y-3">
-                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Harga (Rp) *</label>
-                <input type="number" name="price" value="{{ old('price', $isEdit ? $product->price : '') }}" required class="w-full h-14 lg:h-18 bg-gray-50 border-none rounded-2xl lg:rounded-2xl lg:rounded-3xl px-6 lg:px-8 focus:ring-2 focus:ring-primary-600 font-bold text-lg lg:text-xl transition-all {{ $errors->has('price') ? 'ring-2 ring-red-500' : '' }}" placeholder="1500000">
-                @error('price') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
+        {{-- ── Section: Foto Produk ── --}}
+        <div class="bg-white rounded-2xl border border-gray-100 p-5">
+            <h2 class="text-xs font-black text-gray-700 uppercase tracking-widest mb-4">📸 Foto Produk</h2>
 
-            <!-- Stock -->
-            <div class="space-y-3">
-                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Stok *</label>
-                <input type="number" name="stock" value="{{ old('stock', $isEdit ? $product->stock : '') }}" required class="w-full h-14 lg:h-18 bg-gray-50 border-none rounded-2xl lg:rounded-2xl lg:rounded-3xl px-6 lg:px-8 focus:ring-2 focus:ring-primary-600 font-bold text-lg lg:text-xl transition-all {{ $errors->has('stock') ? 'ring-2 ring-red-500' : '' }}" placeholder="10">
-                @error('stock') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            <!-- Discount Percent -->
-            <div class="space-y-3">
-                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Diskon Produk (%)</label>
-                <input type="number" step="0.01" min="0" max="100" name="discount_percent" value="{{ old('discount_percent', $isEdit ? $product->discount_percent : 0) }}" class="w-full h-14 lg:h-18 bg-gray-50 border-none rounded-2xl lg:rounded-2xl lg:rounded-3xl px-6 lg:px-8 focus:ring-2 focus:ring-primary-600 font-bold text-lg lg:text-xl transition-all {{ $errors->has('discount_percent') ? 'ring-2 ring-red-500' : '' }}" placeholder="10">
-                @error('discount_percent') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            <!-- Discount Date Start -->
-            <div class="space-y-3">
-                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Diskon Aktif Dari</label>
-                <input type="datetime-local" name="discount_start_at" value="{{ old('discount_start_at', $isEdit && $product->discount_start_at ? $product->discount_start_at->format('Y-m-d\TH:i') : '') }}" class="w-full h-14 lg:h-18 bg-gray-50 border-none rounded-2xl lg:rounded-2xl lg:rounded-3xl px-6 lg:px-8 focus:ring-2 focus:ring-primary-600 font-bold text-sm lg:text-base transition-all {{ $errors->has('discount_start_at') ? 'ring-2 ring-red-500' : '' }}">
-                @error('discount_start_at') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            <!-- Discount Date End -->
-            <div class="space-y-3 col-span-2 md:col-span-1">
-                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Diskon Aktif Sampai</label>
-                <input type="datetime-local" name="discount_end_at" value="{{ old('discount_end_at', $isEdit && $product->discount_end_at ? $product->discount_end_at->format('Y-m-d\TH:i') : '') }}" class="w-full h-14 lg:h-18 bg-gray-50 border-none rounded-2xl lg:rounded-2xl lg:rounded-3xl px-6 lg:px-8 focus:ring-2 focus:ring-primary-600 font-bold text-sm lg:text-base transition-all {{ $errors->has('discount_end_at') ? 'ring-2 ring-red-500' : '' }}">
-                @error('discount_end_at') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            <!-- Description -->
-            <div class="space-y-3 col-span-2">
-                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Deskripsi</label>
-                <textarea name="description" rows="4" class="w-full bg-gray-50 border-none rounded-2xl lg:rounded-2xl lg:rounded-3xl px-6 lg:px-8 py-5 lg:py-6 focus:ring-2 focus:ring-primary-600 font-bold text-base lg:text-lg transition-all {{ $errors->has('description') ? 'ring-2 ring-red-500' : '' }}" placeholder="Detail produk Anda...">{{ old('description', $isEdit ? $product->description : '') }}</textarea>
-                @error('description') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
-
-            <!-- Variant JSON -->
-            <div class="space-y-3 col-span-2">
-                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Varian Produk</label>
-                
-                <!-- Variant Builder UI -->
-                <div id="variantBuilder" class="space-y-4">
-                    <!-- Variant Input Fields -->
-                    <div id="variantsList" class="space-y-3"></div>
-                    
-                    <!-- Add Variant Button -->
-                    <button type="button" onclick="addVariantField()" class="w-full h-12 border-2 border-dashed border-primary-300 rounded-xl text-primary-600 font-bold hover:bg-primary-50 transition">
-                        + Tambah Varian
-                    </button>
+            <div class="flex flex-col sm:flex-row gap-5 items-start">
+                {{-- Preview --}}
+                <div id="imagePreviewWrap"
+                     class="w-full sm:w-36 h-36 rounded-2xl overflow-hidden flex-shrink-0 border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center cursor-pointer hover:border-green-400 transition group"
+                     onclick="document.getElementById('imageInput').click()">
+                    <img id="imagePreview"
+                         src="{{ $isEdit && $product->image ? $product->image : '' }}"
+                         alt="preview"
+                         class="{{ ($isEdit && $product->image) ? '' : 'hidden' }} w-full h-full object-cover">
+                    <div id="imagePreviewPlaceholder" class="{{ ($isEdit && $product->image) ? 'hidden' : '' }} text-center p-3">
+                        <svg class="w-8 h-8 text-gray-300 mx-auto mb-1 group-hover:text-green-400 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        <p class="text-[10px] font-bold text-gray-400">Klik untuk upload</p>
+                    </div>
                 </div>
-                
-                <!-- Hidden JSON Textarea (for form submission) -->
-                <textarea name="variants_json" id="variantsJSON" style="display:none;">{{ old('variants_json', $isEdit ? json_encode($product->variants ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : '[]') }}</textarea>
-                
-                <p class="text-[10px] text-gray-400">Biarkan kosong jika produk tidak punya varian.</p>
-                @error('variants_json') <p class="text-xs text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
 
-            <!-- Image Upload -->
-            <div class="space-y-3 col-span-2">
-                <label class="block text-[10px] font-black text-gray-400 border-l-4 border-primary-600 pl-4 uppercase tracking-widest">Foto Produk</label>
-                <div class="flex gap-6">
-                    <!-- Preview Image -->
-                    <div class="w-32 h-32 rounded-2xl bg-gray-100 flex items-center justify-center overflow-hidden border-2 border-dashed border-gray-200 flex-shrink-0">
-                        <img id="imagePreview" src="{{ $isEdit && $product->image ? $product->image : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=200&h=200' }}" alt="preview" class="w-full h-full object-cover">
-                    </div>
-                    <!-- Input -->
-                    <div class="flex-1 space-y-2">
-                        <input type="file" name="image" accept="image/*" id="imageInput" class="w-full h-14 bg-gray-50 border-2 border-dashed border-gray-300 rounded-2xl lg:rounded-2xl lg:rounded-3xl px-6 lg:px-8 py-4 focus:ring-2 focus:ring-primary-600 font-bold text-[10px] text-gray-500 cursor-pointer {{ $errors->has('image') ? 'ring-2 ring-red-500' : '' }}">
-                        <p class="text-[10px] text-gray-400">Format: JPG, PNG, WEBP (Max 2MB)</p>
-                        @if($isEdit && $product->image)
-                            <p class="text-[10px] text-gray-500">Foto sekarang: <strong>Ada</strong>. Kosongkan input di atas untuk gunakan yang lama.</p>
-                        @endif
-                        @error('image') <p class="text-xs text-red-500">{{ $message }}</p> @enderror
-                    </div>
+                <div class="flex-1 space-y-2">
+                    <input type="file" name="image" accept="image/*" id="imageInput" class="hidden">
+                    <button type="button" onclick="document.getElementById('imageInput').click()"
+                            class="w-full h-10 border-2 border-dashed border-gray-300 rounded-xl text-sm font-bold text-gray-500 hover:border-green-400 hover:text-green-600 transition">
+                        {{ $isEdit && $product->image ? '🔄 Ganti Foto' : '📂 Pilih Foto' }}
+                    </button>
+                    <p class="text-[10px] text-gray-400">Format: JPG, PNG, WEBP · Maks 2MB · Rasio 1:1 direkomendasikan</p>
+                    @if($isEdit && $product->image)
+                        <p class="text-[10px] text-green-600 font-bold">✅ Foto tersimpan. Kosongkan jika tidak ingin mengubah.</p>
+                    @endif
+                    @error('image') <p class="text-xs text-red-500 font-bold">{{ $message }}</p> @enderror
                 </div>
             </div>
         </div>
 
-        <div class="pt-8 border-t border-gray-50 flex flex-col sm:flex-row gap-4 relative z-10">
-            <button type="submit" class="w-full h-16 bg-primary-600 text-white rounded-2xl font-black text-lg hover:bg-primary-700 shadow-xl shadow-primary-200 transition active:scale-95 flex items-center justify-center gap-3">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        {{-- ── Section: Info Dasar ── --}}
+        <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+            <h2 class="text-xs font-black text-gray-700 uppercase tracking-widest">📋 Informasi Dasar</h2>
+
+            {{-- Nama --}}
+            <div class="space-y-1.5">
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-wider">Nama Produk <span class="text-red-400">*</span></label>
+                <input type="text" name="name"
+                       value="{{ old('name', $isEdit ? $product->name : '') }}"
+                       required
+                       placeholder="contoh: Kemeja Batik Premium"
+                       class="w-full h-11 bg-gray-50 border {{ $errors->has('name') ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-200' }} rounded-xl px-4 text-sm font-semibold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition"
+                       style="--tw-ring-color:rgba(114,191,119,.4)">
+                @error('name') <p class="text-xs text-red-500 font-bold">{{ $message }}</p> @enderror
+            </div>
+
+            {{-- Deskripsi --}}
+            <div class="space-y-1.5">
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-wider">Deskripsi Produk</label>
+                <textarea name="description" rows="4"
+                          placeholder="Jelaskan produk Anda secara detail: bahan, ukuran, keunggulan, dll."
+                          class="w-full bg-gray-50 border {{ $errors->has('description') ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-200' }} rounded-xl px-4 py-3 text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition resize-none"
+                          style="--tw-ring-color:rgba(114,191,119,.4)">{{ old('description', $isEdit ? $product->description : '') }}</textarea>
+                @error('description') <p class="text-xs text-red-500 font-bold">{{ $message }}</p> @enderror
+            </div>
+
+            {{-- Harga & Stok --}}
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-wider">Harga (Rp) <span class="text-red-400">*</span></label>
+                    <div class="relative">
+                        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">Rp</span>
+                        <input type="number" name="price"
+                               value="{{ old('price', $isEdit ? $product->price : '') }}"
+                               required min="0"
+                               placeholder="150000"
+                               class="w-full h-11 bg-gray-50 border {{ $errors->has('price') ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-200' }} rounded-xl pl-9 pr-4 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:border-transparent transition"
+                               style="--tw-ring-color:rgba(114,191,119,.4)">
+                    </div>
+                    @error('price') <p class="text-xs text-red-500 font-bold">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-wider">Stok <span class="text-red-400">*</span></label>
+                    <input type="number" name="stock"
+                           value="{{ old('stock', $isEdit ? $product->stock : '') }}"
+                           required min="0"
+                           placeholder="10"
+                           class="w-full h-11 bg-gray-50 border {{ $errors->has('stock') ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-200' }} rounded-xl px-4 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:border-transparent transition"
+                           style="--tw-ring-color:rgba(114,191,119,.4)">
+                    @error('stock') <p class="text-xs text-red-500 font-bold">{{ $message }}</p> @enderror
+                </div>
+            </div>
+        </div>
+
+        {{-- ── Section: Diskon ── --}}
+        <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xs font-black text-gray-700 uppercase tracking-widest">🏷️ Pengaturan Diskon</h2>
+                <span class="text-[10px] text-gray-400 font-bold">Opsional</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-wider">Diskon (%)</label>
+                    <div class="relative">
+                        <input type="number" step="0.01" min="0" max="100" name="discount_percent"
+                               value="{{ old('discount_percent', $isEdit ? $product->discount_percent : 0) }}"
+                               placeholder="0"
+                               id="discountPercent"
+                               class="w-full h-11 bg-gray-50 border border-gray-200 rounded-xl px-4 pr-8 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:border-transparent transition"
+                               style="--tw-ring-color:rgba(114,191,119,.4)">
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">%</span>
+                    </div>
+                    @error('discount_percent') <p class="text-xs text-red-500 font-bold">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-wider">Diskon Dari</label>
+                    <input type="datetime-local" name="discount_start_at"
+                           value="{{ old('discount_start_at', $isEdit && $product->discount_start_at ? $product->discount_start_at->format('Y-m-d\TH:i') : '') }}"
+                           class="w-full h-11 bg-gray-50 border border-gray-200 rounded-xl px-4 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:border-transparent transition"
+                           style="--tw-ring-color:rgba(114,191,119,.4)">
+                    @error('discount_start_at') <p class="text-xs text-red-500 font-bold">{{ $message }}</p> @enderror
+                </div>
+
+                <div class="space-y-1.5">
+                    <label class="block text-xs font-black text-gray-500 uppercase tracking-wider">Diskon Sampai</label>
+                    <input type="datetime-local" name="discount_end_at"
+                           value="{{ old('discount_end_at', $isEdit && $product->discount_end_at ? $product->discount_end_at->format('Y-m-d\TH:i') : '') }}"
+                           class="w-full h-11 bg-gray-50 border border-gray-200 rounded-xl px-4 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 focus:border-transparent transition"
+                           style="--tw-ring-color:rgba(114,191,119,.4)">
+                    @error('discount_end_at') <p class="text-xs text-red-500 font-bold">{{ $message }}</p> @enderror
+                </div>
+            </div>
+
+            {{-- Discount Preview --}}
+            <div id="discountPreview" class="hidden p-3 bg-green-50 border border-green-200 rounded-xl">
+                <p class="text-xs font-bold text-green-700">💡 Preview: Harga setelah diskon = <span id="discountedPrice" class="font-black">—</span></p>
+            </div>
+        </div>
+
+        {{-- ── Section: Varian ── --}}
+        <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-4">
+            <div class="flex items-center justify-between">
+                <h2 class="text-xs font-black text-gray-700 uppercase tracking-widest">🎛️ Varian Produk</h2>
+                <span class="text-[10px] text-gray-400 font-bold">Opsional — jika produk punya pilihan</span>
+            </div>
+
+            <div id="variantsList" class="space-y-3"></div>
+
+            <button type="button" onclick="addVariantField()"
+                    class="w-full h-10 border-2 border-dashed border-gray-300 rounded-xl text-sm font-bold text-gray-500 hover:border-green-400 hover:text-green-600 hover:bg-green-50 transition flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+                Tambah Varian
+            </button>
+
+            <textarea name="variants_json" id="variantsJSON" class="hidden">{{ old('variants_json', $isEdit ? json_encode($product->variants ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) : '[]') }}</textarea>
+            @error('variants_json') <p class="text-xs text-red-500 font-bold">{{ $message }}</p> @enderror
+        </div>
+
+        {{-- ── Submit ── --}}
+        <div class="flex flex-col sm:flex-row gap-3 pb-6">
+            <button type="submit"
+                    class="flex-1 h-12 rounded-2xl font-black text-sm text-white transition hover:opacity-90 active:scale-95 flex items-center justify-center gap-2 shadow-lg"
+                    style="background:#72bf77;box-shadow:0 8px 24px rgba(114,191,119,.3)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                 {{ $isEdit ? 'Simpan Perubahan' : 'Publish Produk' }}
             </button>
-            <a href="/seller/products" class="w-full h-16 bg-gray-50 text-gray-400 rounded-2xl font-black text-lg flex items-center justify-center hover:bg-gray-100 transition">Batal</a>
+            <a href="/seller/products"
+               class="flex-1 sm:flex-none sm:w-32 h-12 rounded-2xl font-black text-sm text-gray-500 bg-gray-100 hover:bg-gray-200 transition flex items-center justify-center">
+                Batal
+            </a>
         </div>
     </form>
 </div>
 
 <script>
-    // Image preview on file select
-    document.getElementById('imageInput').addEventListener('change', function(e) {
-        if(e.target.files && e.target.files[0]) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                document.getElementById('imagePreview').src = event.target.result;
-            }
-            reader.readAsDataURL(e.target.files[0]);
-        }
-    });
-
-    // Variant Builder Functions
-    let variantCounter = 0;
-
-    function generateUniqueKey(name) {
-        return name.toLowerCase()
-            .replace(/\s+/g, '-')
-            .replace(/[^\w\-]/g, '')
-            .substring(0, 20);
+// ── Image Preview ──
+document.getElementById('imageInput').addEventListener('change', function(e) {
+    if (e.target.files && e.target.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const img = document.getElementById('imagePreview');
+            const ph = document.getElementById('imagePreviewPlaceholder');
+            img.src = event.target.result;
+            img.classList.remove('hidden');
+            if (ph) ph.classList.add('hidden');
+        };
+        reader.readAsDataURL(e.target.files[0]);
     }
+});
 
-    function addVariantField(data = null) {
-        const variantsList = document.getElementById('variantsList');
-        const variantId = variantCounter++;
-        
-        const variantHTML = `
-            <div class="variant-item bg-gradient-to-br from-gray-50 to-gray-100 p-6 rounded-2xl border-2 border-gray-200 space-y-4" data-variant-id="${variantId}">
-                <!-- Header with Delete Button -->
-                <div class="flex justify-between items-center">
-                    <span class="text-sm font-bold text-gray-500">Varian ${variantsList.children.length + 1}</span>
-                    <button type="button" onclick="removeVariantField(${variantId})" class="px-3 py-1 bg-red-100 text-red-600 rounded-lg text-xs font-bold hover:bg-red-200 transition">Hapus</button>
-                </div>
+// ── Discount Preview ──
+function updateDiscountPreview() {
+    const priceInput = document.querySelector('input[name="price"]');
+    const discountInput = document.getElementById('discountPercent');
+    const preview = document.getElementById('discountPreview');
+    const discountedEl = document.getElementById('discountedPrice');
+    if (!priceInput || !discountInput || !preview) return;
+    const price = Number(priceInput.value) || 0;
+    const discount = Number(discountInput.value) || 0;
+    if (price > 0 && discount > 0) {
+        const final = price - (price * discount / 100);
+        discountedEl.textContent = 'Rp ' + new Intl.NumberFormat('id-ID').format(Math.round(final));
+        preview.classList.remove('hidden');
+    } else {
+        preview.classList.add('hidden');
+    }
+}
+document.querySelector('input[name="price"]')?.addEventListener('input', updateDiscountPreview);
+document.getElementById('discountPercent')?.addEventListener('input', updateDiscountPreview);
+updateDiscountPreview();
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Variant Name -->
-                    <input type="text" 
-                        placeholder="Nama varian (misal: Ukuran M, Warna Merah)"
-                        class="variant-name bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-600 font-semibold text-sm transition"
-                        value="${data?.name || ''}">
-                    
-                    <!-- Price -->
-                    <input type="number" 
-                        placeholder="Harga varian (Rp)"
-                        class="variant-price bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-600 font-semibold text-sm transition"
-                        value="${data?.price || ''}">
-                    
-                    <!-- Stock (if needed) -->
-                    <input type="number" 
-                        placeholder="Stok varian (opsional)"
-                        class="variant-stock bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-600 font-semibold text-sm transition"
-                        value="${data?.stock || ''}">
-                    
-                    <!-- Discount Percent -->
-                    <input type="number" 
-                        step="0.01"
-                        min="0" 
-                        max="100"
-                        placeholder="Diskon (%, opsional)"
-                        class="variant-discount bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-600 font-semibold text-sm transition"
-                        value="${data?.discount_percent || ''}">
-                </div>
+// ── Variant Builder ──
+let variantCounter = 0;
 
-                <!-- Optional: Discount Date Range (collapsed by default) -->
-                <details class="cursor-pointer">
-                    <summary class="text-xs font-bold text-gray-400 hover:text-gray-600">⚙️ Pengaturan Diskon Lanjutan (Opsional)</summary>
-                    <div class="mt-4 space-y-4 pt-4 border-t border-gray-300">
-                        <input type="datetime-local" 
-                            placeholder="Diskon aktif dari"
-                            class="variant-discount-start w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-600 font-semibold text-sm transition"
-                            value="${data?.discount_start_at ? data.discount_start_at.replace(' ', 'T') : ''}">
-                        
-                        <input type="datetime-local" 
-                            placeholder="Diskon aktif sampai"
-                            class="variant-discount-end w-full bg-white border-2 border-gray-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-primary-600 font-semibold text-sm transition"
-                            value="${data?.discount_end_at ? data.discount_end_at.replace(' ', 'T') : ''}">
-                    </div>
-                </details>
+function generateUniqueKey(name) {
+    return name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w\-]/g, '').substring(0, 20);
+}
+
+function addVariantField(data = null) {
+    const variantsList = document.getElementById('variantsList');
+    const variantId = variantCounter++;
+    const num = variantsList.children.length + 1;
+
+    const html = `
+        <div class="variant-item bg-gray-50 border border-gray-200 p-4 rounded-2xl space-y-3 transition-all" data-variant-id="${variantId}" style="opacity:0;transform:translateY(8px)">
+            <div class="flex justify-between items-center">
+                <span class="text-xs font-black text-gray-600 uppercase tracking-widest">Varian ${num}</span>
+                <button type="button" onclick="removeVariantField(${variantId})" class="px-2.5 py-1 bg-red-100 text-red-600 rounded-lg text-[10px] font-black hover:bg-red-200 transition">✕ Hapus</button>
             </div>
-        `;
-        
-        variantsList.insertAdjacentHTML('beforeend', variantHTML);
-        updateVariantsJSON();
-    }
+            <div class="grid grid-cols-2 gap-3">
+                <input type="text" placeholder="Nama varian (Warna Merah, Size M...)" class="variant-name col-span-2 h-10 bg-white border border-gray-200 rounded-xl px-3 text-sm font-semibold focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)" value="${data?.name || ''}">
+                <div class="relative">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-black text-gray-400">Rp</span>
+                    <input type="number" placeholder="Harga" class="variant-price w-full h-10 bg-white border border-gray-200 rounded-xl pl-8 pr-3 text-sm font-semibold focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)" value="${data?.price || ''}">
+                </div>
+                <input type="number" placeholder="Stok (opsional)" class="variant-stock h-10 bg-white border border-gray-200 rounded-xl px-3 text-sm font-semibold focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)" value="${data?.stock || ''}">
+            </div>
+            <details class="cursor-pointer">
+                <summary class="text-[10px] font-black text-gray-400 hover:text-green-600 uppercase tracking-widest transition select-none">⚙️ Pengaturan Diskon Varian</summary>
+                <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-3 pt-3 border-t border-gray-200">
+                    <div class="relative">
+                        <input type="number" step="0.01" min="0" max="100" placeholder="Diskon %" class="variant-discount w-full h-10 bg-white border border-gray-200 rounded-xl px-3 pr-7 text-sm font-semibold focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)" value="${data?.discount_percent || ''}">
+                        <span class="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-gray-400">%</span>
+                    </div>
+                    <input type="datetime-local" class="variant-discount-start h-10 bg-white border border-gray-200 rounded-xl px-3 text-xs font-medium focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)" value="${data?.discount_start_at ? data.discount_start_at.replace(' ', 'T') : ''}">
+                    <input type="datetime-local" class="variant-discount-end h-10 bg-white border border-gray-200 rounded-xl px-3 text-xs font-medium focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)" value="${data?.discount_end_at ? data.discount_end_at.replace(' ', 'T') : ''}">
+                </div>
+            </details>
+        </div>`;
 
-    function removeVariantField(variantId) {
-        const item = document.querySelector(`[data-variant-id="${variantId}"]`);
-        if(item) {
-            item.style.opacity = '0';
-            item.style.transform = 'scale(0.95)';
-            setTimeout(() => {
-                item.remove();
-                updateVariantsJSON();
-            }, 200);
-        }
-    }
+    variantsList.insertAdjacentHTML('beforeend', html);
+    const el = variantsList.lastElementChild;
+    requestAnimationFrame(() => {
+        el.style.opacity = '1';
+        el.style.transform = 'translateY(0)';
+    });
+    updateVariantsJSON();
+}
 
-    function updateVariantsJSON() {
-        const variants = [];
-        document.querySelectorAll('.variant-item').forEach(item => {
-            const name = item.querySelector('.variant-name').value.trim();
-            const price = item.querySelector('.variant-price').value.trim();
-            
-            if(name && price) {
-                const variant = {
-                    key: generateUniqueKey(name),
-                    name: name,
-                    price: parseInt(price) || 0,
-                    stock: parseInt(item.querySelector('.variant-stock').value) || 0
-                };
-                
-                const discount = item.querySelector('.variant-discount').value.trim();
-                if(discount) {
-                    variant.discount_percent = parseFloat(discount) || 0;
-                }
-                
-                const discountStart = item.querySelector('.variant-discount-start').value.trim();
-                if(discountStart) {
-                    variant.discount_start_at = discountStart.replace('T', ' ') + ':00';
-                }
-                
-                const discountEnd = item.querySelector('.variant-discount-end').value.trim();
-                if(discountEnd) {
-                    variant.discount_end_at = discountEnd.replace('T', ' ') + ':00';
-                }
-                
-                variants.push(variant);
-            }
-        });
-        
-        document.getElementById('variantsJSON').value = JSON.stringify(variants);
+function removeVariantField(variantId) {
+    const item = document.querySelector(`[data-variant-id="${variantId}"]`);
+    if (item) {
+        item.style.opacity = '0';
+        item.style.transform = 'scale(0.95)';
+        setTimeout(() => { item.remove(); updateVariantsJSON(); }, 200);
     }
+}
 
-    // Auto-update JSON when variant fields change
-    document.addEventListener('change', function(e) {
-        if(e.target.classList.contains('variant-name') ||
-           e.target.classList.contains('variant-price') ||
-           e.target.classList.contains('variant-stock') ||
-           e.target.classList.contains('variant-discount') ||
-           e.target.classList.contains('variant-discount-start') ||
-           e.target.classList.contains('variant-discount-end')) {
-            updateVariantsJSON();
+function updateVariantsJSON() {
+    const variants = [];
+    document.querySelectorAll('.variant-item').forEach(item => {
+        const name = item.querySelector('.variant-name').value.trim();
+        const price = item.querySelector('.variant-price').value.trim();
+        if (name && price) {
+            const variant = {
+                key: generateUniqueKey(name),
+                name,
+                price: parseInt(price) || 0,
+                stock: parseInt(item.querySelector('.variant-stock').value) || 0,
+            };
+            const discount = item.querySelector('.variant-discount').value.trim();
+            if (discount) variant.discount_percent = parseFloat(discount) || 0;
+            const start = item.querySelector('.variant-discount-start').value.trim();
+            if (start) variant.discount_start_at = start.replace('T', ' ') + ':00';
+            const end = item.querySelector('.variant-discount-end').value.trim();
+            if (end) variant.discount_end_at = end.replace('T', ' ') + ':00';
+            variants.push(variant);
         }
     });
+    document.getElementById('variantsJSON').value = JSON.stringify(variants);
+}
 
-    document.addEventListener('input', function(e) {
-        if(e.target.classList.contains('variant-name') ||
-           e.target.classList.contains('variant-price') ||
-           e.target.classList.contains('variant-stock') ||
-           e.target.classList.contains('variant-discount') ||
-           e.target.classList.contains('variant-discount-start') ||
-           e.target.classList.contains('variant-discount-end')) {
-            updateVariantsJSON();
-        }
-    });
+document.addEventListener('input', function(e) {
+    const classes = ['variant-name','variant-price','variant-stock','variant-discount','variant-discount-start','variant-discount-end'];
+    if (classes.some(c => e.target.classList.contains(c))) updateVariantsJSON();
+});
 
-    // Initialize with existing variants on page load
-    window.addEventListener('DOMContentLoaded', function() {
-        const existingJSON = document.getElementById('variantsJSON').value.trim();
-        if(existingJSON && existingJSON !== '[]') {
-            try {
-                const variants = JSON.parse(existingJSON);
-                if(Array.isArray(variants)) {
-                    variants.forEach(variant => {
-                        addVariantField(variant);
-                    });
-                }
-            } catch(e) {
-                console.log('Could not parse existing variants');
-            }
-        }
-    });
+window.addEventListener('DOMContentLoaded', function() {
+    const existingJSON = document.getElementById('variantsJSON').value.trim();
+    if (existingJSON && existingJSON !== '[]') {
+        try {
+            const variants = JSON.parse(existingJSON);
+            if (Array.isArray(variants)) variants.forEach(v => addVariantField(v));
+        } catch(e) {}
+    }
+});
 </script>
 @endsection
