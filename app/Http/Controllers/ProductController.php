@@ -12,11 +12,33 @@ class ProductController extends Controller
      * GET /api/products
      * Public: list all products with store info.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $products = Product::with('store:id,name,address')
-            ->latest()
-            ->paginate(15);
+        $page = $request->get('page', 1);
+        
+        $products = \Illuminate\Support\Facades\Cache::remember(
+            "api:products:page:{$page}",
+            300, // 5 minutes
+            function () {
+                return Product::select([
+                    'id', 'store_id', 'category_id', 'name', 
+                    'price', 'stock', 'image', 'discount_percent',
+                    'discount_start_at', 'discount_end_at', 'created_at'
+                ])
+                ->with([
+                    'store:id,name,address',
+                    'category:id,name'
+                ])
+                ->whereHas('store.user', function ($q) {
+                    $q->where('is_seller', true);
+                })
+                ->whereHas('store', function ($q) {
+                    $q->where('status', 'active');
+                })
+                ->latest()
+                ->paginate(15);
+            }
+        );
 
         return response()->json([
             'success' => true,
@@ -35,17 +57,35 @@ class ProductController extends Controller
         ]);
 
         $keyword = trim($validated['q']);
+        $page = $request->get('page', 1);
 
-        $products = Product::with('store:id,name,address', 'category:id,name')
-            ->where(function ($query) use ($keyword) {
-                $query->where('name', 'like', "%{$keyword}%")
-                    ->orWhereHas('category', function ($categoryQuery) use ($keyword) {
-                        $categoryQuery->where('name', 'like', "%{$keyword}%");
-                    });
-            })
-            ->latest()
-            ->paginate(15)
-            ->withQueryString();
+        $products = \Illuminate\Support\Facades\Cache::remember(
+            "api:products:search:" . md5($keyword) . ":page:{$page}",
+            180, // 3 minutes
+            function () use ($keyword) {
+                return Product::select([
+                    'id', 'store_id', 'category_id', 'name', 
+                    'price', 'stock', 'image', 'discount_percent',
+                    'discount_start_at', 'discount_end_at', 'created_at'
+                ])
+                ->with('store:id,name,address', 'category:id,name')
+                ->where(function ($query) use ($keyword) {
+                    $query->where('name', 'like', "%{$keyword}%")
+                        ->orWhereHas('category', function ($categoryQuery) use ($keyword) {
+                            $categoryQuery->where('name', 'like', "%{$keyword}%");
+                        });
+                })
+                ->whereHas('store.user', function ($q) {
+                    $q->where('is_seller', true);
+                })
+                ->whereHas('store', function ($q) {
+                    $q->where('status', 'active');
+                })
+                ->latest()
+                ->paginate(15)
+                ->withQueryString();
+            }
+        );
 
         return response()->json([
             'success' => true,
@@ -60,11 +100,20 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
-        $product->load('store:id,name,address');
+        $productData = \Illuminate\Support\Facades\Cache::remember(
+            "api:product:{$product->id}",
+            300, // 5 minutes
+            function () use ($product) {
+                return Product::with([
+                    'store:id,name,address,user_id',
+                    'category:id,name,slug'
+                ])->find($product->id);
+            }
+        );
 
         return response()->json([
             'success' => true,
-            'data'    => $product,
+            'data'    => $productData,
         ]);
     }
 
@@ -136,6 +185,9 @@ class ProductController extends Controller
 
         $product = $store->products()->create($request->validated());
 
+        // Clear cache
+        \App\Services\CacheService::clearProductCache();
+
         return response()->json([
             'success' => true,
             'message' => 'Product created successfully.',
@@ -153,6 +205,9 @@ class ProductController extends Controller
 
         $product->update($request->validated());
 
+        // Clear cache
+        \App\Services\CacheService::clearProductCache($product->id);
+
         return response()->json([
             'success' => true,
             'message' => 'Product updated successfully.',
@@ -168,7 +223,11 @@ class ProductController extends Controller
     {
         $this->authorizeOwnership($request, $product);
 
+        $productId = $product->id;
         $product->delete();
+
+        // Clear cache
+        \App\Services\CacheService::clearProductCache($productId);
 
         return response()->json([
             'success' => true,

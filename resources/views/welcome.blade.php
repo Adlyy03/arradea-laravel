@@ -3,223 +3,398 @@
 
 @section('content')
 @php
-    $products = \App\Models\Product::with('store')->latest()->take(12)->get();
-    $featuredCategories = \App\Models\Category::featured()->parents()->orderBy('sort_order')->get();
+    use Illuminate\Support\Facades\Cache;
+    
+    // Cache produk terbaru (5 menit)
+    $products = Cache::remember('home:products:latest', 300, function () {
+        return \App\Models\Product::with(['store:id,name', 'category:id,name'])
+            ->whereHas('store.user', function ($userQuery) {
+                $userQuery->where('is_seller', true);
+            })
+            ->whereHas('store', function ($storeQuery) {
+                $storeQuery->where('status', 'active');
+            })
+            ->latest()
+            ->take(12)
+            ->get();
+    });
+    
+    // Cache produk dengan diskon (5 menit)
+    $discountedProducts = Cache::remember('home:products:discounted', 300, function () {
+        return \App\Models\Product::with(['store:id,name', 'category:id,name'])
+            ->whereHas('store.user', function ($userQuery) {
+                $userQuery->where('is_seller', true);
+            })
+            ->whereHas('store', function ($storeQuery) {
+                $storeQuery->where('status', 'active');
+            })
+            ->where('discount_percent', '>', 0)
+            ->orderBy('discount_percent', 'desc')
+            ->take(8)
+            ->get();
+    });
+    
+    // Cache produk populer (10 menit)
+    $popularProducts = Cache::remember('home:products:popular', 600, function () {
+        return \App\Models\Product::with(['store:id,name', 'category:id,name'])
+            ->whereHas('store.user', function ($userQuery) {
+                $userQuery->where('is_seller', true);
+            })
+            ->whereHas('store', function ($storeQuery) {
+                $storeQuery->where('status', 'active');
+            })
+            ->withCount('orders')
+            ->having('orders_count', '>', 0)
+            ->orderBy('orders_count', 'desc')
+            ->take(8)
+            ->get();
+    });
 @endphp
 
 <style>
-    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
-    @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
-    .float { animation: float 4s ease-in-out infinite; }
-    .fade-up { animation: fadeUp .6s ease both; }
-    .fade-up-2 { animation: fadeUp .6s ease .1s both; }
-    .fade-up-3 { animation: fadeUp .6s ease .2s both; }
-    .product-card:hover .product-img { transform: scale(1.07); }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+    @keyframes fadeUp { from{opacity:0;transform:translateY(32px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes scaleIn { from{opacity:0;transform:scale(0.92)} to{opacity:1;transform:scale(1)} }
+    .float { animation: float 5s ease-in-out infinite; }
+    .fade-up { animation: fadeUp .7s cubic-bezier(0.4,0,0.2,1) both; }
+    .fade-up-2 { animation: fadeUp .7s cubic-bezier(0.4,0,0.2,1) .15s both; }
+    .fade-up-3 { animation: fadeUp .7s cubic-bezier(0.4,0,0.2,1) .3s both; }
+    .scale-in { animation: scaleIn .5s cubic-bezier(0.4,0,0.2,1) both; }
+    .product-card { transition: all .35s cubic-bezier(0.4,0,0.2,1); }
+    .product-card:hover { transform: translateY(-6px); box-shadow: 0 20px 40px rgba(114,191,119,.18); }
+    .product-card:hover .product-img { transform: scale(1.08); }
     .product-card:hover .buy-btn { opacity:1; transform:translateY(0); }
-    .buy-btn { opacity:0; transform:translateY(8px); transition:all .3s; }
-    .hero-blob { position:absolute; border-radius:50%; filter:blur(80px); pointer-events:none; }
+    .product-img { transition: transform .5s cubic-bezier(0.4,0,0.2,1); }
+    .buy-btn { opacity:0; transform:translateY(12px); transition:all .35s cubic-bezier(0.4,0,0.2,1); }
+    .hero-blob { position:absolute; border-radius:50%; filter:blur(100px); pointer-events:none; opacity:.15; }
+    .glass-card { background:rgba(255,255,255,0.75); backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px); border:1px solid rgba(114,191,119,0.12); }
+    .category-card { transition: all .3s cubic-bezier(0.4,0,0.2,1); }
+    .category-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 28px rgba(114,191,119,.15); }
+    
+    /* Slider Styles */
+    .promo-slider { position: relative; overflow: hidden; }
+    .promo-track { display: flex; transition: transform 0.5s ease-in-out; }
+    .promo-slide { min-width: 100%; }
+    .promo-dots { display: flex; gap: 8px; justify-content: center; margin-top: 20px; }
+    .promo-dot { width: 8px; height: 8px; border-radius: 50%; background: #d1d5db; cursor: pointer; transition: all 0.3s; }
+    .promo-dot.active { width: 24px; border-radius: 4px; background: #72bf77; }
+    .promo-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e5e7eb; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .promo-nav:hover { background: #72bf77; border-color: #72bf77; color: white; transform: translateY(-50%) scale(1.1); }
+    .promo-nav.prev { left: 10px; }
+    .promo-nav.next { right: 10px; }
+    @media (max-width: 640px) {
+        .promo-nav { width: 32px; height: 32px; }
+    }
 </style>
 
 {{-- HERO --}}
-<section class="relative overflow-hidden bg-white min-h-[82vh] flex items-center">
+<section class="relative overflow-hidden min-h-[85vh] sm:min-h-[88vh] flex items-center" style="background:linear-gradient(to bottom,#ffffff 0%,#f7faf7 100%)">
     {{-- Blobs --}}
-    <div class="hero-blob w-96 h-96 -top-20 -right-20 opacity-20" style="background:#72bf77"></div>
-    <div class="hero-blob w-64 h-64 bottom-10 -left-10 opacity-10" style="background:#4db85a"></div>
+    <div class="hero-blob w-[500px] h-[500px] -top-32 -right-32" style="background:#72bf77"></div>
+    <div class="hero-blob w-80 h-80 bottom-20 -left-20" style="background:#4db85a"></div>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 w-full">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-20 lg:py-28 w-full relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 lg:gap-24 items-center">
 
             {{-- Left --}}
-            <div class="space-y-8 fade-up">
-                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold" style="background:rgba(114,191,119,.12);color:#3fa348;border:1px solid rgba(114,191,119,.25)">
-                    🏘️ Pasar Warga Arradea
+            <div class="space-y-6 sm:space-y-10 fade-up">
+                <div class="inline-flex items-center gap-2.5 px-3.5 py-2 rounded-full text-xs font-bold glass-card shadow-sm">
+                    <span class="text-base sm:text-lg">🏘️</span>
+                    <span style="color:#3fa348">Pasar Warga Arradea</span>
                 </div>
 
-                <h1 class="text-5xl lg:text-7xl font-black tracking-tighter leading-[0.85] text-gray-900">
+                <h1 class="text-5xl sm:text-6xl lg:text-8xl font-black tracking-tighter leading-[0.88] text-gray-900">
                     Segar<br>
-                    <span style="color:#72bf77">Dekat</span><br>
+                    <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Dekat</span><br>
                     Lengkap.
                 </h1>
 
-                <p class="text-lg text-gray-500 leading-relaxed max-w-md font-medium">
+                <p class="text-base sm:text-xl text-gray-600 leading-relaxed max-w-lg font-medium">
                     Dukung jualan tetangga! Dari makanan ibu-ibu komplek sampai jasa profesional, semua ada di sini.
                 </p>
 
-                <div class="flex flex-wrap gap-4">
-                    <a href="#feed" class="px-7 py-3.5 rounded-2xl font-bold text-white text-base transition hover:opacity-90 hover:-translate-y-0.5" style="background:#72bf77;box-shadow:0 8px 30px rgba(114,191,119,.4)">
-                        Belanja Sekarang
+                <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-5">
+                    <a href="#feed" class="group px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-white text-sm sm:text-base transition-all duration-300 hover:-translate-y-1 active:scale-95 text-center" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.35)">
+                        <span class="flex items-center justify-center gap-2">
+                            Belanja Sekarang
+                            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                        </span>
                     </a>
                     @guest
-                        <a href="{{ route('register') }}" class="px-7 py-3.5 rounded-2xl font-bold text-gray-700 text-base bg-gray-50 border border-gray-200 hover:bg-gray-100 transition">
+                        <a href="{{ route('register') }}" class="px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-gray-700 text-sm sm:text-base glass-card hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 text-center">
                             Gabung Seller →
                         </a>
                     @else
-                        <a href="{{ Auth::user()->is_seller ? route('seller.dashboard') : route('buyer.dashboard') }}" class="px-7 py-3.5 rounded-2xl font-bold text-gray-700 text-base bg-gray-50 border border-gray-200 hover:bg-gray-100 transition">
+                        <a href="{{ Auth::user()->is_seller ? route('seller.dashboard') : route('buyer.dashboard') }}" class="px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-gray-700 text-sm sm:text-base glass-card hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 text-center">
                             Dashboard Saya →
                         </a>
                     @endguest
                 </div>
-
-                {{-- Stats --}}
-                <div class="flex flex-wrap gap-6 pt-4 border-t border-gray-100">
-                    <div>
-                        <p class="text-2xl font-black text-gray-900">500+</p>
-                        <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Transaksi</p>
-                    </div>
-                    <div class="w-px bg-gray-100"></div>
-                    <div>
-                        <p class="text-2xl font-black text-gray-900">100+</p>
-                        <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Seller Aktif</p>
-                    </div>
-                    <div class="w-px bg-gray-100"></div>
-                    <div>
-                        <p class="text-2xl font-black" style="color:#72bf77">★ 4.9</p>
-                        <p class="text-xs text-gray-400 font-semibold uppercase tracking-wider">Rating</p>
-                    </div>
-                </div>
             </div>
 
             {{-- Right: Floating Cards --}}
-            <div class="relative hidden lg:block h-[480px] fade-up-2">
+            <div class="relative hidden lg:block h-[520px] fade-up-2">
                 {{-- Main visual --}}
                 <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="w-72 h-72 rounded-[4rem] flex items-center justify-center text-8xl shadow-2xl shadow-green-200/50" style="background:linear-gradient(135deg,#f0faf1,#d8f3da)">
+                    <div class="w-80 h-80 rounded-[5rem] flex items-center justify-center text-9xl shadow-2xl shadow-green-200/40 scale-in" style="background:linear-gradient(135deg,#f0faf1,#d8f3da)">
                         🏪
                     </div>
                 </div>
 
                 {{-- Floating card 1 --}}
-                <div class="float absolute top-8 right-4 bg-white rounded-2xl p-4 shadow-xl border border-gray-100" style="animation-delay:0s">
+                <div class="float absolute top-12 right-8 glass-card rounded-2xl p-5 shadow-xl" style="animation-delay:0s">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center text-xl">🛒</div>
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style="background:rgba(114,191,119,.15)">🛒</div>
                         <div>
-                            <p class="text-xs font-black text-gray-900">Pesanan Baru!</p>
-                            <p class="text-[10px] text-gray-400">2 menit yang lalu</p>
+                            <p class="text-sm font-black text-gray-900">Pesanan Baru!</p>
+                            <p class="text-xs text-gray-400 mt-0.5">2 menit yang lalu</p>
                         </div>
                     </div>
                 </div>
 
                 {{-- Floating card 2 --}}
-                <div class="float absolute bottom-12 left-4 bg-white rounded-2xl p-4 shadow-xl border border-gray-100" style="animation-delay:1.5s">
+                <div class="float absolute bottom-16 left-8 glass-card rounded-2xl p-5 shadow-xl" style="animation-delay:1.5s">
                     <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-xl">⭐</div>
+                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style="background:rgba(245,158,11,.15)">⭐</div>
                         <div>
-                            <p class="text-xs font-black text-gray-900">Rating Sempurna</p>
-                            <p class="text-[10px] text-gray-400">Baru direview</p>
+                            <p class="text-sm font-black text-gray-900">Rating Sempurna</p>
+                            <p class="text-xs text-gray-400 mt-0.5">Baru direview</p>
                         </div>
                     </div>
                 </div>
 
                 {{-- Floating card 3 --}}
-                <div class="float absolute top-1/2 right-0 bg-white rounded-2xl p-3 shadow-xl border border-gray-100" style="animation-delay:.8s">
-                    <p class="text-xs font-black text-gray-700">💰 Rp 350.000</p>
-                    <p class="text-[10px] text-gray-400">Penjualan hari ini</p>
+                <div class="float absolute top-1/2 right-4 glass-card rounded-2xl p-4 shadow-xl" style="animation-delay:.8s">
+                    <p class="text-sm font-black text-gray-700">💰 Rp 350.000</p>
+                    <p class="text-xs text-gray-400 mt-0.5">Penjualan hari ini</p>
                 </div>
             </div>
         </div>
     </div>
 </section>
 
-{{-- CATEGORIES --}}
-@if($featuredCategories->count() > 0)
-<section class="py-16 bg-[#f7faf7]">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="text-center mb-10">
-            <h2 class="text-3xl font-black tracking-tight text-gray-900">Kategori <span style="color:#72bf77">Populer</span></h2>
-            <p class="text-gray-400 mt-2 font-medium">Temukan produk berdasarkan kategori favoritmu</p>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-            @foreach($featuredCategories as $cat)
-            <a href="{{ route('categories.show', $cat->slug) }}" class="group bg-white rounded-2xl p-5 text-center border border-gray-100 hover:border-green-200 hover:shadow-lg hover:shadow-green-100/50 transition-all duration-300">
-                <div class="w-14 h-14 mx-auto mb-3 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition" style="background:rgba(114,191,119,.1)">
-                    {{ $cat->image ? '🏷️' : substr($cat->name,0,1) }}
+{{-- PROMO BANNER SLIDER --}}
+@if($discountedProducts->count() > 0 || $popularProducts->count() > 0)
+ <h2 class="text-3xl sm:text-4xl font-black tracking-tight text-gray-900">Promo <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Spesial</span></h2>
+            <p class="text-gray-500 mt-2 sm:mt-3 font-medium text-base sm:text-lg">Jangan lewatkan penawaran terbaik hari ini!</p>
+        <div class="promo-slider relative fade-up-2">
+            {{-- Navigation Buttons --}}
+            <button class="promo-nav prev hidden sm:flex" onclick="prevSlide()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <button class="promo-nav next hidden sm:flex" onclick="nextSlide()">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>
+
+            <div class="promo-track">
+                {{-- Slide 1: Produk Diskon --}}
+                @if($discountedProducts->count() > 0)
+                <div class="promo-slide">
+                    <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-3xl p-6 sm:p-8 border border-red-100">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style="background:rgba(239,68,68,.15)">
+                                🔥
+                            </div>
+                            <div>
+                                <h3 class="text-xl sm:text-2xl font-black text-gray-900">Diskon Spesial!</h3>
+                                <p class="text-sm text-gray-600">Hemat hingga {{ $discountedProducts->max('discount_percent') }}%</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                            @foreach($discountedProducts->take(4) as $product)
+                            <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                                <div class="relative aspect-square overflow-hidden bg-gray-50">
+                                    <img src="{{ $product->image }}" alt="{{ $product->name }}"
+                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                        onerror="this.src='https://via.placeholder.com/300x300/f0faf1/72bf77?text=Produk'">
+                                    <span class="absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-black text-white shadow-lg" style="background:linear-gradient(135deg,#ef4444,#dc2626)">
+                                        -{{ $product->discount_percent }}%
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <p class="text-xs font-bold text-gray-900 line-clamp-2 mb-2">{{ $product->name }}</p>
+                                    @php $finalPrice = $product->price * (1 - $product->discount_percent/100); @endphp
+                                    <p class="text-[10px] text-gray-400 line-through">Rp {{ number_format($product->price,0,',','.') }}</p>
+                                    <p class="text-sm font-black text-red-600">Rp {{ number_format($finalPrice,0,',','.') }}</p>
+                                </div>
+                            </a>
+                            @endforeach
+                        </div>
+                        <div class="mt-6 text-center">
+                            <a href="{{ route('buyer.products') }}?discount=1" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all hover:scale-105" style="background:linear-gradient(135deg,#ef4444,#dc2626)">
+                                Lihat Semua Diskon
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
                 </div>
-                <p class="text-sm font-black text-gray-900 group-hover:text-[#3fa348] transition">{{ $cat->name }}</p>
-                <p class="text-[10px] text-gray-400 mt-0.5">{{ $cat->getProductsCount() }} produk</p>
-            </a>
-            @endforeach
+
+                @endif
+
+                {{-- Slide 2: Produk Populer --}}
+                @if($popularProducts->count() > 0)
+                <div class="promo-slide">
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-6 sm:p-8 border border-blue-100">
+                        <div class="flex items-center gap-3 mb-6">
+                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style="background:rgba(59,130,246,.15)">
+                                ⭐
+                            </div>
+                            <div>
+                                <h3 class="text-xl sm:text-2xl font-black text-gray-900">Paling Laris!</h3>
+                                <p class="text-sm text-gray-600">Produk favorit warga Arradea</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                            @foreach($popularProducts->take(4) as $product)
+                            <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                                <div class="relative aspect-square overflow-hidden bg-gray-50">
+                                    <img src="{{ $product->image }}" alt="{{ $product->name }}"
+                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                        onerror="this.src='https://via.placeholder.com/300x300/f0faf1/72bf77?text=Produk'">
+                                    <span class="absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-black text-white shadow-lg" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">
+                                        🔥 {{ $product->orders_count }} terjual
+                                    </span>
+                                </div>
+                                <div class="p-3">
+                                    <p class="text-xs font-bold text-gray-900 line-clamp-2 mb-2">{{ $product->name }}</p>
+                                    @if($product->discount_percent > 0)
+                                        @php $finalPrice = $product->price * (1 - $product->discount_percent/100); @endphp
+                                        <p class="text-[10px] text-gray-400 line-through">Rp {{ number_format($product->price,0,',','.') }}</p>
+                                        <p class="text-sm font-black" style="color:#72bf77">Rp {{ number_format($finalPrice,0,',','.') }}</p>
+                                    @else
+                                        <p class="text-sm font-black text-gray-900">Rp {{ number_format($product->price,0,',','.') }}</p>
+                                    @endif
+                                </div>
+                            </a>
+                            @endforeach
+                        </div>
+                        <div class="mt-6 text-center">
+                            <a href="{{ route('buyer.products') }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all hover:scale-105" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">
+                                Lihat Semua Produk
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @endif
+            </div>
+
+            {{-- Dots Navigation --}}
+            <div class="promo-dots" id="promoDots"></div>
         </div>
     </div>
 </section>
+
+<script>
+let currentSlide = 0;
+const slides = document.querySelectorAll('.promo-slide');
+const track = document.querySelector('.promo-track');
+const dotsContainer = document.getElementById('promoDots');
+let autoSlideInterval;
+
+// Create dots
+slides.forEach((_, index) => {
+    const dot = document.createElement('div');
+    dot.className = 'promo-dot' + (index === 0 ? ' active' : '');
+    dot.onclick = () => goToSlide(index);
+    dotsContainer.appendChild(dot);
+});
+
+const dots = document.querySelectorAll('.promo-dot');
+
+function updateSlider() {
+    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    dots.forEach((dot, index) => {
+        dot.classList.toggle('active', index === currentSlide);
+    });
+}
+
+function nextSlide() {
+    currentSlide = (currentSlide + 1) % slides.length;
+    updateSlider();
+    resetAutoSlide();
+}
+
+function prevSlide() {
+    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+    updateSlider();
+    resetAutoSlide();
+}
+
+function goToSlide(index) {
+    currentSlide = index;
+    updateSlider();
+    resetAutoSlide();
+}
+
+function startAutoSlide() {
+    autoSlideInterval = setInterval(nextSlide, 5000); // Auto slide every 5 seconds
+}
+
+function resetAutoSlide() {
+    clearInterval(autoSlideInterval);
+    startAutoSlide();
+}
+
+// Start auto slide
+if (slides.length > 1) {
+    startAutoSlide();
+}
+
+// Pause on hover
+const slider = document.querySelector('.promo-slider');
+slider.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
+slider.addEventListener('mouseleave', startAutoSlide);
+
+// Touch swipe support for mobile
+let touchStartX = 0;
+let touchEndX = 0;
+
+slider.addEventListener('touchstart', (e) => {
+    touchStartX = e.changedTouches[0].screenX;
+});
+
+slider.addEventListener('touchend', (e) => {
+    touchEndX = e.changedTouches[0].screenX;
+    handleSwipe();
+});
+
+function handleSwipe() {
+    if (touchEndX < touchStartX - 50) nextSlide();
+    if (touchEndX > touchStartX + 50) prevSlide();
+}
+</script>
 @endif
 
-{{-- PRODUCTS FEED --}}
-<section id="feed" class="py-16 bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex items-end justify-between mb-10">
-            <div>
-                <h2 class="text-3xl font-black tracking-tight text-gray-900">Jualan <span style="color:#72bf77">Tetangga</span></h2>
-                <p class="text-gray-400 mt-1 font-medium">Produk langsung dari warga di sekitarmu</p>
-            </div>
-            <a href="{{ route('buyer.products') }}" class="text-sm font-bold hidden sm:block" style="color:#72bf77">Lihat semua →</a>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            @forelse($products as $product)
-            <div class="product-card group bg-white rounded-3xl border border-gray-100 overflow-hidden hover:shadow-xl hover:shadow-green-100/40 transition-all duration-300">
-                <div class="relative aspect-square overflow-hidden bg-gray-50">
-                    <img src="{{ $product->image }}" alt="{{ $product->name }}"
-                        class="product-img w-full h-full object-cover transition-transform duration-500"
-                        onerror="this.src='https://via.placeholder.com/400x400/f0faf1/72bf77?text=Produk'">
-                    @if($product->discount_percent > 0)
-                        <span class="absolute top-3 left-3 px-2 py-1 rounded-xl text-[10px] font-black text-white" style="background:#72bf77">-{{ $product->discount_percent }}%</span>
-                    @endif
-                </div>
-                <div class="p-4">
-                    <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-1">🏪 {{ $product->store->name ?? 'Arradea' }}</p>
-                    <h3 class="font-black text-gray-900 leading-tight line-clamp-2 mb-2">{{ $product->name }}</h3>
-                    <div class="flex items-center justify-between">
-                        <div>
-                            @if($product->discount_percent > 0)
-                                @php $finalPrice = $product->price * (1 - $product->discount_percent/100); @endphp
-                                <p class="text-[11px] text-gray-400 line-through">Rp {{ number_format($product->price,0,',','.') }}</p>
-                                <p class="font-black text-lg" style="color:#72bf77">Rp {{ number_format($finalPrice,0,',','.') }}</p>
-                            @else
-                                <p class="font-black text-lg text-gray-900">Rp {{ number_format($product->price,0,',','.') }}</p>
-                            @endif
-                        </div>
-                        <span class="text-[10px] text-gray-400">Stok {{ $product->stock }}</span>
-                    </div>
-                    <a href="{{ route('buyer.products.show', $product->id) }}"
-                        class="buy-btn mt-3 w-full py-2.5 rounded-xl text-sm font-bold text-white text-center block transition"
-                        style="background:#72bf77">+ Beli Sekarang</a>
-                </div>
-            </div>
-            @empty
-            @for($i=1;$i<=4;$i++)
-            <div class="animate-pulse bg-white rounded-3xl border border-gray-100 overflow-hidden">
-                <div class="aspect-square bg-gray-100"></div>
-                <div class="p-4 space-y-2"><div class="h-4 bg-gray-100 rounded-full w-3/4"></div><div class="h-3 bg-gray-100 rounded-full w-1/2"></div></div>
-            </div>
-            @endfor
-            @endforelse
-        </div>
-
-        <div class="text-center mt-10">
-            <a href="{{ route('buyer.products') }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl font-bold text-sm border-2 transition hover:text-white" style="border-color:#72bf77;color:#72bf77;hover:background:#72bf77">
-                Lihat Semua Produk →
-            </a>
-        </div>
-    </div>
-</section>
 
 {{-- CTA BANNER --}}
-<section class="py-16 bg-[#f7faf7]">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="relative overflow-hidden rounded-3xl p-8 lg:p-16 text-white text-center" style="background:linear-gradient(135deg,#0f1a11,#1e3a22)">
-            <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-10" style="background:#72bf77;filter:blur(60px)"></div>
-            <div class="relative z-10">
-                <p class="text-[10px] font-black uppercase tracking-widest mb-3" style="color:#72bf77">Untuk Warga Arradea</p>
-                <h2 class="text-3xl lg:text-4xl font-black tracking-tight mb-4">Punya produk untuk dijual?</h2>
-                <p class="text-white/60 mb-8 max-w-lg mx-auto font-medium">Bergabunglah sebagai seller dan mulai berjualan kepada tetangga-tetanggamu.</p>
+<section class="py-12 sm:py-20 bg-[#f7faf7]">
+    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+        <div class="relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] p-8 sm:p-10 lg:p-20 text-white text-center shadow-2xl" style="background:linear-gradient(135deg,#0f1a11,#1e3a22,#0f1a11)">
+            <div class="absolute -top-32 -right-32 w-80 h-80 rounded-full opacity-15" style="background:#72bf77;filter:blur(80px)"></div>
+            <div class="absolute -bottom-32 -left-32 w-80 h-80 rounded-full opacity-10" style="background:#4db85a;filter:blur(80px)"></div>
+            <div class="relative z-10 fade-up">
+                <p class="text-[10px] sm:text-xs font-black uppercase tracking-widest mb-3 sm:mb-4" style="color:#72bf77">Untuk Warga Arradea</p>
+                <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-4 sm:mb-5 leading-tight">Punya produk untuk dijual?</h2>
+                <p class="text-white/70 mb-8 sm:mb-10 max-w-2xl mx-auto font-medium text-sm sm:text-lg leading-relaxed">Bergabunglah sebagai seller dan mulai berjualan kepada tetangga-tetanggamu. Raih penghasilan tambahan dari rumah.</p>
                 @guest
-                    <a href="{{ route('register') }}" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl font-bold text-gray-900 transition hover:opacity-90" style="background:#72bf77">
-                        Daftar Jadi Seller 🚀
+                    <a href="{{ route('register') }}" class="inline-flex items-center gap-2 px-8 sm:px-10 py-3.5 sm:py-5 rounded-2xl font-bold text-gray-900 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-95 text-base sm:text-lg" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.4)">
+                        Daftar Jadi Seller
+                        <span class="text-xl sm:text-2xl">🚀</span>
                     </a>
                 @else
                     @if(!Auth::user()->is_seller && Auth::user()->role !== 'admin')
-                        <a href="{{ route('seller.apply') }}" class="inline-flex items-center gap-2 px-8 py-3.5 rounded-2xl font-bold text-gray-900 transition hover:opacity-90" style="background:#72bf77">
-                            Buka Toko Sekarang 🚀
+                        <a href="{{ route('seller.apply') }}" class="inline-flex items-center gap-2 px-8 sm:px-10 py-3.5 sm:py-5 rounded-2xl font-bold text-gray-900 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-95 text-base sm:text-lg" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.4)">
+                            Buka Toko Sekarang
+                            <span class="text-xl sm:text-2xl">🚀</span>
                         </a>
                     @endif
                 @endguest

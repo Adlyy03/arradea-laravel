@@ -149,6 +149,30 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('/dashboard', fn() => view('admin.dashboard'));
         Route::get('/sellers',   fn() => view('admin.sellers'));
+        
+        // Categories Management
+        Route::resource('categories', \App\Http\Controllers\CategoryController::class)
+            ->except(['show'])
+            ->names([
+                'index' => 'admin.categories.index',
+                'create' => 'admin.categories.create',
+                'store' => 'admin.categories.store',
+                'edit' => 'admin.categories.edit',
+                'update' => 'admin.categories.update',
+                'destroy' => 'admin.categories.destroy',
+            ]);
+
+        // Products Management
+        Route::resource('products', \App\Http\Controllers\AdminProductController::class)
+            ->only(['index', 'edit', 'update', 'destroy'])
+            ->names([
+                'index' => 'admin.products.index',
+                'edit' => 'admin.products.edit',
+                'update' => 'admin.products.update',
+                'destroy' => 'admin.products.destroy',
+            ]);
+        Route::post('products/bulk-update-stock', [\App\Http\Controllers\AdminProductController::class, 'bulkUpdateStock'])->name('admin.products.bulk-update-stock');
+        Route::post('products/bulk-delete', [\App\Http\Controllers\AdminProductController::class, 'bulkDelete'])->name('admin.products.bulk-delete');
     });
 
     // 🏪 SELLER
@@ -508,7 +532,10 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
     Route::get('/products', function (\Illuminate\Http\Request $request) {
         $query = Product::with('store', 'category')
             ->whereHas('store.user', function ($userQuery) {
-                $userQuery->where('is_seller', true)->where('store_status', 'open');
+                $userQuery->where('is_seller', true);
+            })
+            ->whereHas('store', function ($storeQuery) {
+                $storeQuery->where('status', 'active');
             })
             ->latest();
         $keyword = trim((string) $request->query('q', ''));
@@ -537,7 +564,10 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
     Route::get('/products/{id}', function ($id) {
         $product = Product::with('store')
             ->whereHas('store.user', function ($userQuery) {
-                $userQuery->where('is_seller', true)->where('store_status', 'open');
+                $userQuery->where('is_seller', true);
+            })
+            ->whereHas('store', function ($storeQuery) {
+                $storeQuery->where('status', 'active');
             })
             ->findOrFail($id);
         return view('buyer.products.show', compact('product'));
@@ -556,7 +586,10 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
         $products = $category->products()
             ->with('store')
             ->whereHas('store.user', function ($userQuery) {
-                $userQuery->where('is_seller', true)->where('store_status', 'open');
+                $userQuery->where('is_seller', true);
+            })
+            ->whereHas('store', function ($storeQuery) {
+                $storeQuery->where('status', 'active');
             })
             ->paginate(20);
         return view('categories.show', compact('category', 'products'));

@@ -18,8 +18,8 @@
     @else
         <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
             <div class="px-5 py-3.5 border-b border-gray-50 flex items-center gap-4 text-xs font-bold text-gray-600">
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> Toko Buka</span>
-                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-gray-400"></span> Toko Tutup</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-green-500"></span> Seller (Toko)</span>
+                <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-full bg-blue-500"></span> Buyer (Pembeli)</span>
                 <span class="ml-auto text-gray-400">{{ count($mapUsers) }} lokasi tersedia</span>
             </div>
             <div id="admin-live-map" class="w-full h-[70vh] min-h-[480px]"></div>
@@ -43,20 +43,37 @@ document.addEventListener('DOMContentLoaded', function(){
     users.forEach(u => {
         const lat = parseFloat(u.latitude), lng = parseFloat(u.longitude);
         if(isNaN(lat)||isNaN(lng)) return;
-        const isOpen = u.store_status === 'open';
-        const color = isOpen ? '#72bf77' : '#9ca3af';
+        const isSeller = u.is_seller || u.role === 'seller';
+        const color = isSeller ? '#72bf77' : '#3b82f6';
         const marker = L.circleMarker([lat,lng],{radius:9,color,weight:3,fillColor:color,fillOpacity:0.9}).addTo(map);
-        const schedule = (u.open_time && u.close_time) ? `${String(u.open_time).slice(0,5)}–${String(u.close_time).slice(0,5)}` : '—';
-        marker.bindPopup(`
+        
+        let popupContent = `
             <div style="min-width:200px;font-family:sans-serif">
-                <p style="font-weight:900;font-size:13px;margin:0 0 6px">${u.store_name||u.name}</p>
+                <p style="font-weight:900;font-size:14px;margin:0 0 6px;color:${color}">${isSeller ? u.store_name : u.name}</p>
                 <div style="font-size:12px;color:#374151;line-height:1.7">
-                    <div><strong>Status:</strong> ${isOpen?'🟢 Buka':'⚫ Tutup'}</div>
+        `;
+
+        if (isSeller) {
+            const isOpen = u.store_status === 'open';
+            const schedule = (u.open_time && u.close_time) ? `${String(u.open_time).slice(0,5)}–${String(u.close_time).slice(0,5)}` : '—';
+            popupContent += `
+                    <div><strong>Nama Pemilik:</strong> ${u.name}</div>
+                    <div><strong>Status Toko:</strong> ${isOpen?'🟢 Buka':'⚫ Tutup'}</div>
                     <div><strong>Jadwal:</strong> ${schedule}</div>
+            `;
+        } else {
+            popupContent += `
+                    <div><strong>Peran:</strong> Buyer (Pembeli)</div>
+            `;
+        }
+
+        popupContent += `
                     <div><strong>Koordinat:</strong> ${lat.toFixed(5)}, ${lng.toFixed(5)}</div>
                 </div>
             </div>
-        `);
+        `;
+        
+        marker.bindPopup(popupContent);
         bounds.push([lat,lng]);
     });
     if(bounds.length) map.fitBounds(bounds,{padding:[40,40]});

@@ -44,17 +44,136 @@
         ::-webkit-scrollbar{width:4px;height:4px}
         ::-webkit-scrollbar-track{background:transparent}
         ::-webkit-scrollbar-thumb{background:#2d4a30;border-radius:10px}
-        .sidebar-item{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:12px;transition:all .2s;font-weight:600;font-size:.8125rem;color:#9db89f;cursor:pointer;text-decoration:none}
-        .sidebar-item:hover{background:rgba(114,191,119,.12);color:#b3e6b8}
-        .sidebar-item.active{background:rgba(114,191,119,.18);color:#72bf77}
-        .sidebar-item.active svg{color:#72bf77}
-        .sidebar-item svg{flex-shrink:0;width:18px;height:18px;transition:color .2s}
-        .topbar-glass{background:rgba(247,250,247,.9);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px)}
+
+        /* ── Sidebar Core ─────────────────────────────── */
+        .sb-item{
+            display:flex;align-items:center;gap:10px;
+            padding:8px 10px;
+            border-radius:10px;
+            transition:all .2s cubic-bezier(.4,0,.2,1);
+            font-weight:600;font-size:.8125rem;
+            color:rgba(185,210,187,.65);
+            cursor:pointer;text-decoration:none;
+            position:relative;
+            border:1px solid transparent;
+        }
+        .sb-item:hover{
+            background:rgba(114,191,119,.1);
+            color:rgba(179,230,184,.95);
+            border-color:rgba(114,191,119,.1);
+        }
+        .sb-item.sb-active{
+            background:linear-gradient(135deg,rgba(114,191,119,.22) 0%,rgba(114,191,119,.12) 100%);
+            color:#72bf77;
+            border-color:rgba(114,191,119,.25);
+            box-shadow:0 2px 12px rgba(114,191,119,.15);
+        }
+        .sb-item.sb-active .sb-icon svg{color:#72bf77;opacity:1}
+        .sb-item:hover .sb-icon svg{opacity:1}
+
+        /* Icon container */
+        .sb-icon{
+            width:34px;height:34px;flex-shrink:0;
+            display:flex;align-items:center;justify-content:center;
+            border-radius:8px;
+            background:rgba(255,255,255,.04);
+            transition:all .2s;
+        }
+        .sb-item.sb-active .sb-icon{
+            background:rgba(114,191,119,.18);
+        }
+        .sb-item:hover .sb-icon{
+            background:rgba(114,191,119,.1);
+        }
+        .sb-icon svg{width:16px;height:16px;opacity:.6;transition:all .2s;flex-shrink:0}
+
+        /* Label */
+        .sb-label{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+        /* Section Labels */
+        .sb-section-label{
+            padding:14px 12px 4px;
+            font-size:.625rem;
+            font-weight:800;
+            letter-spacing:.1em;
+            text-transform:uppercase;
+            color:rgba(114,191,119,.4);
+            display:flex;align-items:center;gap:6px;
+        }
+        .sb-section-label::after{
+            content:'';flex:1;height:1px;
+            background:rgba(114,191,119,.08);
+        }
+
+        /* Badges */
+        .sb-badge{
+            font-size:.65rem;font-weight:800;
+            padding:2px 7px;
+            border-radius:99px;
+            flex-shrink:0;
+            line-height:1.4;
+        }
+        .sb-badge-green{background:rgba(114,191,119,.22);color:#72bf77}
+        .sb-badge-amber{background:rgba(245,158,11,.18);color:#f59e0b}
+        .sb-badge-red{background:rgba(220,38,38,.18);color:#f87171}
+
+        /* Icon dot (collapsed state) */
+        .sb-dot{
+            position:absolute;top:6px;right:6px;
+            width:7px;height:7px;border-radius:50%;
+            border:1.5px solid #0f1a11;
+        }
+        .sb-dot-amber{background:#f59e0b}
+        .sb-dot-red{background:#f87171}
+
+        /* Icon overlay dot */
+        .sb-icon-dot{
+            position:absolute;top:-2px;right:-2px;
+            width:7px;height:7px;border-radius:50%;
+            background:#72bf77;
+            border:1.5px solid #0f1a11;
+        }
+        .sb-icon-dot-red{background:#f87171}
+
+        /* Status chips */
+        .sb-status-chip{
+            margin:6px 4px 2px;
+            padding:8px 10px;
+            border-radius:10px;
+            display:flex;align-items:flex-start;gap:8px;
+        }
+        .sb-chip-amber{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2)}
+        .sb-chip-green{background:rgba(114,191,119,.1);border:1px solid rgba(114,191,119,.2)}
+        .sb-chip-dot{
+            width:7px;height:7px;border-radius:50%;
+            flex-shrink:0;margin-top:3px;
+        }
+        .sb-chip-amber .sb-chip-dot{background:#f59e0b}
+        .sb-chip-green .sb-chip-dot{background:#72bf77}
+        .sb-chip-title{
+            font-size:.65rem;font-weight:800;
+            text-transform:uppercase;letter-spacing:.06em;
+            margin:0;
+        }
+        .sb-chip-amber .sb-chip-title{color:#f59e0b}
+        .sb-chip-green .sb-chip-title{color:#72bf77}
+        .sb-chip-desc{font-size:.65rem;margin:2px 0 0;color:rgba(185,210,187,.5)}
+
+        /* Topbar */
+        .topbar-glass{background:rgba(247,250,247,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+
+        /* Stat card */
         .stat-card{background:rgba(255,255,255,.8);border:1px solid rgba(114,191,119,.15);border-radius:16px;padding:20px;transition:all .25s;cursor:default}
         .stat-card:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(114,191,119,.15);border-color:rgba(114,191,119,.35)}
+
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
         .fade-up{animation:fadeUp .35s ease both}
         .badge-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+
+        /* Responsive – collapse sidebar on small screens */
+        @media(max-width:1023px){
+            .sb-section-label{padding-top:10px;padding-bottom:2px}
+        }
     </style>
     @stack('styles')
 </head>
@@ -64,42 +183,52 @@
 <div x-show="sideOpen && window.innerWidth < 1024" @click="sideOpen=false" x-cloak class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"></div>
 
 {{-- SIDEBAR --}}
-<aside :class="sideOpen ? 'w-[220px]' : 'w-[60px] lg:w-[60px]'"
-    class="fixed top-0 left-0 h-screen z-50 flex flex-col transition-all duration-300 overflow-hidden"
-    style="background:linear-gradient(160deg,#0f1a11 0%,#152218 60%,#0f1a11 100%);border-right:1px solid rgba(114,191,119,.12)">
+<aside :class="sideOpen ? 'w-[230px]' : 'w-[62px]'"
+    class="fixed top-0 left-0 h-screen z-50 flex flex-col transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)] overflow-hidden"
+    style="background:linear-gradient(175deg,#0c1710 0%,#111f14 50%,#0c1710 100%);border-right:1px solid rgba(114,191,119,.1);box-shadow:4px 0 24px rgba(0,0,0,.25)">
 
     {{-- Logo area --}}
-    <div class="flex items-center gap-3 px-4 py-5 border-b border-white/5">
-        <div class="w-8 h-8 rounded-xl bg-[#72bf77] flex items-center justify-center shadow-lg shadow-green-900/50 flex-shrink-0">
-            <span class="text-white font-black text-sm">A</span>
+    <div class="flex items-center gap-3 px-4 h-[60px] flex-shrink-0" style="border-bottom:1px solid rgba(255,255,255,.04)">
+        <div class="w-8 h-8 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm text-white shadow-lg" style="background:linear-gradient(135deg,#72bf77,#3fa348);box-shadow:0 4px 14px rgba(114,191,119,.4)">
+            A
         </div>
-        <span x-show="sideOpen" x-cloak class="text-white font-black text-lg tracking-tight truncate" style="text-shadow:0 1px 8px rgba(114,191,119,.3)">Arradea<span style="color:#72bf77">.</span></span>
+        <div x-show="sideOpen" x-cloak class="overflow-hidden">
+            <span class="text-white font-black text-base tracking-tight block" style="text-shadow:0 1px 8px rgba(114,191,119,.25)">Arradea<span style="color:#72bf77">.</span></span>
+            <span class="text-[9px] uppercase tracking-widest font-semibold" style="color:rgba(114,191,119,.5)">Marketplace</span>
+        </div>
     </div>
 
-    {{-- User info --}}
-    <div x-show="sideOpen" x-cloak class="mx-3 mt-4 mb-2 p-3 rounded-2xl" style="background:rgba(114,191,119,.08);border:1px solid rgba(114,191,119,.12)">
-        <div class="flex items-center gap-2.5">
-            <div class="w-8 h-8 rounded-xl flex items-center justify-center font-black text-sm flex-shrink-0" style="background:rgba(114,191,119,.25);color:#72bf77">
+    {{-- User info card --}}
+    <div class="px-3 pt-4 pb-1 flex-shrink-0">
+        <div x-show="sideOpen" x-cloak
+            class="flex items-center gap-3 p-3 rounded-xl"
+            style="background:rgba(114,191,119,.07);border:1px solid rgba(114,191,119,.1)">
+            <div class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center font-black text-sm" style="background:rgba(114,191,119,.2);color:#72bf77">
                 {{ strtoupper(substr(Auth::user()->name,0,1)) }}
             </div>
-            <div class="overflow-hidden">
-                <p class="text-white text-xs font-bold truncate">{{ Auth::user()->name }}</p>
-                <p class="text-[10px] uppercase tracking-widest font-semibold truncate" style="color:#72bf77">
+            <div class="overflow-hidden flex-1 min-w-0">
+                <p class="text-white text-xs font-bold truncate leading-tight">{{ Auth::user()->name }}</p>
+                <p class="text-[9px] uppercase tracking-widest font-bold truncate mt-0.5" style="color:rgba(114,191,119,.6)">
                     @if(Auth::user()->role==='admin') Admin @elseif(Auth::user()->is_seller) Seller @else Buyer @endif
                 </p>
+            </div>
+        </div>
+        {{-- Collapsed: just avatar --}}
+        <div x-show="!sideOpen" class="flex justify-center py-1">
+            <div class="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center font-black text-sm" style="background:rgba(114,191,119,.2);color:#72bf77">
+                {{ strtoupper(substr(Auth::user()->name,0,1)) }}
             </div>
         </div>
     </div>
 
     {{-- Nav --}}
-    <nav class="flex-1 overflow-y-auto px-2 py-1 space-y-0.5">
+    <nav class="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1 space-y-0.5">
         @if(Auth::user()->role === 'admin')
             @include('components.sidebar.admin')
         @else
             @include('components.sidebar.buyer')
             @if(Auth::user()->is_seller)
-                <div class="pt-3 mt-2" style="border-top:1px solid rgba(114,191,119,.1)">
-                    <p x-show="sideOpen" x-cloak class="text-[9px] uppercase font-black tracking-widest px-3 pb-2" style="color:#4a7a4e">Menu Seller</p>
+                <div class="mt-2 pt-1" style="border-top:1px solid rgba(114,191,119,.08)">
                     @include('components.sidebar.seller')
                 </div>
             @endif
@@ -107,19 +236,21 @@
     </nav>
 
     {{-- Logout --}}
-    <div class="p-3 border-t" style="border-color:rgba(114,191,119,.1)">
+    <div class="p-3 flex-shrink-0" style="border-top:1px solid rgba(114,191,119,.08)">
         <form method="POST" action="{{ route('logout') }}">
             @csrf
-            <button type="submit" class="sidebar-item w-full hover:!bg-red-900/30 hover:!text-red-400 group">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
-                <span x-show="sideOpen" x-cloak>Keluar</span>
+            <button type="submit" class="sb-item w-full text-left" style="color:rgba(185,210,187,.4)" onmouseover="this.style.background='rgba(220,38,38,.12)';this.style.color='#f87171'" onmouseout="this.style.background='';this.style.color='rgba(185,210,187,.4)'">
+                <span class="sb-icon" style="background:rgba(220,38,38,.07)">
+                    <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                </span>
+                <span x-show="sideOpen" x-cloak class="sb-label">Keluar</span>
             </button>
         </form>
     </div>
 </aside>
 
 {{-- MAIN --}}
-<div :style="sideOpen ? 'margin-left:220px' : 'margin-left:60px'" class="min-h-screen flex flex-col transition-all duration-300 lg:block" style="margin-left:60px" x-init="$watch('sideOpen', v => {})">
+<div :style="sideOpen ? 'margin-left:230px' : 'margin-left:62px'" class="min-h-screen flex flex-col transition-all duration-300 ease-[cubic-bezier(.4,0,.2,1)]" style="margin-left:62px">
 
     {{-- TOPBAR --}}
     <header class="sticky top-0 z-30 h-14 topbar-glass border-b border-green-100/40 flex items-center justify-between px-4 lg:px-6">

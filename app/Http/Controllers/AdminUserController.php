@@ -56,18 +56,18 @@ class AdminUserController extends Controller
     public function mapUsers()
     {
         $users = User::query()
-            ->where('role', 'seller')
             ->whereNotNull('latitude')
             ->whereNotNull('longitude')
             ->with(['accessCode', 'store'])
             ->orderByDesc('id')
-            ->get(['id', 'name', 'role', 'latitude', 'longitude', 'access_code_id', 'store_status', 'open_time', 'close_time', 'auto_schedule'])
+            ->get(['id', 'name', 'role', 'is_seller', 'latitude', 'longitude', 'access_code_id', 'store_status', 'open_time', 'close_time', 'auto_schedule'])
             ->map(function (User $user) {
                 return [
                     'id' => $user->id,
                     'name' => $user->name,
                     'store_name' => $user->store?->name ?: $user->name,
                     'role' => $user->role,
+                    'is_seller' => (bool) $user->is_seller,
                     'store_status' => $user->store_status ?? 'closed',
                     'open_time' => $user->open_time,
                     'close_time' => $user->close_time,
