@@ -14,18 +14,12 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = \Illuminate\Support\Facades\Cache::remember(
-            'admin:categories:list',
-            600, // 10 minutes
-            function () {
-                return Category::select(['id', 'name', 'slug', 'parent_id', 'sort_order', 'is_featured'])
-                    ->withCount('products')
-                    ->with('parent:id,name')
-                    ->orderBy('sort_order')
-                    ->orderBy('name')
-                    ->get();
-            }
-        );
+        $categories = Category::select(['id', 'name', 'slug', 'parent_id', 'sort_order', 'is_featured'])
+            ->withCount('products')
+            ->with('parent:id,name')
+            ->orderBy('sort_order')
+            ->orderBy('name')
+            ->get();
 
         // Get products count per store for each category
         $categoriesWithStores = $categories->map(function ($category) {
