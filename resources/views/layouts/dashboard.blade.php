@@ -209,7 +209,13 @@
             <div class="overflow-hidden flex-1 min-w-0">
                 <p class="text-white text-xs font-bold truncate leading-tight">{{ Auth::user()->name }}</p>
                 <p class="text-[9px] uppercase tracking-widest font-bold truncate mt-0.5" style="color:rgba(114,191,119,.6)">
-                    @if(Auth::user()->role==='admin') Admin @elseif(Auth::user()->is_seller) Seller @else Buyer @endif
+                    @if(Auth::user()->role==='admin')
+                        Admin
+                    @elseif(Auth::user()->is_seller)
+                        {{ Auth::user()->store?->name ?? 'Seller' }}
+                    @else
+                        Buyer
+                    @endif
                 </p>
             </div>
         </div>
