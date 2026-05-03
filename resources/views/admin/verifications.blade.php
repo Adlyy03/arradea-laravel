@@ -79,11 +79,13 @@
                                 <td class="px-5 py-4 text-xs text-gray-500 hidden md:table-cell">{{ $user->phone_verified_at?->format('d M Y') }}</td>
                                 <td class="px-5 py-4">
                                     <div class="flex items-center justify-end gap-1.5">
-                                        <form method="POST" action="{{ route('admin.verifications.approve', $user) }}" onsubmit="return confirmSubmit(event, @js('Setujui akun buyer ini?'))">
+                                        <form method="POST" action="{{ route('admin.verifications.approve', $user) }}"
+                                              onsubmit="return confirmApprove(event, @js('Setujui '.$user->name.' sebagai Buyer?'), 'Akun akan diaktifkan dan user bisa login sebagai pembeli.')">
                                             @csrf
                                             <button class="px-3 py-1.5 rounded-lg text-[10px] font-black text-white" style="background:#72bf77">Terima</button>
                                         </form>
-                                        <form method="POST" action="{{ route('admin.verifications.reject', $user) }}" onsubmit="return confirmSubmit(event, @js('Tolak & hapus akun ini?'))">
+                                        <form method="POST" action="{{ route('admin.verifications.reject', $user) }}"
+                                              onsubmit="return confirmReject(event, @js('Tolak pendaftaran '.$user->name.'?'), 'Akun akan dihapus dan user tidak bisa login.')">
                                             @csrf
                                             <button class="px-3 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-500 hover:bg-red-100 transition">Tolak</button>
                                         </form>
@@ -141,11 +143,13 @@
                                 <td class="px-5 py-4 text-xs text-gray-500 hidden md:table-cell">{{ $user->seller_applied_at ? \Carbon\Carbon::parse($user->seller_applied_at)->format('d M Y') : '—' }}</td>
                                 <td class="px-5 py-4">
                                     <div class="flex items-center justify-end gap-1.5">
-                                        <form method="POST" action="{{ route('admin.verifications.approve-seller', $user) }}" onsubmit="return confirmSubmit(event, @js('Setujui '.$user->name.' jadi Seller?'))">
+                                        <form method="POST" action="{{ route('admin.verifications.approve-seller', $user) }}"
+                                              onsubmit="return confirmApprove(event, @js('Setujui '.$user->name.' menjadi Seller?'), 'Akun akan diupgrade ke Seller dan toko akan diaktifkan.')">
                                             @csrf
                                             <button class="px-3 py-1.5 rounded-lg text-[10px] font-black text-white" style="background:#72bf77">Setujui</button>
                                         </form>
-                                        <form method="POST" action="{{ route('admin.verifications.reject-seller', $user) }}" onsubmit="return confirmSubmit(event, @js('Tolak pengajuan '.$user->name.'?'))">
+                                        <form method="POST" action="{{ route('admin.verifications.reject-seller', $user) }}"
+                                              onsubmit="return confirmReject(event, @js('Tolak pengajuan Seller '.$user->name.'?'), 'Pengajuan ditolak, user tetap sebagai Buyer.')">
                                             @csrf
                                             <button class="px-3 py-1.5 rounded-lg text-[10px] font-black bg-red-50 text-red-500 hover:bg-red-100 transition">Tolak</button>
                                         </form>
@@ -176,7 +180,99 @@
 
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+
+<style>
+    .swal-btn-approve {
+        background-color: #72bf77 !important;
+        color: #fff !important;
+        border-radius: 0.75rem !important;
+        padding: 0.625rem 1.25rem !important;
+        font-weight: 700 !important;
+        font-size: 0.875rem !important;
+        border: none !important;
+        cursor: pointer !important;
+    }
+    .swal-btn-approve:hover { background-color: #5aaa5f !important; }
+
+    .swal-btn-reject {
+        background-color: #dc2626 !important;
+        color: #fff !important;
+        border-radius: 0.75rem !important;
+        padding: 0.625rem 1.25rem !important;
+        font-weight: 700 !important;
+        font-size: 0.875rem !important;
+        border: none !important;
+        cursor: pointer !important;
+    }
+    .swal-btn-reject:hover { background-color: #b91c1c !important; }
+
+    .swal-btn-cancel {
+        background-color: #f3f4f6 !important;
+        color: #374151 !important;
+        border-radius: 0.75rem !important;
+        padding: 0.625rem 1.25rem !important;
+        font-weight: 700 !important;
+        font-size: 0.875rem !important;
+        border: none !important;
+        cursor: pointer !important;
+    }
+    .swal-btn-cancel:hover { background-color: #e5e7eb !important; }
+</style>
 <script>
+    // ── Approve confirmation (green/success style) ──
+    window.confirmApprove = function(e, title, text) {
+        e && e.preventDefault();
+        const form = e && e.target;
+        if (!form) return false;
+        if (typeof Swal === 'undefined') { form.submit(); return false; }
+        Swal.fire({
+            icon: 'success',
+            iconColor: '#72bf77',
+            title: title || 'Konfirmasi',
+            text: text || '',
+            showCancelButton: true,
+            confirmButtonText: '✓ Ya, Setujui',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'rounded-2xl shadow-2xl',
+                title: 'text-lg font-black',
+                htmlContainer: 'text-sm text-gray-500',
+                confirmButton: 'swal-btn-approve',
+                cancelButton: 'swal-btn-cancel',
+            },
+        }).then(result => { if (result.isConfirmed) form.submit(); });
+        return false;
+    };
+
+    // ── Reject confirmation (red/danger style) ──
+    window.confirmReject = function(e, title, text) {
+        e && e.preventDefault();
+        const form = e && e.target;
+        if (!form) return false;
+        if (typeof Swal === 'undefined') { form.submit(); return false; }
+        Swal.fire({
+            icon: 'warning',
+            iconColor: '#dc2626',
+            title: title || 'Tolak?',
+            text: text || '',
+            showCancelButton: true,
+            confirmButtonText: '✕ Ya, Tolak',
+            cancelButtonText: 'Batal',
+            reverseButtons: true,
+            buttonsStyling: false,
+            customClass: {
+                popup: 'rounded-2xl shadow-2xl',
+                title: 'text-lg font-black',
+                htmlContainer: 'text-sm text-gray-500',
+                confirmButton: 'swal-btn-reject',
+                cancelButton: 'swal-btn-cancel',
+            },
+        }).then(result => { if (result.isConfirmed) form.submit(); });
+        return false;
+    };
+
     window.renderVerificationUserMap = function(user) {
         const contentEl = document.getElementById('verification-location-content');
         if (!contentEl || !user) return;

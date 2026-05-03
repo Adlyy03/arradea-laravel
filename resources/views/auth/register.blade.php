@@ -71,6 +71,7 @@
                             <div class="h-1 flex-1 rounded-full bg-gray-200 transition-colors" id="bar2"></div>
                             <div class="h-1 flex-1 rounded-full bg-gray-200 transition-colors" id="bar3"></div>
                         </div>
+                        <p id="pw-hint" class="text-[10px] text-gray-400 mt-1">Min. 8 karakter, huruf besar, angka, tanpa spasi</p>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-500 mb-1.5 uppercase tracking-wider">Konfirmasi</label>
@@ -119,21 +120,59 @@ document.addEventListener('DOMContentLoaded', function(){
         input.type = input.type === 'password' ? 'text' : 'password';
     });
 
-    // Password strength
-    const pwInput = document.getElementById('password-input');
-    pwInput?.addEventListener('input', function(){
-        const val = this.value;
-        const len = val.length;
-        const bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3')];
-        let strength = 0;
-        if(len >= 6) strength++;
-        if(len >= 10 && /[A-Z]/.test(val)) strength++;
-        if(len >= 10 && /[0-9]/.test(val) && /[^A-Za-z0-9]/.test(val)) strength++;
-        const colors = ['#ef4444','#f59e0b','#72bf77'];
-        bars.forEach((b,i) => { b.style.background = i < strength ? colors[strength-1] : '#e5e7eb'; });
+    // Block spaces in password fields in real-time
+    ['password-input', 'pw-confirm'].forEach(function(id) {
+        document.getElementById(id)?.addEventListener('keydown', function(e) {
+            if (e.key === ' ') e.preventDefault();
+        });
+        document.getElementById(id)?.addEventListener('input', function() {
+            if (this.value.includes(' ')) {
+                this.value = this.value.replace(/\s/g, '');
+            }
+        });
     });
 
-    // Password match
+    // Password strength meter
+    const pwInput = document.getElementById('password-input');
+    const pwHint  = document.getElementById('pw-hint');
+    pwInput?.addEventListener('input', function(){
+        const val = this.value;
+        const bars = [document.getElementById('bar1'), document.getElementById('bar2'), document.getElementById('bar3')];
+
+        const hasLen    = val.length >= 8;
+        const hasUpper  = /[A-Z]/.test(val);
+        const hasNumber = /[0-9]/.test(val);
+        const noSpace   = !/\s/.test(val);
+
+        let strength = 0;
+        if (hasLen && noSpace) strength++;
+        if (hasUpper) strength++;
+        if (hasNumber) strength++;
+
+        const colors = ['#ef4444', '#f59e0b', '#72bf77'];
+        bars.forEach((b, i) => {
+            b.style.background = i < strength ? colors[strength - 1] : '#e5e7eb';
+        });
+
+        // Hint text
+        const missing = [];
+        if (!hasLen)    missing.push('min. 8 karakter');
+        if (!hasUpper)  missing.push('huruf besar');
+        if (!hasNumber) missing.push('angka');
+        if (!noSpace)   missing.push('hapus spasi');
+
+        if (pwHint) {
+            if (missing.length === 0) {
+                pwHint.textContent = '✓ Password kuat';
+                pwHint.style.color = '#72bf77';
+            } else {
+                pwHint.textContent = 'Perlu: ' + missing.join(', ');
+                pwHint.style.color = strength === 0 ? '#ef4444' : '#f59e0b';
+            }
+        }
+    });
+
+    // Password match indicator
     const confirm = document.getElementById('pw-confirm');
     confirm?.addEventListener('input', function(){
         const match = this.value === document.getElementById('password-input').value && this.value.length > 0;
@@ -141,20 +180,30 @@ document.addEventListener('DOMContentLoaded', function(){
         this.style.borderColor = this.value.length > 0 ? (match ? '#72bf77' : '#ef4444') : '';
     });
 
+    // Block form submit if password has spaces (double safety)
+    document.getElementById('register-form')?.addEventListener('submit', function(e) {
+        const pw = document.getElementById('password-input').value;
+        if (/\s/.test(pw)) {
+            e.preventDefault();
+            if (pwHint) { pwHint.textContent = '❌ Password tidak boleh mengandung spasi!'; pwHint.style.color = '#ef4444'; }
+            document.getElementById('password-input').focus();
+        }
+    });
+
     // Geolocation
     const latInput = document.getElementById('latitude');
     const lngInput = document.getElementById('longitude');
-    const locText = document.getElementById('location-text');
-    if(latInput?.value && lngInput?.value){ locText && (locText.textContent = '✓ Lokasi berhasil didapatkan.'); return; }
-    if(!navigator.geolocation){ locText && (locText.textContent = 'Geolocation tidak tersedia. Anda tetap bisa mendaftar.'); return; }
+    const locText  = document.getElementById('location-text');
+    if (latInput?.value && lngInput?.value) { locText && (locText.textContent = '✓ Lokasi berhasil didapatkan.'); return; }
+    if (!navigator.geolocation) { locText && (locText.textContent = 'Geolocation tidak tersedia. Anda tetap bisa mendaftar.'); return; }
     navigator.geolocation.getCurrentPosition(
         pos => {
-            if(latInput) latInput.value = pos.coords.latitude.toFixed(7);
-            if(lngInput) lngInput.value = pos.coords.longitude.toFixed(7);
-            if(locText) locText.textContent = '✓ Lokasi berhasil didapatkan.';
+            if (latInput) latInput.value = pos.coords.latitude.toFixed(7);
+            if (lngInput) lngInput.value = pos.coords.longitude.toFixed(7);
+            if (locText)  locText.textContent = '✓ Lokasi berhasil didapatkan.';
         },
-        () => { if(locText) locText.textContent = 'Lokasi tidak tersedia. Anda tetap bisa mendaftar.'; },
-        { enableHighAccuracy:true, timeout:10000, maximumAge:300000 }
+        () => { if (locText) locText.textContent = 'Lokasi tidak tersedia. Anda tetap bisa mendaftar.'; },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
     );
 });
 </script>

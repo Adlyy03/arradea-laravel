@@ -23,4 +23,13 @@ class RegisterRequest extends FormRequest
             'longitude'   => ['nullable', 'numeric', 'between:-180,180'],
         ];
     }
+
+    public function messages(): array
+    {
+        return [
+            'password.min'   => 'Password minimal 8 karakter.',
+            'password.regex' => 'Password tidak boleh mengandung spasi.',
+            'phone.unique'   => 'Nomor HP sudah terdaftar.',
+        ];
+    }
 }

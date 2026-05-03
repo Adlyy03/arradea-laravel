@@ -106,7 +106,9 @@ class AuthWebController extends Controller
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ], [
-            'phone.unique' => 'Nomor HP sudah terdaftar.',
+            'phone.unique'   => 'Nomor HP sudah terdaftar.',
+            'password.min'   => 'Password minimal 8 karakter.',
+            'password.regex' => 'Password tidak boleh mengandung spasi.',
         ]);
 
         $user = User::create([
