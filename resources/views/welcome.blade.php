@@ -5,50 +5,59 @@
 @php
     use Illuminate\Support\Facades\Cache;
     
-    // Cache produk terbaru (5 menit)
-    $products = Cache::remember('home:products:latest', 300, function () {
-        return \App\Models\Product::with(['store:id,name', 'category:id,name'])
-            ->whereHas('store.user', function ($userQuery) {
-                $userQuery->where('is_seller', true);
-            })
-            ->whereHas('store', function ($storeQuery) {
-                $storeQuery->where('status', 'active');
-            })
-            ->latest()
-            ->take(12)
-            ->get();
+    // Cache hanya IDs produk terbaru (5 menit), fetch models fresh
+    $productIds = Cache::remember('home:products:latest:ids', 300, function () {
+        return \App\Models\Product::whereHas('store.user', function ($userQuery) {
+            $userQuery->where('is_seller', true);
+        })
+        ->whereHas('store', function ($storeQuery) {
+            $storeQuery->where('status', 'active');
+        })
+        ->latest()
+        ->take(12)
+        ->pluck('id')
+        ->toArray();
     });
+    $products = \App\Models\Product::with(['store:id,name', 'category:id,name'])
+        ->whereIn('id', $productIds)
+        ->get();
     
-    // Cache produk dengan diskon (5 menit)
-    $discountedProducts = Cache::remember('home:products:discounted', 300, function () {
-        return \App\Models\Product::with(['store:id,name', 'category:id,name'])
-            ->whereHas('store.user', function ($userQuery) {
-                $userQuery->where('is_seller', true);
-            })
-            ->whereHas('store', function ($storeQuery) {
-                $storeQuery->where('status', 'active');
-            })
-            ->where('discount_percent', '>', 0)
-            ->orderBy('discount_percent', 'desc')
-            ->take(8)
-            ->get();
+    // Cache hanya IDs produk dengan diskon (5 menit), fetch models fresh
+    $discountedIds = Cache::remember('home:products:discounted:ids', 300, function () {
+        return \App\Models\Product::whereHas('store.user', function ($userQuery) {
+            $userQuery->where('is_seller', true);
+        })
+        ->whereHas('store', function ($storeQuery) {
+            $storeQuery->where('status', 'active');
+        })
+        ->where('discount_percent', '>', 0)
+        ->orderBy('discount_percent', 'desc')
+        ->take(8)
+        ->pluck('id')
+        ->toArray();
     });
+    $discountedProducts = \App\Models\Product::with(['store:id,name', 'category:id,name'])
+        ->whereIn('id', $discountedIds)
+        ->get();
     
-    // Cache produk populer (10 menit)
-    $popularProducts = Cache::remember('home:products:popular', 600, function () {
-        return \App\Models\Product::with(['store:id,name', 'category:id,name'])
-            ->whereHas('store.user', function ($userQuery) {
-                $userQuery->where('is_seller', true);
-            })
-            ->whereHas('store', function ($storeQuery) {
-                $storeQuery->where('status', 'active');
-            })
-            ->withCount('orders')
-            ->having('orders_count', '>', 0)
-            ->orderBy('orders_count', 'desc')
-            ->take(8)
-            ->get();
+    // Cache hanya IDs produk populer (10 menit), fetch models fresh
+    $popularIds = Cache::remember('home:products:popular:ids', 600, function () {
+        return \App\Models\Product::whereHas('store.user', function ($userQuery) {
+            $userQuery->where('is_seller', true);
+        })
+        ->whereHas('store', function ($storeQuery) {
+            $storeQuery->where('status', 'active');
+        })
+        ->withCount('orders')
+        ->having('orders_count', '>', 0)
+        ->orderBy('orders_count', 'desc')
+        ->take(8)
+        ->pluck('id')
+        ->toArray();
     });
+    $popularProducts = \App\Models\Product::with(['store:id,name', 'category:id,name'])
+        ->whereIn('id', $popularIds)
+        ->get();
 @endphp
 
 <style>
@@ -72,18 +81,26 @@
     .category-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 28px rgba(114,191,119,.15); }
     
     /* Slider Styles */
-    .promo-slider { position: relative; overflow: hidden; }
+    .promo-slider { position: relative; overflow: hidden; border-radius: 0.75rem; }
     .promo-track { display: flex; transition: transform 0.5s ease-in-out; }
-    .promo-slide { min-width: 100%; }
-    .promo-dots { display: flex; gap: 8px; justify-content: center; margin-top: 20px; }
-    .promo-dot { width: 8px; height: 8px; border-radius: 50%; background: #d1d5db; cursor: pointer; transition: all 0.3s; }
-    .promo-dot.active { width: 24px; border-radius: 4px; background: #72bf77; }
-    .promo-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e5e7eb; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    .promo-slide { min-width: 100%; flex-shrink: 0; }
+    .promo-dots { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+    .promo-dot { width: 6px; height: 6px; border-radius: 50%; background: #d1d5db; cursor: pointer; transition: all 0.3s ease; }
+    .promo-dot:hover { background: #a3a3a3; }
+    .promo-dot.active { width: 20px; border-radius: 3px; background: #72bf77; }
+    .promo-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; width: 36px; height: 36px; border-radius: 50%; background: white; border: 2px solid #e5e7eb; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.1); color: #72bf77; }
     .promo-nav:hover { background: #72bf77; border-color: #72bf77; color: white; transform: translateY(-50%) scale(1.1); }
-    .promo-nav.prev { left: 10px; }
-    .promo-nav.next { right: 10px; }
-    @media (max-width: 640px) {
+    .promo-nav:active { transform: translateY(-50%) scale(0.95); }
+    .promo-nav.prev { left: 16px; }
+    .promo-nav.next { right: 16px; }
+    @media (max-width: 768px) {
         .promo-nav { width: 32px; height: 32px; }
+        .promo-nav.prev { left: 8px; }
+        .promo-nav.next { right: 8px; }
+    }
+    @media (max-width: 640px) {
+        .promo-nav { width: 28px; height: 28px; }
+        .promo-slider { border-radius: 0.5rem; }
     }
 </style>
 
@@ -175,8 +192,12 @@
 
 {{-- PROMO BANNER SLIDER --}}
 @if($discountedProducts->count() > 0 || $popularProducts->count() > 0)
- <h2 class="text-3xl sm:text-4xl font-black tracking-tight text-gray-900">Promo <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Spesial</span></h2>
-            <p class="text-gray-500 mt-2 sm:mt-3 font-medium text-base sm:text-lg">Jangan lewatkan penawaran terbaik hari ini!</p>
+<section class="py-12 sm:py-16 lg:py-20 bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="mb-8 sm:mb-10 lg:mb-12">
+            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-gray-900">Promo <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Spesial</span></h2>
+            <p class="text-gray-500 mt-2 sm:mt-3 font-medium text-sm sm:text-base lg:text-lg">Jangan lewatkan penawaran terbaik hari ini!</p>
+        </div>
         <div class="promo-slider relative fade-up-2">
             {{-- Navigation Buttons --}}
             <button class="promo-nav prev hidden sm:flex" onclick="prevSlide()">
@@ -194,40 +215,40 @@
                 {{-- Slide 1: Produk Diskon --}}
                 @if($discountedProducts->count() > 0)
                 <div class="promo-slide">
-                    <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-3xl p-6 sm:p-8 border border-red-100">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style="background:rgba(239,68,68,.15)">
+                    <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-red-100">
+                        <div class="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                            <div class="w-10 sm:w-12 h-10 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0" style="background:rgba(239,68,68,.15)">
                                 🔥
                             </div>
-                            <div>
-                                <h3 class="text-xl sm:text-2xl font-black text-gray-900">Diskon Spesial!</h3>
-                                <p class="text-sm text-gray-600">Hemat hingga {{ $discountedProducts->max('discount_percent') }}%</p>
+                            <div class="min-w-0">
+                                <h3 class="text-lg sm:text-xl lg:text-2xl font-black text-gray-900">Diskon Spesial!</h3>
+                                <p class="text-xs sm:text-sm text-gray-600 truncate">Hemat hingga {{ $discountedProducts->max('discount_percent') }}%</p>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                             @foreach($discountedProducts->take(4) as $product)
-                            <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                            <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 sm:hover:-translate-y-1">
                                 <div class="relative aspect-square overflow-hidden bg-gray-50">
                                     <img src="{{ $product->image }}" alt="{{ $product->name }}"
                                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                         onerror="this.src='https://via.placeholder.com/300x300/f0faf1/72bf77?text=Produk'">
-                                    <span class="absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-black text-white shadow-lg" style="background:linear-gradient(135deg,#ef4444,#dc2626)">
+                                    <span class="absolute top-1 left-1 sm:top-2 sm:left-2 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-black text-white shadow-lg" style="background:linear-gradient(135deg,#ef4444,#dc2626)">
                                         -{{ $product->discount_percent }}%
                                     </span>
                                 </div>
-                                <div class="p-3">
-                                    <p class="text-xs font-bold text-gray-900 line-clamp-2 mb-2">{{ $product->name }}</p>
+                                <div class="p-2 sm:p-3">
+                                    <p class="text-[11px] sm:text-xs font-bold text-gray-900 line-clamp-2 mb-1.5 sm:mb-2">{{ $product->name }}</p>
                                     @php $finalPrice = $product->price * (1 - $product->discount_percent/100); @endphp
-                                    <p class="text-[10px] text-gray-400 line-through">Rp {{ number_format($product->price,0,',','.') }}</p>
-                                    <p class="text-sm font-black text-red-600">Rp {{ number_format($finalPrice,0,',','.') }}</p>
+                                    <p class="text-[9px] sm:text-[10px] text-gray-400 line-through">Rp {{ number_format($product->price,0,',','.') }}</p>
+                                    <p class="text-xs sm:text-sm font-black text-red-600">Rp {{ number_format($finalPrice,0,',','.') }}</p>
                                 </div>
                             </a>
                             @endforeach
                         </div>
-                        <div class="mt-6 text-center">
-                            <a href="{{ route('buyer.products') }}?discount=1" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all hover:scale-105" style="background:linear-gradient(135deg,#ef4444,#dc2626)">
+                        <div class="mt-4 sm:mt-6 text-center">
+                            <a href="{{ route('buyer.products') }}?discount=1" class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold text-white transition-all hover:scale-105 active:scale-95" style="background:linear-gradient(135deg,#ef4444,#dc2626)">
                                 Lihat Semua Diskon
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                                 </svg>
                             </a>
@@ -240,44 +261,44 @@
                 {{-- Slide 2: Produk Populer --}}
                 @if($popularProducts->count() > 0)
                 <div class="promo-slide">
-                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-3xl p-6 sm:p-8 border border-blue-100">
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style="background:rgba(59,130,246,.15)">
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-blue-100">
+                        <div class="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
+                            <div class="w-10 sm:w-12 h-10 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0" style="background:rgba(59,130,246,.15)">
                                 ⭐
                             </div>
-                            <div>
-                                <h3 class="text-xl sm:text-2xl font-black text-gray-900">Paling Laris!</h3>
-                                <p class="text-sm text-gray-600">Produk favorit warga Arradea</p>
+                            <div class="min-w-0">
+                                <h3 class="text-lg sm:text-xl lg:text-2xl font-black text-gray-900">Paling Laris!</h3>
+                                <p class="text-xs sm:text-sm text-gray-600 truncate">Produk favorit warga Arradea</p>
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
                             @foreach($popularProducts->take(4) as $product)
-                            <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                            <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 sm:hover:-translate-y-1">
                                 <div class="relative aspect-square overflow-hidden bg-gray-50">
                                     <img src="{{ $product->image }}" alt="{{ $product->name }}"
                                         class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                                         onerror="this.src='https://via.placeholder.com/300x300/f0faf1/72bf77?text=Produk'">
-                                    <span class="absolute top-2 left-2 px-2 py-1 rounded-lg text-xs font-black text-white shadow-lg" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">
-                                        🔥 {{ $product->orders_count }} terjual
+                                    <span class="absolute top-1 left-1 sm:top-2 sm:left-2 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[9px] sm:text-xs font-black text-white shadow-lg" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">
+                                        🔥 {{ $product->orders_count }}
                                     </span>
                                 </div>
-                                <div class="p-3">
-                                    <p class="text-xs font-bold text-gray-900 line-clamp-2 mb-2">{{ $product->name }}</p>
+                                <div class="p-2 sm:p-3">
+                                    <p class="text-[11px] sm:text-xs font-bold text-gray-900 line-clamp-2 mb-1.5 sm:mb-2">{{ $product->name }}</p>
                                     @if($product->discount_percent > 0)
                                         @php $finalPrice = $product->price * (1 - $product->discount_percent/100); @endphp
-                                        <p class="text-[10px] text-gray-400 line-through">Rp {{ number_format($product->price,0,',','.') }}</p>
-                                        <p class="text-sm font-black" style="color:#72bf77">Rp {{ number_format($finalPrice,0,',','.') }}</p>
+                                        <p class="text-[9px] sm:text-[10px] text-gray-400 line-through">Rp {{ number_format($product->price,0,',','.') }}</p>
+                                        <p class="text-xs sm:text-sm font-black" style="color:#72bf77">Rp {{ number_format($finalPrice,0,',','.') }}</p>
                                     @else
-                                        <p class="text-sm font-black text-gray-900">Rp {{ number_format($product->price,0,',','.') }}</p>
+                                        <p class="text-xs sm:text-sm font-black text-gray-900">Rp {{ number_format($product->price,0,',','.') }}</p>
                                     @endif
                                 </div>
                             </a>
                             @endforeach
                         </div>
-                        <div class="mt-6 text-center">
-                            <a href="{{ route('buyer.products') }}" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold text-white transition-all hover:scale-105" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">
+                        <div class="mt-4 sm:mt-6 text-center">
+                            <a href="{{ route('buyer.products') }}" class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold text-white transition-all hover:scale-105 active:scale-95" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">
                                 Lihat Semua Produk
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
                                 </svg>
                             </a>
@@ -287,8 +308,20 @@
                 @endif
             </div>
 
+            {{-- Navigation Buttons (Desktop) --}}
+            <button class="promo-nav prev hidden md:flex" onclick="prevSlide()" title="Slide sebelumnya">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
+                </svg>
+            </button>
+            <button class="promo-nav next hidden md:flex" onclick="nextSlide()" title="Slide berikutnya">
+                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
+                </svg>
+            </button>
+
             {{-- Dots Navigation --}}
-            <div class="promo-dots" id="promoDots"></div>
+            <div class="promo-dots absolute bottom-4 sm:bottom-6 left-0 right-0" id="promoDots"></div>
         </div>
     </div>
 </section>
@@ -299,34 +332,44 @@ const slides = document.querySelectorAll('.promo-slide');
 const track = document.querySelector('.promo-track');
 const dotsContainer = document.getElementById('promoDots');
 let autoSlideInterval;
+let touchStartX = 0;
+let touchEndX = 0;
+let isSwiping = false;
 
 // Create dots
 slides.forEach((_, index) => {
     const dot = document.createElement('div');
     dot.className = 'promo-dot' + (index === 0 ? ' active' : '');
     dot.onclick = () => goToSlide(index);
+    dot.setAttribute('aria-label', `Slide ${index + 1}`);
+    dot.setAttribute('role', 'button');
+    dot.setAttribute('tabindex', '0');
     dotsContainer.appendChild(dot);
 });
 
 const dots = document.querySelectorAll('.promo-dot');
 
 function updateSlider() {
-    track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    if (track) {
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+    }
     dots.forEach((dot, index) => {
         dot.classList.toggle('active', index === currentSlide);
     });
 }
 
 function nextSlide() {
-    currentSlide = (currentSlide + 1) % slides.length;
-    updateSlider();
-    resetAutoSlide();
+    if (slides.length > 0) {
+        currentSlide = (currentSlide + 1) % slides.length;
+        updateSlider();
+    }
 }
 
 function prevSlide() {
-    currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-    updateSlider();
-    resetAutoSlide();
+    if (slides.length > 0) {
+        currentSlide = (currentSlide - 1 + slides.length) % slides.length;
+        updateSlider();
+    }
 }
 
 function goToSlide(index) {
@@ -336,7 +379,9 @@ function goToSlide(index) {
 }
 
 function startAutoSlide() {
-    autoSlideInterval = setInterval(nextSlide, 5000); // Auto slide every 5 seconds
+    if (slides.length > 1) {
+        autoSlideInterval = setInterval(nextSlide, 6000);
+    }
 }
 
 function resetAutoSlide() {
@@ -344,33 +389,57 @@ function resetAutoSlide() {
     startAutoSlide();
 }
 
-// Start auto slide
-if (slides.length > 1) {
-    startAutoSlide();
-}
+// Initialize
+updateSlider();
+startAutoSlide();
 
-// Pause on hover
+// Event listeners
 const slider = document.querySelector('.promo-slider');
-slider.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
-slider.addEventListener('mouseleave', startAutoSlide);
+if (slider) {
+    // Pause auto-slide on hover
+    slider.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
+    slider.addEventListener('mouseleave', () => startAutoSlide());
+    
+    // Touch support for mobile
+    slider.addEventListener('touchstart', (e) => {
+        isSwiping = true;
+        touchStartX = e.changedTouches[0].screenX;
+        clearInterval(autoSlideInterval);
+    }, { passive: true });
 
-// Touch swipe support for mobile
-let touchStartX = 0;
-let touchEndX = 0;
+    slider.addEventListener('touchmove', () => {
+        isSwiping = true;
+    }, { passive: true });
 
-slider.addEventListener('touchstart', (e) => {
-    touchStartX = e.changedTouches[0].screenX;
-});
-
-slider.addEventListener('touchend', (e) => {
-    touchEndX = e.changedTouches[0].screenX;
-    handleSwipe();
-});
+    slider.addEventListener('touchend', (e) => {
+        if (!isSwiping) return;
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+        isSwiping = false;
+        startAutoSlide();
+    }, { passive: true });
+}
 
 function handleSwipe() {
-    if (touchEndX < touchStartX - 50) nextSlide();
-    if (touchEndX > touchStartX + 50) prevSlide();
+    const swipeThreshold = 50;
+    const diff = touchStartX - touchEndX;
+    
+    if (Math.abs(diff) > swipeThreshold) {
+        if (diff > 0) {
+            nextSlide();
+        } else {
+            prevSlide();
+        }
+    }
 }
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+    if (slider && slider.contains(document.activeElement)) {
+        if (e.key === 'ArrowLeft') prevSlide();
+        if (e.key === 'ArrowRight') nextSlide();
+    }
+});
 </script>
 @endif
 
