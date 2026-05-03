@@ -9,7 +9,6 @@
         'pending'    => ['Menunggu',   'bg-amber-100 text-amber-700'],
         'accepted'   => ['Diproses',   'bg-blue-100 text-blue-700'],
         'shipped'    => ['Dikirim',    'bg-purple-100 text-purple-700'],
-        'delivered'  => ['Terkirim',   'bg-green-100 text-green-700'],
         'done'       => ['Selesai',    'bg-green-100 text-green-700'],
         'rejected'   => ['Ditolak',    'bg-red-100 text-red-700'],
         'dibatalkan' => ['Dibatalkan', 'bg-gray-100 text-gray-500'],
@@ -22,7 +21,7 @@
     <div class="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         @php $activeStatus = request('status'); @endphp
         <a href="{{ route('buyer.orders') }}" class="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition {{ !$activeStatus ? 'text-white' : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-300' }}" style="{{ !$activeStatus ? 'background:#72bf77' : '' }}">Semua</a>
-        @foreach(['pending'=>'Menunggu','accepted'=>'Diproses','done'=>'Selesai','rejected'=>'Ditolak'] as $key=>$label)
+        @foreach(['pending'=>'Menunggu','accepted'=>'Diproses','shipped'=>'Dikirim','done'=>'Selesai','rejected'=>'Ditolak'] as $key=>$label)
         <a href="{{ route('buyer.orders', ['status'=>$key]) }}" class="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition {{ $activeStatus===$key ? 'text-white' : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-300' }}" style="{{ $activeStatus===$key ? 'background:#72bf77' : '' }}">{{ $label }}</a>
         @endforeach
     </div>

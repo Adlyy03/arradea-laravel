@@ -6,11 +6,12 @@
 @section('content')
 @php
     $statusMap = [
-        'pending'    => ['Menunggu Konfirmasi', 'bg-amber-100 text-amber-700', 'border-amber-200'],
-        'accepted'   => ['Sedang Diproses',     'bg-blue-100 text-blue-700',   'border-blue-200'],
-        'done'       => ['Selesai',             'bg-green-100 text-green-700', 'border-green-200'],
-        'rejected'   => ['Ditolak',             'bg-red-100 text-red-700',     'border-red-200'],
-        'dibatalkan' => ['Dibatalkan',           'bg-gray-100 text-gray-500',   'border-gray-200'],
+        'pending'    => ['Menunggu Konfirmasi', 'bg-amber-100 text-amber-700',  'border-amber-200'],
+        'accepted'   => ['Sedang Diproses',     'bg-blue-100 text-blue-700',    'border-blue-200'],
+        'shipped'    => ['Dikirim',             'bg-purple-100 text-purple-700','border-purple-200'],
+        'done'       => ['Selesai',             'bg-green-100 text-green-700',  'border-green-200'],
+        'rejected'   => ['Ditolak',             'bg-red-100 text-red-700',      'border-red-200'],
+        'dibatalkan' => ['Dibatalkan',           'bg-gray-100 text-gray-500',    'border-gray-200'],
     ];
     [$statusLabel, $statusClass, $statusBorder] = $statusMap[$order->status] ?? [$order->status, 'bg-gray-100 text-gray-500', 'border-gray-200'];
 @endphp
@@ -108,7 +109,7 @@
     @endif
 
     {{-- Actions --}}
-    @if(in_array($order->status, ['pending','accepted']))
+    @if(in_array($order->status, ['pending','accepted','shipped']))
     <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
         <h2 class="text-xs font-black text-gray-500 uppercase tracking-widest">⚙️ Tindakan</h2>
 
@@ -135,9 +136,19 @@
         @elseif($order->status === 'accepted')
         <form action="/web/order/{{ $order->id }}/status" method="POST">
             @csrf @method('PUT')
+            <input type="hidden" name="status" value="shipped">
+            <button type="submit"
+                    class="w-full h-12 rounded-2xl font-black text-sm text-white bg-purple-600 hover:bg-purple-700 transition active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-purple-100">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/></svg>
+                Tandai Sudah Dikirim
+            </button>
+        </form>
+        @elseif($order->status === 'shipped')
+        <form action="/web/order/{{ $order->id }}/status" method="POST">
+            @csrf @method('PUT')
             <input type="hidden" name="status" value="done">
             <button type="submit"
-                    class="w-full h-12 rounded-2xl font-black text-sm text-white bg-blue-600 hover:bg-blue-700 transition active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-blue-100">
+                    class="w-full h-12 rounded-2xl font-black text-sm text-white bg-green-600 hover:bg-green-700 transition active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-green-100">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
                 Tandai Pesanan Selesai
             </button>

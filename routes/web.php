@@ -183,7 +183,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
         
         // Products CRUD List
         Route::get('/products', function () {
-            $products = auth()->user()->store ? auth()->user()->store->products()->latest()->get() : collect();
+            $products = auth()->user()->store ? auth()->user()->store->products()->with('category')->latest()->get() : collect();
             return view('seller.products.index', compact('products'));
         })->name('seller.products');
 
@@ -858,7 +858,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
     // Update status order (seller action)
     Route::put('/web/order/{id}/status', function (\Illuminate\Http\Request $request, $id) {
         $order = Order::findOrFail($id);
-        $request->validate(['status' => 'required|in:accepted,rejected,done']);
+        $request->validate(['status' => 'required|in:accepted,shipped,rejected,done']);
 
         $sellerStore = auth()->user()->store;
         if (! $sellerStore || (int) $order->store_id !== (int) $sellerStore->id) {

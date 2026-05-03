@@ -96,6 +96,7 @@
                 <thead class="bg-gray-50/80 text-[10px] font-black tracking-widest uppercase text-gray-400">
                     <tr>
                         <th class="px-5 py-4">Detail Produk</th>
+                        <th class="px-5 py-4">Kategori</th>
                         <th class="px-5 py-4">Harga</th>
                         <th class="px-5 py-4">Stok</th>
                         <th class="px-5 py-4">Diskon</th>
@@ -123,6 +124,13 @@
                                     <span class="inline-block mt-1 text-[9px] font-bold uppercase tracking-widest text-gray-400">ID-{{ str_pad($product->id, 5, '0', STR_PAD_LEFT) }}</span>
                                 </div>
                             </div>
+                        </td>
+                        <td class="px-5 py-4">
+                            @if($product->category)
+                                <span class="px-2.5 py-1 bg-blue-50 text-blue-600 border border-blue-100 rounded-lg text-[10px] font-black uppercase tracking-widest">{{ $product->category->name }}</span>
+                            @else
+                                <span class="text-xs text-gray-300 font-bold">—</span>
+                            @endif
                         </td>
                         <td class="px-5 py-4">
                             <p class="product-price font-black text-gray-900">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
@@ -169,7 +177,7 @@
                     </tr>
                     @empty
                     <tr id="empty-row">
-                        <td colspan="5" class="px-10 py-20 text-center">
+                        <td colspan="6" class="px-10 py-20 text-center">
                             <div class="flex flex-col items-center gap-3">
                                 <span class="text-5xl">📦</span>
                                 <p class="font-black text-gray-900 text-lg">Belum Ada Produk</p>
@@ -204,6 +212,9 @@
                         <p class="font-black text-gray-900 leading-tight text-sm">{{ $product->name }}</p>
                         <span class="product-stock-badge flex-shrink-0 px-2 py-0.5 rounded-lg text-[9px] font-black {{ $product->stock > 5 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">{{ $product->stock }}x</span>
                     </div>
+                    @if($product->category)
+                        <span class="inline-block mt-1 px-2 py-0.5 bg-blue-50 text-blue-600 rounded-lg text-[9px] font-black uppercase tracking-widest">{{ $product->category->name }}</span>
+                    @endif
                     <p class="product-price text-sm font-black text-gray-900 mt-1">Rp {{ number_format($product->price, 0, ',', '.') }}</p>
                     <div class="flex items-center gap-2 mt-2">
                         <a href="{{ route('seller.products.edit', $product->id) }}"

@@ -17,6 +17,7 @@ class ProductRequest extends FormRequest
             'name'        => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'price'       => ['required', 'numeric', 'min:0'],
+            'category_id' => ['nullable', 'exists:categories,id'],
             'discount_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
             'discount_start_at' => ['nullable', 'date'],
             'discount_end_at' => ['nullable', 'date', 'after_or_equal:discount_start_at'],

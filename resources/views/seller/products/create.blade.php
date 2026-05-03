@@ -101,6 +101,23 @@
                 @error('name') <p class="text-xs text-red-500 font-bold">{{ $message }}</p> @enderror
             </div>
 
+            {{-- Kategori --}}
+            <div class="space-y-1.5">
+                <label class="block text-xs font-black text-gray-500 uppercase tracking-wider">Kategori</label>
+                <select name="category_id"
+                        class="w-full h-11 bg-gray-50 border {{ $errors->has('category_id') ? 'border-red-300 ring-2 ring-red-100' : 'border-gray-200' }} rounded-xl px-4 text-sm font-semibold text-gray-900 focus:outline-none focus:ring-2 focus:border-transparent transition appearance-none"
+                        style="--tw-ring-color:rgba(114,191,119,.4)">
+                    <option value="">— Pilih Kategori (Opsional) —</option>
+                    @foreach(\App\Models\Category::orderBy('name')->get() as $cat)
+                        <option value="{{ $cat->id }}"
+                            {{ old('category_id', $isEdit ? $product->category_id : '') == $cat->id ? 'selected' : '' }}>
+                            {{ $cat->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @error('category_id') <p class="text-xs text-red-500 font-bold">{{ $message }}</p> @enderror
+            </div>
+
             {{-- Deskripsi --}}
             <div class="space-y-1.5">
                 <label class="block text-xs font-black text-gray-500 uppercase tracking-wider">Deskripsi Produk</label>

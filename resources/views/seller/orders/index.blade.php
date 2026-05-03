@@ -54,7 +54,7 @@
         <a href="{{ route('seller.orders') }}"
            class="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition {{ !$activeStatus ? 'text-white' : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-300' }}"
            style="{{ !$activeStatus ? 'background:#72bf77' : '' }}">Semua</a>
-        @foreach(['pending'=>'⏳ Pending','accepted'=>'🔄 Diproses','done'=>'✅ Selesai','rejected'=>'❌ Ditolak'] as $key=>$label)
+        @foreach(['pending'=>'⏳ Pending','accepted'=>'🔄 Diproses','shipped'=>'🚚 Dikirim','done'=>'✅ Selesai','rejected'=>'❌ Ditolak'] as $key=>$label)
         <a href="{{ route('seller.orders', ['status'=>$key]) }}"
            class="flex-shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition {{ $activeStatus===$key ? 'text-white' : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-300' }}"
            style="{{ $activeStatus===$key ? 'background:#72bf77' : '' }}">{{ $label }}</a>
@@ -87,6 +87,7 @@
                         $statusMap = [
                             'pending'    => ['Menunggu',  'bg-amber-100 text-amber-700'],
                             'accepted'   => ['Diproses',  'bg-blue-100 text-blue-700'],
+                            'shipped'    => ['Dikirim',   'bg-purple-100 text-purple-700'],
                             'done'       => ['Selesai',   'bg-green-100 text-green-700'],
                             'rejected'   => ['Ditolak',   'bg-red-100 text-red-700'],
                             'dibatalkan' => ['Dibatalkan','bg-gray-100 text-gray-500'],
@@ -154,8 +155,14 @@
                                 @elseif($order->status === 'accepted')
                                     <form action="/web/order/{{ $order->id }}/status" method="POST">
                                         @csrf @method('PUT')
+                                        <input type="hidden" name="status" value="shipped">
+                                        <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-black text-white bg-purple-600 hover:bg-purple-700 transition active:scale-95">🚚 Kirim</button>
+                                    </form>
+                                @elseif($order->status === 'shipped')
+                                    <form action="/web/order/{{ $order->id }}/status" method="POST">
+                                        @csrf @method('PUT')
                                         <input type="hidden" name="status" value="done">
-                                        <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-black text-white bg-blue-600 hover:bg-blue-700 transition active:scale-95">✓ Selesai</button>
+                                        <button type="submit" class="px-3 py-1.5 rounded-lg text-xs font-black text-white bg-green-600 hover:bg-green-700 transition active:scale-95">✓ Selesai</button>
                                     </form>
                                 @else
                                     <span class="text-xs text-gray-300 font-bold">—</span>
@@ -189,6 +196,7 @@
                 $statusMap = [
                     'pending'    => ['Menunggu',  'bg-amber-100 text-amber-700'],
                     'accepted'   => ['Diproses',  'bg-blue-100 text-blue-700'],
+                    'shipped'    => ['Dikirim',   'bg-purple-100 text-purple-700'],
                     'done'       => ['Selesai',   'bg-green-100 text-green-700'],
                     'rejected'   => ['Ditolak',   'bg-red-100 text-red-700'],
                     'dibatalkan' => ['Dibatalkan','bg-gray-100 text-gray-500'],
@@ -238,8 +246,14 @@
                     @elseif($order->status === 'accepted')
                         <form action="/web/order/{{ $order->id }}/status" method="POST" class="flex-1">
                             @csrf @method('PUT')
+                            <input type="hidden" name="status" value="shipped">
+                            <button type="submit" class="w-full py-2 rounded-xl text-xs font-black text-white bg-purple-600 hover:bg-purple-700 transition">🚚 Tandai Dikirim</button>
+                        </form>
+                    @elseif($order->status === 'shipped')
+                        <form action="/web/order/{{ $order->id }}/status" method="POST" class="flex-1">
+                            @csrf @method('PUT')
                             <input type="hidden" name="status" value="done">
-                            <button type="submit" class="w-full py-2 rounded-xl text-xs font-black text-white bg-blue-600 hover:bg-blue-700 transition">✓ Tandai Selesai</button>
+                            <button type="submit" class="w-full py-2 rounded-xl text-xs font-black text-white bg-green-600 hover:bg-green-700 transition">✓ Tandai Selesai</button>
                         </form>
                     @endif
                     <a href="{{ route('chat.show', $order) }}" class="py-2 px-4 rounded-xl text-xs font-black text-white bg-gray-700 hover:bg-gray-800 transition">💬 Chat</a>

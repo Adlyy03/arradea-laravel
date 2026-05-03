@@ -9,7 +9,7 @@
     <div class="flex flex-col lg:flex-row justify-between items-center lg:items-end gap-5 lg:gap-10 bg-white p-8 lg:p-10 lg:p-20 rounded-2xl lg:rounded-3xl lg:rounded-2xl lg:rounded-3xl lg:rounded-[4rem] shadow-sm border border-gray-100">
         <div class="max-w-2xl text-center lg:text-left">
             <h1 class="text-4xl lg:text-6xl font-black text-gray-900 tracking-tighter leading-tight mb-4">Pesanan <span class="text-primary-600 underline underline-offset-4 lg:underline-offset-8 decoration-4 lg:decoration-8">#{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}</span>.</h1>
-            <p class="text-gray-500 text-base lg:text-lg font-medium leading-relaxed">Status: <span class="font-black text-{{ $order->status === 'done' ? 'green' : ($order->status === 'rejected' ? 'red' : ($order->status === 'accepted' ? 'blue' : ($order->status === 'dibatalkan' ? 'gray' : 'amber'))) }}-600">{{ strtoupper($order->status) }}</span></p>
+            <p class="text-gray-500 text-base lg:text-lg font-medium leading-relaxed">Status: <span class="font-black text-{{ $order->status === 'done' ? 'green' : ($order->status === 'rejected' ? 'red' : ($order->status === 'accepted' ? 'blue' : ($order->status === 'shipped' ? 'purple' : ($order->status === 'dibatalkan' ? 'gray' : 'amber')))) }}-600">{{ strtoupper($order->status) }}</span></p>
         </div>
         <div class="flex gap-4 w-full lg:w-auto">
             <a href="{{ route('buyer.orders') }}" class="flex-1 lg:flex-none px-8 lg:px-5 lg:px-10 py-5 bg-black text-white rounded-2xl lg:rounded-2xl lg:rounded-3xl font-black text-lg shadow-xl hover:scale-105 active:scale-95 transition-all text-center">← Kembali</a>
@@ -82,23 +82,40 @@
                 
                 <div class="space-y-4">
                     @php
-                        $statuses = ['pending' => 'Menunggu Konfirmasi', 'accepted' => 'Diterima Penjual', 'rejected' => 'Ditolak', 'done' => 'Selesai', 'dibatalkan' => 'Dibatalkan Pembeli'];
-                        $statusColors = ['pending' => 'amber', 'accepted' => 'blue', 'rejected' => 'red', 'done' => 'green', 'dibatalkan' => 'gray'];
+                        $statuses = [
+                            'pending'    => 'Menunggu Konfirmasi',
+                            'accepted'   => 'Diterima Penjual',
+                            'shipped'    => 'Sedang Dikirim',
+                            'rejected'   => 'Ditolak',
+                            'done'       => 'Selesai',
+                            'dibatalkan' => 'Dibatalkan Pembeli',
+                        ];
+                        $statusColors = [
+                            'pending'    => 'amber',
+                            'accepted'   => 'blue',
+                            'shipped'    => 'purple',
+                            'rejected'   => 'red',
+                            'done'       => 'green',
+                            'dibatalkan' => 'gray',
+                        ];
                     @endphp
 
-                    @foreach(['pending', 'accepted', 'rejected', 'done', 'dibatalkan'] as $status)
+                    @foreach(['pending', 'accepted', 'shipped', 'done', 'rejected', 'dibatalkan'] as $status)
                         <div class="flex items-start gap-3">
                             <div class="w-6 h-6 rounded-full {{$order->status === $status || 
                                 ($status === 'done' && $order->status === 'done') || 
-                                ($status === 'accepted' && in_array($order->status, ['accepted', 'done'])) 
+                                ($status === 'shipped' && in_array($order->status, ['shipped', 'done'])) ||
+                                ($status === 'accepted' && in_array($order->status, ['accepted', 'shipped', 'done'])) 
                                 ? 'bg-' . $statusColors[$status] . '-600' 
                                 : 'bg-gray-200'}} flex-shrink-0 mt-1"></div>
                             <div>
                                 <p class="font-black text-sm text-gray-900">{{ $statuses[$status] }}</p>
                                 @if($status === 'pending' && $order->status === 'pending')
                                     <p class="text-[10px] text-gray-400 mt-1">Sedang menunggu respons penjual...</p>
-                                @elseif($status === 'accepted' && in_array($order->status, ['accepted', 'done']))
+                                @elseif($status === 'accepted' && in_array($order->status, ['accepted', 'shipped', 'done']))
                                     <p class="text-[10px] text-gray-400 mt-1">Penjual menerima pesanan ini.</p>
+                                @elseif($status === 'shipped' && in_array($order->status, ['shipped', 'done']))
+                                    <p class="text-[10px] text-gray-400 mt-1">Pesanan sedang dalam pengiriman.</p>
                                 @elseif($status === 'dibatalkan' && $order->status === 'dibatalkan')
                                     <p class="text-[10px] text-gray-400 mt-1">Pesanan dibatalkan oleh pembeli.</p>
                                 @endif
