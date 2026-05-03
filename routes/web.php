@@ -366,6 +366,30 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
         })->name('seller.messages');
 
         Route::get('/settings', fn() => view('seller.settings'))->name('seller.settings');
+        Route::post('/settings', function (Request $request) {
+            $request->validate([
+                'store_name'        => ['required', 'string', 'max:255'],
+                'store_description' => ['nullable', 'string', 'max:1000'],
+                'store_address'     => ['nullable', 'string', 'max:500'],
+            ], [
+                'store_name.required' => 'Nama toko tidak boleh kosong.',
+                'store_name.max'      => 'Nama toko maksimal 255 karakter.',
+            ]);
+
+            $store = auth()->user()->store;
+
+            if (! $store) {
+                return back()->withErrors(['store' => 'Toko tidak ditemukan.']);
+            }
+
+            $store->update([
+                'name'        => $request->store_name,
+                'description' => $request->store_description,
+                'address'     => $request->store_address,
+            ]);
+
+            return back()->with('success', 'Informasi toko berhasil diperbarui!');
+        })->name('seller.settings.update');
     });
 
     Route::get('/seller/apply', function () {

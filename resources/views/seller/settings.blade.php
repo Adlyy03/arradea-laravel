@@ -21,47 +21,60 @@
     <div class="bg-white rounded-2xl lg:rounded-3xl lg:rounded-[3.5rem] shadow-sm border border-gray-100 p-5 lg:p-10">
         <h2 class="text-2xl font-black text-gray-900 mb-8">Informasi Toko</h2>
 
-        <form class="space-y-8">
+        @if(session('success'))
+        <div class="mb-6 flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-2xl">
+            <span class="text-lg">✅</span>
+            <p class="text-sm font-bold text-green-700">{{ session('success') }}</p>
+        </div>
+        @endif
+
+        @if($errors->any())
+        <div class="mb-6 flex items-start gap-3 p-4 bg-red-50 border border-red-200 rounded-2xl">
+            <span class="text-lg">❌</span>
+            <ul class="text-sm font-medium text-red-700 space-y-0.5">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+        </div>
+        @endif
+
+        <form method="POST" action="{{ route('seller.settings.update') }}" class="space-y-8">
+            @csrf
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
-                    <label class="block text-sm font-black text-gray-700 mb-2">Nama Toko</label>
-                    <input type="text" value="{{ auth()->user()->store->name ?? '' }}" class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium">
+                    <label class="block text-sm font-black text-gray-700 mb-2">Nama Toko <span class="text-red-400">*</span></label>
+                    <input type="text"
+                           name="store_name"
+                           value="{{ old('store_name', auth()->user()->store->name ?? '') }}"
+                           required
+                           placeholder="Nama toko Anda"
+                           class="w-full px-6 py-4 bg-gray-50 border {{ $errors->has('store_name') ? 'border-red-300' : 'border-gray-200' }} rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium">
+                    @error('store_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                 </div>
 
                 <div>
-                    <label class="block text-sm font-black text-gray-700 mb-2">Email Kontak</label>
-                    <input type="email" value="{{ auth()->user()->email }}" class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium">
+                    <label class="block text-sm font-black text-gray-700 mb-2">Alamat Toko</label>
+                    <input type="text"
+                           name="store_address"
+                           value="{{ old('store_address', auth()->user()->store->address ?? '') }}"
+                           placeholder="Alamat lengkap toko"
+                           class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium">
                 </div>
 
                 <div class="lg:col-span-2">
                     <label class="block text-sm font-black text-gray-700 mb-2">Deskripsi Toko</label>
-                    <textarea rows="4" class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium resize-none">{{ auth()->user()->store->description ?? '' }}</textarea>
-                </div>
-            </div>
-
-            <div class="pt-8 border-t border-gray-100">
-                <h3 class="text-xl font-black text-gray-900 mb-6">Preferensi Notifikasi</h3>
-
-                <div class="space-y-4">
-                    <label class="flex items-center gap-4 cursor-pointer">
-                        <input type="checkbox" checked class="w-5 h-5 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500">
-                        <span class="font-medium text-gray-700">Email untuk pesanan baru</span>
-                    </label>
-
-                    <label class="flex items-center gap-4 cursor-pointer">
-                        <input type="checkbox" checked class="w-5 h-5 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500">
-                        <span class="font-medium text-gray-700">Notifikasi chat dari pembeli</span>
-                    </label>
-
-                    <label class="flex items-center gap-4 cursor-pointer">
-                        <input type="checkbox" class="w-5 h-5 text-primary-600 bg-gray-100 border-gray-300 rounded focus:ring-primary-500">
-                        <span class="font-medium text-gray-700">Laporan penjualan mingguan</span>
-                    </label>
+                    <textarea name="store_description"
+                              rows="4"
+                              placeholder="Ceritakan tentang toko Anda..."
+                              class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium resize-none">{{ old('store_description', auth()->user()->store->description ?? '') }}</textarea>
                 </div>
             </div>
 
             <div class="pt-8 border-t border-gray-100 flex justify-end">
-                <button type="submit" class="px-8 py-4 bg-primary-600 text-white font-black rounded-2xl hover:bg-primary-700 transition">
+                <button type="submit"
+                        class="px-8 py-4 text-white font-black rounded-2xl transition hover:opacity-90 active:scale-95"
+                        style="background:#72bf77">
                     Simpan Perubahan
                 </button>
             </div>
