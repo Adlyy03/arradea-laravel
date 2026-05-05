@@ -81,27 +81,15 @@
     .category-card:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 12px 28px rgba(114,191,119,.15); }
     
     /* Slider Styles */
-    .promo-slider { position: relative; overflow: hidden; border-radius: 0.75rem; }
-    .promo-track { display: flex; transition: transform 0.5s ease-in-out; }
+    .promo-slider { position: relative; }
+    .promo-overflow { overflow: hidden; border-radius: 1.25rem; }
+    .promo-track { display: flex; transition: transform 0.45s cubic-bezier(0.4,0,0.2,1); }
     .promo-slide { min-width: 100%; flex-shrink: 0; }
-    .promo-dots { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
-    .promo-dot { width: 6px; height: 6px; border-radius: 50%; background: #d1d5db; cursor: pointer; transition: all 0.3s ease; }
-    .promo-dot:hover { background: #a3a3a3; }
-    .promo-dot.active { width: 20px; border-radius: 3px; background: #72bf77; }
-    .promo-nav { position: absolute; top: 50%; transform: translateY(-50%); z-index: 10; width: 36px; height: 36px; border-radius: 50%; background: white; border: 2px solid #e5e7eb; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 4px 12px rgba(0,0,0,0.1); color: #72bf77; }
-    .promo-nav:hover { background: #72bf77; border-color: #72bf77; color: white; transform: translateY(-50%) scale(1.1); }
-    .promo-nav:active { transform: translateY(-50%) scale(0.95); }
-    .promo-nav.prev { left: 16px; }
-    .promo-nav.next { right: 16px; }
-    @media (max-width: 768px) {
-        .promo-nav { width: 32px; height: 32px; }
-        .promo-nav.prev { left: 8px; }
-        .promo-nav.next { right: 8px; }
-    }
-    @media (max-width: 640px) {
-        .promo-nav { width: 28px; height: 28px; }
-        .promo-slider { border-radius: 0.5rem; }
-    }
+    .promo-dots { display: flex; gap: 6px; justify-content: center; }
+    .promo-dot { width: 6px; height: 6px; border-radius: 50%; background: #d1d5db; cursor: pointer; transition: all 0.3s ease; border: none; padding: 0; }
+    .promo-dot.active { width: 22px; border-radius: 3px; background: #72bf77; }
+    .promo-nav { width: 34px; height: 34px; border-radius: 50%; background: white; border: 1.5px solid #e5e7eb; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.08); color: #6b7280; flex-shrink: 0; }
+    .promo-nav:hover { background: #72bf77; border-color: #72bf77; color: white; }
 </style>
 
 {{-- HERO --}}
@@ -192,254 +180,164 @@
 
 {{-- PROMO BANNER SLIDER --}}
 @if($discountedProducts->count() > 0 || $popularProducts->count() > 0)
-<section class="py-12 sm:py-16 lg:py-20 bg-white">
+<section class="py-8 sm:py-10 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="mb-8 sm:mb-10 lg:mb-12">
-            <h2 class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tight text-gray-900">Promo <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Spesial</span></h2>
-            <p class="text-gray-500 mt-2 sm:mt-3 font-medium text-sm sm:text-base lg:text-lg">Jangan lewatkan penawaran terbaik hari ini!</p>
+
+        {{-- Header + Nav --}}
+        <div class="flex items-center justify-between mb-4 sm:mb-5">
+            <div>
+                <h2 class="text-base sm:text-lg font-black tracking-tight text-gray-900">Promo <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Spesial</span></h2>
+                <p class="text-gray-400 text-[10px] sm:text-xs font-medium mt-0.5">Penawaran terbaik hari ini</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <button class="promo-nav" onclick="prevSlide()" aria-label="Sebelumnya">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <div class="promo-dots" id="promoDots"></div>
+                <button class="promo-nav" onclick="nextSlide()" aria-label="Berikutnya">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                </button>
+            </div>
         </div>
-        <div class="promo-slider relative fade-up-2">
-            {{-- Navigation Buttons --}}
-            <button class="promo-nav prev hidden sm:flex" onclick="prevSlide()">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
-                </svg>
-            </button>
-            <button class="promo-nav next hidden sm:flex" onclick="nextSlide()">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                </svg>
-            </button>
 
-            <div class="promo-track">
-                {{-- Slide 1: Produk Diskon --}}
-                @if($discountedProducts->count() > 0)
-                <div class="promo-slide">
-                    <div class="bg-gradient-to-br from-red-50 to-orange-50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-red-100">
-                        <div class="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                            <div class="w-10 sm:w-12 h-10 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0" style="background:rgba(239,68,68,.15)">
-                                🔥
-                            </div>
-                            <div class="min-w-0">
-                                <h3 class="text-lg sm:text-xl lg:text-2xl font-black text-gray-900">Diskon Spesial!</h3>
-                                <p class="text-xs sm:text-sm text-gray-600 truncate">Hemat hingga {{ $discountedProducts->max('discount_percent') }}%</p>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
-                            @foreach($discountedProducts->take(4) as $product)
-                            <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 sm:hover:-translate-y-1">
-                                <div class="relative aspect-square overflow-hidden bg-gray-50">
-                                    <img src="{{ $product->image }}" alt="{{ $product->name }}"
-                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                        onerror="this.src='https://via.placeholder.com/300x300/f0faf1/72bf77?text=Produk'">
-                                    <span class="absolute top-1 left-1 sm:top-2 sm:left-2 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[10px] sm:text-xs font-black text-white shadow-lg" style="background:linear-gradient(135deg,#ef4444,#dc2626)">
-                                        -{{ $product->discount_percent }}%
-                                    </span>
+        {{-- Slider --}}
+        <div class="promo-slider fade-up-2">
+            <div class="promo-overflow">
+                <div class="promo-track">
+
+                    {{-- Slide 1: Diskon --}}
+                    @if($discountedProducts->count() > 0)
+                    <div class="promo-slide">
+                        <div class="bg-gradient-to-r from-red-50 to-orange-50 border border-red-100 rounded-xl p-3 sm:p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">🔥</span>
+                                    <p class="text-xs sm:text-sm font-black text-gray-900">Diskon Spesial — hemat hingga {{ $discountedProducts->max('discount_percent') }}%</p>
                                 </div>
-                                <div class="p-2 sm:p-3">
-                                    <p class="text-[11px] sm:text-xs font-bold text-gray-900 line-clamp-2 mb-1.5 sm:mb-2">{{ $product->name }}</p>
-                                    @php $finalPrice = $product->price * (1 - $product->discount_percent/100); @endphp
-                                    <p class="text-[9px] sm:text-[10px] text-gray-400 line-through">Rp {{ number_format($product->price,0,',','.') }}</p>
-                                    <p class="text-xs sm:text-sm font-black text-red-600">Rp {{ number_format($finalPrice,0,',','.') }}</p>
-                                </div>
-                            </a>
-                            @endforeach
-                        </div>
-                        <div class="mt-4 sm:mt-6 text-center">
-                            <a href="{{ route('buyer.products') }}?discount=1" class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold text-white transition-all hover:scale-105 active:scale-95" style="background:linear-gradient(135deg,#ef4444,#dc2626)">
-                                Lihat Semua Diskon
-                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                                </svg>
-                            </a>
+                                <a href="{{ route('buyer.products') }}" class="text-[10px] font-bold text-red-500 hover:text-red-600 transition whitespace-nowrap hidden sm:block">Lihat semua →</a>
+                            </div>
+                            {{-- Horizontal scroll list --}}
+                            <div class="grid grid-cols-4 gap-2 sm:gap-3">
+                                @foreach($discountedProducts->take(4) as $product)
+                                <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-red-200 hover:shadow-sm transition-all duration-200">
+                                    <div class="relative overflow-hidden bg-gray-50" style="height:80px">
+                                        <img src="{{ $product->image }}" alt="{{ $product->name }}"
+                                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            onerror="this.src='https://via.placeholder.com/200x200/fff5f5/ef4444?text=+'">
+                                        <span class="absolute top-1 left-1 px-1 py-0.5 rounded text-[8px] font-black text-white leading-none" style="background:#ef4444">-{{ $product->discount_percent }}%</span>
+                                    </div>
+                                    <div class="p-1.5">
+                                        <p class="text-[9px] sm:text-[10px] font-semibold text-gray-800 line-clamp-1 leading-tight">{{ $product->name }}</p>
+                                        @php $fp = $product->price * (1 - $product->discount_percent / 100); @endphp
+                                        <p class="text-[8px] text-gray-400 line-through leading-none mt-0.5">Rp {{ number_format($product->price,0,',','.') }}</p>
+                                        <p class="text-[9px] sm:text-[10px] font-black text-red-600 leading-tight">Rp {{ number_format($fp,0,',','.') }}</p>
+                                    </div>
+                                </a>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
-                </div>
+                    @endif
 
-                @endif
-
-                {{-- Slide 2: Produk Populer --}}
-                @if($popularProducts->count() > 0)
-                <div class="promo-slide">
-                    <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 border border-blue-100">
-                        <div class="flex items-center gap-2 sm:gap-3 mb-4 sm:mb-6">
-                            <div class="w-10 sm:w-12 h-10 sm:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-xl sm:text-2xl flex-shrink-0" style="background:rgba(59,130,246,.15)">
-                                ⭐
-                            </div>
-                            <div class="min-w-0">
-                                <h3 class="text-lg sm:text-xl lg:text-2xl font-black text-gray-900">Paling Laris!</h3>
-                                <p class="text-xs sm:text-sm text-gray-600 truncate">Produk favorit warga Arradea</p>
-                            </div>
-                        </div>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-3 lg:gap-4">
-                            @foreach($popularProducts->take(4) as $product)
-                            <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-xl sm:rounded-2xl overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 sm:hover:-translate-y-1">
-                                <div class="relative aspect-square overflow-hidden bg-gray-50">
-                                    <img src="{{ $product->image }}" alt="{{ $product->name }}"
-                                        class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                                        onerror="this.src='https://via.placeholder.com/300x300/f0faf1/72bf77?text=Produk'">
-                                    <span class="absolute top-1 left-1 sm:top-2 sm:left-2 px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[9px] sm:text-xs font-black text-white shadow-lg" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">
-                                        🔥 {{ $product->orders_count }}
-                                    </span>
+                    {{-- Slide 2: Populer --}}
+                    @if($popularProducts->count() > 0)
+                    <div class="promo-slide">
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-3 sm:p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-base">⭐</span>
+                                    <p class="text-xs sm:text-sm font-black text-gray-900">Paling Laris — favorit warga Arradea</p>
                                 </div>
-                                <div class="p-2 sm:p-3">
-                                    <p class="text-[11px] sm:text-xs font-bold text-gray-900 line-clamp-2 mb-1.5 sm:mb-2">{{ $product->name }}</p>
-                                    @if($product->discount_percent > 0)
-                                        @php $finalPrice = $product->price * (1 - $product->discount_percent/100); @endphp
-                                        <p class="text-[9px] sm:text-[10px] text-gray-400 line-through">Rp {{ number_format($product->price,0,',','.') }}</p>
-                                        <p class="text-xs sm:text-sm font-black" style="color:#72bf77">Rp {{ number_format($finalPrice,0,',','.') }}</p>
-                                    @else
-                                        <p class="text-xs sm:text-sm font-black text-gray-900">Rp {{ number_format($product->price,0,',','.') }}</p>
-                                    @endif
-                                </div>
-                            </a>
-                            @endforeach
-                        </div>
-                        <div class="mt-4 sm:mt-6 text-center">
-                            <a href="{{ route('buyer.products') }}" class="inline-flex items-center justify-center gap-1.5 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold text-white transition-all hover:scale-105 active:scale-95" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">
-                                Lihat Semua Produk
-                                <svg class="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
-                                </svg>
-                            </a>
+                                <a href="{{ route('buyer.products') }}" class="text-[10px] font-bold text-blue-500 hover:text-blue-600 transition whitespace-nowrap hidden sm:block">Lihat semua →</a>
+                            </div>
+                            <div class="grid grid-cols-4 gap-2 sm:gap-3">
+                                @foreach($popularProducts->take(4) as $product)
+                                <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all duration-200">
+                                    <div class="relative overflow-hidden bg-gray-50" style="height:80px">
+                                        <img src="{{ $product->image }}" alt="{{ $product->name }}"
+                                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            onerror="this.src='https://via.placeholder.com/200x200/eff6ff/3b82f6?text=+'">
+                                        <span class="absolute top-1 left-1 px-1 py-0.5 rounded text-[8px] font-black text-white leading-none" style="background:#3b82f6">🔥{{ $product->orders_count }}x</span>
+                                    </div>
+                                    <div class="p-1.5">
+                                        <p class="text-[9px] sm:text-[10px] font-semibold text-gray-800 line-clamp-1 leading-tight">{{ $product->name }}</p>
+                                        @if($product->discount_percent > 0)
+                                            @php $fp = $product->price * (1 - $product->discount_percent / 100); @endphp
+                                            <p class="text-[8px] text-gray-400 line-through leading-none mt-0.5">Rp {{ number_format($product->price,0,',','.') }}</p>
+                                            <p class="text-[9px] sm:text-[10px] font-black leading-tight" style="color:#72bf77">Rp {{ number_format($fp,0,',','.') }}</p>
+                                        @else
+                                            <p class="text-[9px] sm:text-[10px] font-black text-gray-900 leading-tight mt-0.5">Rp {{ number_format($product->price,0,',','.') }}</p>
+                                        @endif
+                                    </div>
+                                </a>
+                                @endforeach
+                            </div>
                         </div>
                     </div>
+                    @endif
+
                 </div>
-                @endif
             </div>
 
-            {{-- Navigation Buttons (Desktop) --}}
-            <button class="promo-nav prev hidden md:flex" onclick="prevSlide()" title="Slide sebelumnya">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/>
-                </svg>
-            </button>
-            <button class="promo-nav next hidden md:flex" onclick="nextSlide()" title="Slide berikutnya">
-                <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
-                </svg>
-            </button>
-
-            {{-- Dots Navigation --}}
-            <div class="promo-dots absolute bottom-4 sm:bottom-6 left-0 right-0" id="promoDots"></div>
+            {{-- Dots mobile --}}
+            <div class="flex sm:hidden justify-center mt-2.5 gap-1.5" id="promoDotsMobile"></div>
         </div>
+
     </div>
 </section>
 
 <script>
-let currentSlide = 0;
-const slides = document.querySelectorAll('.promo-slide');
-const track = document.querySelector('.promo-track');
-const dotsContainer = document.getElementById('promoDots');
-let autoSlideInterval;
-let touchStartX = 0;
-let touchEndX = 0;
-let isSwiping = false;
+(function() {
+    let cur = 0;
+    const track   = document.querySelector('.promo-track');
+    const slides  = document.querySelectorAll('.promo-slide');
+    const dotsEl  = document.getElementById('promoDots');
+    const dotsElM = document.getElementById('promoDotsMobile');
+    let timer;
 
-// Create dots
-slides.forEach((_, index) => {
-    const dot = document.createElement('div');
-    dot.className = 'promo-dot' + (index === 0 ? ' active' : '');
-    dot.onclick = () => goToSlide(index);
-    dot.setAttribute('aria-label', `Slide ${index + 1}`);
-    dot.setAttribute('role', 'button');
-    dot.setAttribute('tabindex', '0');
-    dotsContainer.appendChild(dot);
-});
+    if (!slides.length || !track) return;
 
-const dots = document.querySelectorAll('.promo-dot');
-
-function updateSlider() {
-    if (track) {
-        track.style.transform = `translateX(-${currentSlide * 100}%)`;
-    }
-    dots.forEach((dot, index) => {
-        dot.classList.toggle('active', index === currentSlide);
+    // Build dots for both containers
+    [dotsEl, dotsElM].forEach(function(container) {
+        if (!container) return;
+        slides.forEach(function(_, i) {
+            const d = document.createElement('button');
+            d.className = 'promo-dot' + (i === 0 ? ' active' : '');
+            d.setAttribute('aria-label', 'Slide ' + (i + 1));
+            d.onclick = function() { go(i); reset(); };
+            container.appendChild(d);
+        });
     });
-}
 
-function nextSlide() {
-    if (slides.length > 0) {
-        currentSlide = (currentSlide + 1) % slides.length;
-        updateSlider();
+    function update() {
+        track.style.transform = 'translateX(-' + (cur * 100) + '%)';
+        document.querySelectorAll('.promo-dot').forEach(function(d, i) {
+            d.classList.toggle('active', i % slides.length === cur);
+        });
     }
-}
 
-function prevSlide() {
-    if (slides.length > 0) {
-        currentSlide = (currentSlide - 1 + slides.length) % slides.length;
-        updateSlider();
+    function go(n) { cur = (n + slides.length) % slides.length; update(); }
+    window.nextSlide = function() { go(cur + 1); reset(); };
+    window.prevSlide = function() { go(cur - 1); reset(); };
+
+    function start() { if (slides.length > 1) timer = setInterval(function() { go(cur + 1); }, 5500); }
+    function reset() { clearInterval(timer); start(); }
+
+    update();
+    start();
+
+    // Touch swipe
+    let tx = 0;
+    const wrap = document.querySelector('.promo-overflow');
+    if (wrap) {
+        wrap.addEventListener('touchstart', function(e) { tx = e.changedTouches[0].screenX; clearInterval(timer); }, { passive: true });
+        wrap.addEventListener('touchend', function(e) {
+            const diff = tx - e.changedTouches[0].screenX;
+            if (Math.abs(diff) > 40) diff > 0 ? go(cur + 1) : go(cur - 1);
+            start();
+        }, { passive: true });
     }
-}
-
-function goToSlide(index) {
-    currentSlide = index;
-    updateSlider();
-    resetAutoSlide();
-}
-
-function startAutoSlide() {
-    if (slides.length > 1) {
-        autoSlideInterval = setInterval(nextSlide, 6000);
-    }
-}
-
-function resetAutoSlide() {
-    clearInterval(autoSlideInterval);
-    startAutoSlide();
-}
-
-// Initialize
-updateSlider();
-startAutoSlide();
-
-// Event listeners
-const slider = document.querySelector('.promo-slider');
-if (slider) {
-    // Pause auto-slide on hover
-    slider.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
-    slider.addEventListener('mouseleave', () => startAutoSlide());
-    
-    // Touch support for mobile
-    slider.addEventListener('touchstart', (e) => {
-        isSwiping = true;
-        touchStartX = e.changedTouches[0].screenX;
-        clearInterval(autoSlideInterval);
-    }, { passive: true });
-
-    slider.addEventListener('touchmove', () => {
-        isSwiping = true;
-    }, { passive: true });
-
-    slider.addEventListener('touchend', (e) => {
-        if (!isSwiping) return;
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-        isSwiping = false;
-        startAutoSlide();
-    }, { passive: true });
-}
-
-function handleSwipe() {
-    const swipeThreshold = 50;
-    const diff = touchStartX - touchEndX;
-    
-    if (Math.abs(diff) > swipeThreshold) {
-        if (diff > 0) {
-            nextSlide();
-        } else {
-            prevSlide();
-        }
-    }
-}
-
-// Keyboard navigation
-document.addEventListener('keydown', (e) => {
-    if (slider && slider.contains(document.activeElement)) {
-        if (e.key === 'ArrowLeft') prevSlide();
-        if (e.key === 'ArrowRight') nextSlide();
-    }
-});
+})();
 </script>
 @endif
 

@@ -187,6 +187,14 @@ document.addEventListener('DOMContentLoaded', function(){
             e.preventDefault();
             if (pwHint) { pwHint.textContent = '❌ Password tidak boleh mengandung spasi!'; pwHint.style.color = '#ef4444'; }
             document.getElementById('password-input').focus();
+            return;
+        }
+
+        const lat = document.getElementById('latitude').value;
+        const lng = document.getElementById('longitude').value;
+        if (!lat || !lng) {
+            e.preventDefault();
+            alert('Anda wajib mengizinkan akses lokasi di browser untuk mendaftar!');
         }
     });
 
@@ -194,15 +202,46 @@ document.addEventListener('DOMContentLoaded', function(){
     const latInput = document.getElementById('latitude');
     const lngInput = document.getElementById('longitude');
     const locText  = document.getElementById('location-text');
-    if (latInput?.value && lngInput?.value) { locText && (locText.textContent = '✓ Lokasi berhasil didapatkan.'); return; }
-    if (!navigator.geolocation) { locText && (locText.textContent = 'Geolocation tidak tersedia. Anda tetap bisa mendaftar.'); return; }
+    const submitBtn = document.getElementById('submit-btn');
+
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    }
+
+    if (latInput?.value && lngInput?.value) { 
+        if (locText) locText.textContent = '✓ Lokasi berhasil didapatkan.'; 
+        if (submitBtn) { 
+            submitBtn.disabled = false; 
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed'); 
+        }
+        return; 
+    }
+    if (!navigator.geolocation) { 
+        if (locText) {
+            locText.textContent = '❌ Browser tidak mendukung lokasi.';
+            locText.classList.remove('text-gray-500');
+            locText.classList.add('text-red-500');
+        }
+        return; 
+    }
     navigator.geolocation.getCurrentPosition(
         pos => {
             if (latInput) latInput.value = pos.coords.latitude.toFixed(7);
             if (lngInput) lngInput.value = pos.coords.longitude.toFixed(7);
             if (locText)  locText.textContent = '✓ Lokasi berhasil didapatkan.';
+            if (submitBtn) { 
+                submitBtn.disabled = false; 
+                submitBtn.classList.remove('opacity-50', 'cursor-not-allowed'); 
+            }
         },
-        () => { if (locText) locText.textContent = 'Lokasi tidak tersedia. Anda tetap bisa mendaftar.'; },
+        () => { 
+            if (locText) {
+                locText.textContent = '❌ Wajib izinkan akses lokasi!'; 
+                locText.classList.remove('text-gray-500');
+                locText.classList.add('text-red-500');
+            }
+        },
         { enableHighAccuracy: true, timeout: 10000, maximumAge: 300000 }
     );
 });

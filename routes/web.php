@@ -376,17 +376,24 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
                 'store_name.max'      => 'Nama toko maksimal 255 karakter.',
             ]);
 
-            $store = auth()->user()->store;
+            $user  = auth()->user();
+            $store = $user->store;
 
-            if (! $store) {
-                return back()->withErrors(['store' => 'Toko tidak ditemukan.']);
+            if ($store) {
+                $store->update([
+                    'name'        => $request->store_name,
+                    'description' => $request->store_description,
+                    'address'     => $request->store_address,
+                ]);
+            } else {
+                // Auto-create toko jika belum ada
+                $user->store()->create([
+                    'name'        => $request->store_name,
+                    'description' => $request->store_description,
+                    'address'     => $request->store_address,
+                    'status'      => 'active',
+                ]);
             }
-
-            $store->update([
-                'name'        => $request->store_name,
-                'description' => $request->store_description,
-                'address'     => $request->store_address,
-            ]);
 
             return back()->with('success', 'Informasi toko berhasil diperbarui!');
         })->name('seller.settings.update');
