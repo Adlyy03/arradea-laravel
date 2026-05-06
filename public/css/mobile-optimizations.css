@@ -1,0 +1,179 @@
+/* Mobile Optimizations for Arradea Dashboard */
+
+/* Ensure proper mobile viewport handling */
+@media (max-width: 1023px) {
+    /* Main content adjustments */
+    .main-content {
+        margin-left: 0 !important;
+        padding-bottom: 80px; /* Space for bottom nav */
+    }
+    
+    /* Compact topbar */
+    .topbar {
+        height: 48px !important;
+        padding: 0 12px !important;
+    }
+    
+    /* Smaller buttons and inputs */
+    .mobile-compact input,
+    .mobile-compact button,
+    .mobile-compact select {
+        font-size: 14px !important;
+        padding: 8px 12px !important;
+    }
+    
+    /* Compact cards */
+    .mobile-compact .card {
+        padding: 12px !important;
+        border-radius: 12px !important;
+    }
+    
+    /* Smaller text */
+    .mobile-compact h1 { font-size: 20px !important; }
+    .mobile-compact h2 { font-size: 16px !important; }
+    .mobile-compact h3 { font-size: 14px !important; }
+    .mobile-compact p { font-size: 12px !important; }
+    .mobile-compact .text-xs { font-size: 10px !important; }
+    
+    /* Bottom navigation */
+    .bottom-nav {
+        height: 60px;
+        padding: 8px 0;
+    }
+    
+    .bottom-nav-item {
+        padding: 4px 2px;
+        min-height: 44px; /* Touch target */
+    }
+    
+    /* Floating elements */
+    .floating-chat {
+        bottom: 80px !important; /* Above bottom nav */
+        right: 16px !important;
+        width: 48px !important;
+        height: 48px !important;
+    }
+    
+    /* Modal optimizations */
+    .modal-mobile {
+        padding: 12px !important;
+    }
+    
+    .modal-mobile .modal-header {
+        padding: 12px !important;
+    }
+    
+    .modal-mobile .modal-body {
+        padding: 8px !important;
+    }
+    
+    /* Touch-friendly interactions */
+    .touch-target {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    /* Reduce spacing */
+    .space-y-6 > * + * { margin-top: 16px !important; }
+    .space-y-5 > * + * { margin-top: 12px !important; }
+    .space-y-4 > * + * { margin-top: 10px !important; }
+    .space-y-3 > * + * { margin-top: 8px !important; }
+    
+    /* Grid adjustments */
+    .grid-cols-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    
+    /* Hide desktop-only elements */
+    .desktop-only {
+        display: none !important;
+    }
+    
+    /* Show mobile-only elements */
+    .mobile-only {
+        display: block !important;
+    }
+}
+
+/* Extra small screens */
+@media (max-width: 375px) {
+    .mobile-compact .stat-number {
+        font-size: 18px !important;
+    }
+    
+    .mobile-compact .action-card {
+        padding: 8px !important;
+    }
+    
+    .bottom-nav-item {
+        padding: 2px 1px;
+    }
+    
+    .bottom-nav-label {
+        font-size: 8px !important;
+    }
+    
+    .floating-chat {
+        width: 44px !important;
+        height: 44px !important;
+    }
+}
+
+/* Landscape mobile */
+@media (max-width: 1023px) and (orientation: landscape) {
+    .main-content {
+        padding-bottom: 60px !important;
+    }
+    
+    .bottom-nav {
+        height: 50px !important;
+    }
+    
+    .floating-chat {
+        bottom: 60px !important;
+    }
+}
+
+/* Animation improvements for mobile */
+@media (max-width: 1023px) {
+    .transition-all {
+        transition-duration: 0.2s !important;
+    }
+    
+    .hover\:scale-110:hover {
+        transform: scale(1.05) !important;
+    }
+    
+    .hover\:-translate-y-1:hover {
+        transform: translateY(-2px) !important;
+    }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    .floating-chat {
+        animation: none !important;
+    }
+    
+    .transition-all,
+    .transition {
+        transition: none !important;
+    }
+}
+
+/* Dark mode support for mobile */
+@media (prefers-color-scheme: dark) and (max-width: 1023px) {
+    .bottom-nav {
+        background: rgba(17, 24, 39, 0.95) !important;
+        border-top-color: rgba(75, 85, 99, 0.3) !important;
+    }
+    
+    .bottom-nav-item {
+        color: rgb(156, 163, 175) !important;
+    }
+    
+    .bottom-nav-item.active,
+    .bottom-nav-item:hover {
+        color: #72bf77 !important;
+    }
+}

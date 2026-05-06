@@ -19,7 +19,7 @@
 
 <a href="{{ route('buyer.products') }}" class="sb-item {{ Request::is('products*') ? 'sb-active' : '' }}">
     <span class="sb-icon">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 11m8 4V21M4 11v10l8 4"/></svg>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
     </span>
     <span x-show="sideOpen" x-cloak class="sb-label">Produk</span>
 </a>
@@ -37,40 +37,32 @@
     @endif
 </a>
 
-<a href="{{ route('buyer.wishlist') }}" class="sb-item {{ Request::is('wishlist*') ? 'sb-active' : '' }}">
-    <span class="sb-icon">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-    </span>
-    <span x-show="sideOpen" x-cloak class="sb-label">Wishlist</span>
-</a>
-
-<div x-show="sideOpen" x-cloak class="sb-section-label">
-    <span>Pesanan</span>
-</div>
-
 <a href="{{ route('buyer.orders') }}" class="sb-item {{ Request::is('orders*') ? 'sb-active' : '' }}">
     <span class="sb-icon">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
     </span>
-    <span x-show="sideOpen" x-cloak class="sb-label flex-1">Pesanan Saya</span>
+    <span x-show="sideOpen" x-cloak class="sb-label flex-1">Pesanan</span>
     @if($pendingOrderCount > 0)
         <span x-show="sideOpen" x-cloak class="sb-badge sb-badge-amber">{{ $pendingOrderCount }}</span>
         <span x-show="!sideOpen" class="sb-dot sb-dot-amber"></span>
     @endif
 </a>
 
-<button @click="chatModal=true" class="sb-item w-full text-left">
-    <span class="sb-icon" style="position:relative">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+{{-- Chat moved to bottom nav on mobile, keep in sidebar for desktop --}}
+<div class="hidden lg:block">
+    <button @click="chatModal=true" class="sb-item w-full text-left">
+        <span class="sb-icon" style="position:relative">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+            @if($unreadMsgCount > 0)
+                <span class="sb-icon-dot sb-icon-dot-red"></span>
+            @endif
+        </span>
+        <span x-show="sideOpen" x-cloak class="sb-label flex-1">Chat</span>
         @if($unreadMsgCount > 0)
-            <span class="sb-icon-dot sb-icon-dot-red"></span>
+            <span x-show="sideOpen" x-cloak class="sb-badge sb-badge-red">{{ $unreadMsgCount }}</span>
         @endif
-    </span>
-    <span x-show="sideOpen" x-cloak class="sb-label flex-1">Chat Seller</span>
-    @if($unreadMsgCount > 0)
-        <span x-show="sideOpen" x-cloak class="sb-badge sb-badge-red">{{ $unreadMsgCount }}</span>
-    @endif
-</button>
+    </button>
+</div>
 
 <div x-show="sideOpen" x-cloak class="sb-section-label">
     <span>Akun</span>
@@ -80,5 +72,13 @@
     <span class="sb-icon">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
     </span>
-    <span x-show="sideOpen" x-cloak class="sb-label">Profil Saya</span>
+    <span x-show="sideOpen" x-cloak class="sb-label">Profil</span>
+</a>
+
+{{-- Wishlist moved to less prominent position --}}
+<a href="{{ route('buyer.wishlist') }}" class="sb-item {{ Request::is('wishlist*') ? 'sb-active' : '' }}">
+    <span class="sb-icon">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
+    </span>
+    <span x-show="sideOpen" x-cloak class="sb-label">Wishlist</span>
 </a>
