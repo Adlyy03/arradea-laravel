@@ -39,6 +39,26 @@ Route::get('/run-migrations', function () {
     }
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// STORAGE FILE SERVING (Production-Ready Solution)
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Serve files from storage/app/public without symlink
+Route::get('/storage/{path}', function ($path) {
+    $fullPath = storage_path('app/public/' . $path);
+    
+    if (!file_exists($fullPath) || !is_file($fullPath)) {
+        abort(404);
+    }
+    
+    $mimeType = mime_content_type($fullPath);
+    
+    return response()->file($fullPath, [
+        'Content-Type' => $mimeType,
+        'Cache-Control' => 'public, max-age=31536000', // Cache for 1 year
+    ]);
+})->where('path', '.*')->name('storage.serve');
+
 // PUBLIC & GUEST
 Route::get('/', function () {
     return view('welcome');

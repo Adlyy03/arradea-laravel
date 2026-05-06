@@ -23,7 +23,7 @@ class ProductWebController extends Controller
             'stock'       => 'required|integer|min:0',
             'description' => 'nullable|string|max:1000',
             'variants_json' => 'nullable|json',
-            'image'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image'       => 'nullable|file|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $validated['discount_percent'] = (float) ($validated['discount_percent'] ?? 0);
@@ -80,7 +80,7 @@ class ProductWebController extends Controller
             'stock'       => 'required|integer|min:0',
             'description' => 'nullable|string|max:1000',
             'variants_json' => 'nullable|json',
-            'image'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'image'       => 'nullable|file|mimes:jpeg,png,jpg,webp|max:2048',
         ]);
 
         $validated['discount_percent'] = (float) ($validated['discount_percent'] ?? 0);
