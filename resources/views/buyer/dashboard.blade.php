@@ -11,16 +11,21 @@
     .order-row { transition:all .25s cubic-bezier(0.4,0,0.2,1); }
     .order-row:hover { background:rgba(114,191,119,0.04); transform:translateX(4px); }
     
-    /* Mobile optimizations */
-    @media(max-width:768px){
-        .mobile-compact .stat-card { padding:12px !important; border-radius:16px !important; }
-        .mobile-compact .stat-number { font-size:24px !important; }
-        .mobile-compact .stat-label { font-size:10px !important; }
-        .mobile-compact .action-card { padding:12px !important; }
-        .mobile-compact .greeting-title { font-size:20px !important; }
-        .mobile-compact .order-row { padding:12px !important; }
-        .mobile-compact .order-text { font-size:12px !important; }
+    /* Mobile optimizations - Ultra Compact */
+    @media(max-width:1023px){
+        .mobile-compact .stat-card { padding:8px !important; border-radius:10px !important; }
+        .mobile-compact .stat-number { font-size:20px !important; line-height:1.2 !important; }
+        .mobile-compact .stat-label { font-size:10px !important; margin-top:2px !important; }
+        .mobile-compact .action-card { padding:8px !important; border-radius:8px !important; }
+        .mobile-compact .greeting-title { font-size:16px !important; font-weight:700 !important; }
+        .mobile-compact .order-row { padding:8px 10px !important; }
+        .mobile-compact .order-text { font-size:12px !important; line-height:1.3 !important; }
         .mobile-compact .order-meta { font-size:10px !important; }
+        .mobile-compact .action-card span:first-child { font-size:20px !important; }
+        .mobile-compact .action-card span:last-child { font-size:11px !important; }
+        .mobile-compact h2 { font-size:12px !important; }
+        .mobile-compact .stat-card > div:first-child .w-8,
+        .mobile-compact .stat-card > div:first-child .w-12 { width:28px !important; height:28px !important; font-size:16px !important; }
     }
 </style>
 @endpush
@@ -45,72 +50,72 @@
     </div>
 
     {{-- Stats Grid --}}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
-        <div class="stat-card rounded-2xl lg:rounded-3xl p-4 lg:p-6 shadow-lg">
-            <div class="flex items-center justify-between mb-3 lg:mb-4">
-                <div class="w-8 lg:w-12 h-8 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center text-lg lg:text-2xl" style="background:rgba(114,191,119,.12)">📦</div>
-                <span class="text-[10px] lg:text-xs font-bold uppercase tracking-widest text-gray-400">Total</span>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2 lg:gap-5">
+        <div class="stat-card rounded-xl lg:rounded-3xl p-3 lg:p-6 shadow-lg">
+            <div class="flex items-center justify-between mb-2 lg:mb-4">
+                <div class="w-7 lg:w-12 h-7 lg:h-12 rounded-lg lg:rounded-2xl flex items-center justify-center text-base lg:text-2xl" style="background:rgba(114,191,119,.12)">📦</div>
+                <span class="text-[9px] lg:text-xs font-bold uppercase tracking-wider text-gray-400">Total</span>
             </div>
-            <p class="stat-number text-2xl lg:text-4xl font-black text-gray-900 mb-1">{{ $totalOrders }}</p>
-            <p class="stat-label text-[10px] lg:text-xs text-gray-500 font-medium mb-2 lg:mb-3">Total Pesanan</p>
-            <a href="{{ route('buyer.orders') }}" class="text-[10px] lg:text-xs font-bold inline-flex items-center gap-1 group" style="color:#72bf77">
-                Lihat semua
-                <svg class="w-2.5 lg:w-3 h-2.5 lg:h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+            <p class="stat-number text-xl lg:text-4xl font-black text-gray-900 mb-0.5 lg:mb-1">{{ $totalOrders }}</p>
+            <p class="stat-label text-[9px] lg:text-xs text-gray-500 font-medium mb-1.5 lg:mb-3">Total Pesanan</p>
+            <a href="{{ route('buyer.orders') }}" class="text-[9px] lg:text-xs font-bold inline-flex items-center gap-0.5 lg:gap-1 group" style="color:#72bf77">
+                Lihat
+                <svg class="w-2 lg:w-3 h-2 lg:h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
             </a>
         </div>
 
-        <div class="stat-card rounded-2xl lg:rounded-3xl p-4 lg:p-6 shadow-lg">
-            <div class="flex items-center justify-between mb-3 lg:mb-4">
-                <div class="w-8 lg:w-12 h-8 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center text-lg lg:text-2xl" style="background:rgba(245,158,11,.12)">⏳</div>
-                <span class="text-[10px] lg:text-xs font-bold uppercase tracking-widest text-amber-400">Proses</span>
+        <div class="stat-card rounded-xl lg:rounded-3xl p-3 lg:p-6 shadow-lg">
+            <div class="flex items-center justify-between mb-2 lg:mb-4">
+                <div class="w-7 lg:w-12 h-7 lg:h-12 rounded-lg lg:rounded-2xl flex items-center justify-center text-base lg:text-2xl" style="background:rgba(245,158,11,.12)">⏳</div>
+                <span class="text-[9px] lg:text-xs font-bold uppercase tracking-wider text-amber-400">Proses</span>
             </div>
-            <p class="stat-number text-2xl lg:text-4xl font-black text-amber-500 mb-1">{{ $pendingOrders }}</p>
-            <p class="stat-label text-[10px] lg:text-xs text-gray-500 font-medium">Sedang Diproses</p>
+            <p class="stat-number text-xl lg:text-4xl font-black text-amber-500 mb-0.5 lg:mb-1">{{ $pendingOrders }}</p>
+            <p class="stat-label text-[9px] lg:text-xs text-gray-500 font-medium">Diproses</p>
         </div>
 
-        <div class="stat-card rounded-2xl lg:rounded-3xl p-4 lg:p-6 shadow-lg">
-            <div class="flex items-center justify-between mb-3 lg:mb-4">
-                <div class="w-8 lg:w-12 h-8 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center text-lg lg:text-2xl" style="background:rgba(34,197,94,.12)">✅</div>
-                <span class="text-[10px] lg:text-xs font-bold uppercase tracking-widest text-green-400">Selesai</span>
+        <div class="stat-card rounded-xl lg:rounded-3xl p-3 lg:p-6 shadow-lg">
+            <div class="flex items-center justify-between mb-2 lg:mb-4">
+                <div class="w-7 lg:w-12 h-7 lg:h-12 rounded-lg lg:rounded-2xl flex items-center justify-center text-base lg:text-2xl" style="background:rgba(34,197,94,.12)">✅</div>
+                <span class="text-[9px] lg:text-xs font-bold uppercase tracking-wider text-green-400">Selesai</span>
             </div>
-            <p class="stat-number text-2xl lg:text-4xl font-black text-green-500 mb-1">{{ $completedOrders }}</p>
-            <p class="stat-label text-[10px] lg:text-xs text-gray-500 font-medium">Pesanan Selesai</p>
+            <p class="stat-number text-xl lg:text-4xl font-black text-green-500 mb-0.5 lg:mb-1">{{ $completedOrders }}</p>
+            <p class="stat-label text-[9px] lg:text-xs text-gray-500 font-medium">Selesai</p>
         </div>
 
-        <div class="stat-card rounded-2xl lg:rounded-3xl p-4 lg:p-6 shadow-lg">
-            <div class="flex items-center justify-between mb-3 lg:mb-4">
-                <div class="w-8 lg:w-12 h-8 lg:h-12 rounded-xl lg:rounded-2xl flex items-center justify-center text-lg lg:text-2xl" style="background:rgba(114,191,119,.12)">🛒</div>
-                <span class="text-[10px] lg:text-xs font-bold uppercase tracking-widest" style="color:#72bf77">Keranjang</span>
+        <div class="stat-card rounded-xl lg:rounded-3xl p-3 lg:p-6 shadow-lg">
+            <div class="flex items-center justify-between mb-2 lg:mb-4">
+                <div class="w-7 lg:w-12 h-7 lg:h-12 rounded-lg lg:rounded-2xl flex items-center justify-center text-base lg:text-2xl" style="background:rgba(114,191,119,.12)">🛒</div>
+                <span class="text-[9px] lg:text-xs font-bold uppercase tracking-wider" style="color:#72bf77">Cart</span>
             </div>
-            <p class="stat-number text-2xl lg:text-4xl font-black mb-1" style="color:#72bf77">{{ $cartCount }}</p>
-            <p class="stat-label text-[10px] lg:text-xs text-gray-500 font-medium mb-2 lg:mb-3">Item di Keranjang</p>
-            <a href="{{ route('buyer.cart') }}" class="text-[10px] lg:text-xs font-bold inline-flex items-center gap-1 group" style="color:#72bf77">
+            <p class="stat-number text-xl lg:text-4xl font-black mb-0.5 lg:mb-1" style="color:#72bf77">{{ $cartCount }}</p>
+            <p class="stat-label text-[9px] lg:text-xs text-gray-500 font-medium mb-1.5 lg:mb-3">Item</p>
+            <a href="{{ route('buyer.cart') }}" class="text-[9px] lg:text-xs font-bold inline-flex items-center gap-0.5 lg:gap-1 group" style="color:#72bf77">
                 Checkout
-                <svg class="w-2.5 lg:w-3 h-2.5 lg:h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
+                <svg class="w-2 lg:w-3 h-2 lg:h-3 group-hover:translate-x-0.5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
             </a>
         </div>
     </div>
 
     {{-- Quick Actions --}}
-    <div class="stat-card rounded-2xl lg:rounded-3xl p-4 lg:p-6 shadow-lg">
-        <h2 class="text-xs lg:text-sm font-black text-gray-700 uppercase tracking-widest mb-4 lg:mb-5">Aksi Cepat</h2>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
-            <a href="{{ route('buyer.products') }}" class="action-card flex flex-col items-center gap-2 lg:gap-3 p-3 lg:p-5 rounded-xl lg:rounded-2xl text-center shadow-sm" style="background:rgba(240,250,241,0.6);border:1px solid rgba(114,191,119,0.15)">
-                <span class="text-2xl lg:text-3xl">🛍️</span>
-                <span class="text-xs lg:text-sm font-bold text-gray-700">Belanja</span>
+    <div class="stat-card rounded-xl lg:rounded-3xl p-3 lg:p-6 shadow-lg">
+        <h2 class="text-[10px] lg:text-sm font-black text-gray-700 uppercase tracking-wider mb-2.5 lg:mb-5">Aksi Cepat</h2>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:gap-4">
+            <a href="{{ route('buyer.products') }}" class="action-card flex flex-col items-center gap-1.5 lg:gap-3 p-2.5 lg:p-5 rounded-lg lg:rounded-2xl text-center shadow-sm" style="background:rgba(240,250,241,0.6);border:1px solid rgba(114,191,119,0.15)">
+                <span class="text-xl lg:text-3xl">🛍️</span>
+                <span class="text-[10px] lg:text-sm font-bold text-gray-700">Belanja</span>
             </a>
-            <a href="{{ route('buyer.cart') }}" class="action-card flex flex-col items-center gap-2 lg:gap-3 p-3 lg:p-5 rounded-xl lg:rounded-2xl text-center shadow-sm relative" style="background:rgba(255,247,237,0.6);border:1px solid rgba(254,215,170,0.4)">
-                <span class="text-2xl lg:text-3xl">🛒</span>
-                <span class="text-xs lg:text-sm font-bold text-gray-700">Keranjang</span>
-                @if($cartCount > 0)<span class="absolute top-2 lg:top-3 right-2 lg:right-3 px-1.5 lg:px-2 py-0.5 rounded-full text-[9px] lg:text-xs font-black text-white" style="background:#ea580c">{{ $cartCount }}</span>@endif
+            <a href="{{ route('buyer.cart') }}" class="action-card flex flex-col items-center gap-1.5 lg:gap-3 p-2.5 lg:p-5 rounded-lg lg:rounded-2xl text-center shadow-sm relative" style="background:rgba(255,247,237,0.6);border:1px solid rgba(254,215,170,0.4)">
+                <span class="text-xl lg:text-3xl">🛒</span>
+                <span class="text-[10px] lg:text-sm font-bold text-gray-700">Keranjang</span>
+                @if($cartCount > 0)<span class="absolute top-1.5 lg:top-3 right-1.5 lg:right-3 px-1 lg:px-2 py-0.5 rounded-full text-[8px] lg:text-xs font-black text-white" style="background:#ea580c">{{ $cartCount }}</span>@endif
             </a>
-            <a href="{{ route('buyer.orders') }}" class="action-card flex flex-col items-center gap-2 lg:gap-3 p-3 lg:p-5 rounded-xl lg:rounded-2xl text-center shadow-sm" style="background:rgba(239,246,255,0.6);border:1px solid rgba(191,219,254,0.4)">
-                <span class="text-2xl lg:text-3xl">📋</span>
-                <span class="text-xs lg:text-sm font-bold text-gray-700">Pesanan</span>
+            <a href="{{ route('buyer.orders') }}" class="action-card flex flex-col items-center gap-1.5 lg:gap-3 p-2.5 lg:p-5 rounded-lg lg:rounded-2xl text-center shadow-sm" style="background:rgba(239,246,255,0.6);border:1px solid rgba(191,219,254,0.4)">
+                <span class="text-xl lg:text-3xl">📋</span>
+                <span class="text-[10px] lg:text-sm font-bold text-gray-700">Pesanan</span>
             </a>
-            <button @click="chatModal=true" class="action-card flex flex-col items-center gap-2 lg:gap-3 p-3 lg:p-5 rounded-xl lg:rounded-2xl text-center shadow-sm" style="background:rgba(240,253,244,0.6);border:1px solid rgba(187,247,208,0.4)">
-                <span class="text-2xl lg:text-3xl">💬</span>
-                <span class="text-xs lg:text-sm font-bold text-gray-700">Chat</span>
+            <button @click="chatModal=true" class="action-card flex flex-col items-center gap-1.5 lg:gap-3 p-2.5 lg:p-5 rounded-lg lg:rounded-2xl text-center shadow-sm" style="background:rgba(240,253,244,0.6);border:1px solid rgba(187,247,208,0.4)">
+                <span class="text-xl lg:text-3xl">💬</span>
+                <span class="text-[10px] lg:text-sm font-bold text-gray-700">Chat</span>
             </button>
         </div>
     </div>
