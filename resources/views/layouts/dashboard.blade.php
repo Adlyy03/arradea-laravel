@@ -165,6 +165,14 @@
 
         /* Topbar */
         .topbar-glass{background:rgba(247,250,247,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+        
+        /* Mobile topbar optimizations */
+        @media(max-width:1023px){
+            .topbar-glass{height:44px !important;padding:0 10px !important}
+            .topbar-glass h1,.topbar-glass .text-xl,.topbar-glass .text-2xl{font-size:14px !important;font-weight:700 !important}
+            .topbar-glass button{padding:6px !important;width:32px !important;height:32px !important}
+            .topbar-glass svg{width:16px !important;height:16px !important}
+        }
 
         /* Stat card */
         .stat-card{background:rgba(255,255,255,.8);border:1px solid rgba(114,191,119,.15);border-radius:16px;padding:20px;transition:all .25s;cursor:default}
@@ -176,48 +184,69 @@
 
         /* Mobile optimizations */
         @media(max-width:1023px){
-            .sb-section-label{padding-top:12px;padding-bottom:4px;font-size:.6rem}
-            .sb-item{padding:8px 10px;font-size:.8rem}
-            .sb-icon{width:32px;height:32px}
-            .sb-icon svg{width:16px;height:16px}
-            .sb-badge{font-size:.65rem;padding:2px 6px}
+            .sb-section-label{padding-top:10px;padding-bottom:3px;font-size:.55rem}
+            .sb-item{padding:6px 8px;font-size:.75rem;gap:8px;border-radius:10px}
+            .sb-icon{width:28px;height:28px;border-radius:8px}
+            .sb-icon svg{width:14px;height:14px}
+            .sb-badge{font-size:.6rem;padding:2px 5px}
+            .sb-label{font-size:.75rem}
+            .sb-status-chip{margin:6px 4px 3px;padding:8px 10px;border-radius:10px;gap:8px}
+            .sb-chip-title{font-size:.65rem}
+            .sb-chip-desc{font-size:.65rem;margin-top:2px}
         }
         
-        /* Bottom navigation styles */
+        /* Bottom navigation styles - Ultra Compact */
         .bottom-nav{
-            background:rgba(255,255,255,0.95);
+            background:rgba(255,255,255,0.96);
             backdrop-filter:blur(20px);
             -webkit-backdrop-filter:blur(20px);
-            border-top:1px solid rgba(114,191,119,0.1);
-            box-shadow:0 -4px 20px rgba(0,0,0,0.08);
+            border-top:1px solid rgba(114,191,119,0.15);
+            box-shadow:0 -2px 12px rgba(0,0,0,0.08);
+            height:56px;
+            padding:6px 0;
         }
         .bottom-nav-item{
             display:flex;flex-direction:column;align-items:center;gap:2px;
-            padding:6px 4px;border-radius:8px;transition:all .2s;
+            padding:4px 2px;border-radius:8px;transition:all .2s;
             text-decoration:none;min-width:0;flex:1;
         }
         .bottom-nav-item:hover,.bottom-nav-item.active{
-            background:rgba(114,191,119,0.1);
+            background:rgba(114,191,119,0.12);
             color:#72bf77;
         }
         .bottom-nav-icon{width:20px;height:20px;flex-shrink:0}
-        .bottom-nav-label{font-size:9px;font-weight:700;line-height:1.2;text-align:center}
+        .bottom-nav-label{font-size:10px;font-weight:600;line-height:1.2;text-align:center}
         .bottom-nav-badge{
             position:absolute;top:-2px;right:-2px;
             background:#72bf77;color:white;
-            font-size:7px;font-weight:800;
+            font-size:8px;font-weight:800;
             width:14px;height:14px;border-radius:50%;
             display:flex;align-items:center;justify-content:center;
             border:1.5px solid white;
         }
         
-        /* Floating button animation */
+        /* Floating button animation - Compact */
         .floating-chat{
             animation:float 3s ease-in-out infinite;
+            width:44px;height:44px;
+            box-shadow:0 4px 12px rgba(114,191,119,0.3);
         }
         @keyframes float{
             0%,100%{transform:translateY(0px)}
             50%{transform:translateY(-6px)}
+        }
+        
+        @media(max-width:1023px){
+            .floating-chat{
+                width:44px !important;
+                height:44px !important;
+                bottom:70px !important;
+                right:12px !important;
+            }
+            .floating-chat svg{
+                width:20px !important;
+                height:20px !important;
+            }
         }
     </style>
     @stack('styles')
@@ -238,36 +267,36 @@
     style="border-right:2px solid #72bf77">
 
     {{-- Logo area --}}
-    <div class="flex items-center justify-between px-4 h-[60px] flex-shrink-0 border-b border-white/10">
-        <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-base shadow-lg" style="background:white;color:#1e5128">
+    <div class="flex items-center justify-between px-3 lg:px-4 h-[50px] lg:h-[60px] flex-shrink-0 border-b border-white/10">
+        <div class="flex items-center gap-2 lg:gap-3">
+            <div class="w-8 lg:w-10 h-8 lg:h-10 rounded-lg lg:rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm lg:text-base shadow-lg" style="background:white;color:#1e5128">
                 A
             </div>
             <div x-show="sideOpen" x-cloak class="overflow-hidden">
-                <span class="text-white font-black text-base tracking-tight block">Arradea</span>
-                <span class="text-[10px] uppercase tracking-wider font-semibold text-white/70">Marketplace</span>
+                <span class="text-white font-black text-sm lg:text-base tracking-tight block">Arradea</span>
+                <span class="text-[9px] lg:text-[10px] uppercase tracking-wider font-semibold text-white/70">Marketplace</span>
             </div>
         </div>
         {{-- Close button for mobile --}}
         <button @click="sideOpen=false" 
                 x-show="sideOpen && isMobile" 
-                class="lg:hidden w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="lg:hidden w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
     </div>
 
     {{-- User info card --}}
-    <div class="px-3 pt-4 pb-2 flex-shrink-0">
+    <div class="px-2.5 lg:px-3 pt-3 lg:pt-4 pb-1.5 lg:pb-2 flex-shrink-0">
         <div x-show="sideOpen" x-cloak
-            class="flex items-center gap-3 p-3 rounded-xl bg-white/10 border border-white/20 backdrop-blur-sm">
-            <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm bg-white shadow-md" style="color:#1e5128">
+            class="flex items-center gap-2 lg:gap-3 p-2.5 lg:p-3 rounded-lg lg:rounded-xl bg-white/10 border border-white/20 backdrop-blur-sm">
+            <div class="w-8 lg:w-10 h-8 lg:h-10 rounded-lg lg:rounded-xl flex-shrink-0 flex items-center justify-center font-black text-xs lg:text-sm bg-white shadow-md" style="color:#1e5128">
                 {{ strtoupper(substr(Auth::user()->name,0,1)) }}
             </div>
             <div class="overflow-hidden flex-1 min-w-0">
-                <p class="text-white text-sm font-bold truncate leading-tight">{{ Auth::user()->name }}</p>
-                <p class="text-[10px] uppercase tracking-wide font-semibold truncate mt-1 text-white/60">
+                <p class="text-white text-xs lg:text-sm font-bold truncate leading-tight">{{ Auth::user()->name }}</p>
+                <p class="text-[9px] lg:text-[10px] uppercase tracking-wide font-semibold truncate mt-0.5 lg:mt-1 text-white/60">
                     @if(Auth::user()->role==='admin')
                         Admin
                     @elseif(Auth::user()->is_seller)

@@ -74,11 +74,3 @@
     </span>
     <span x-show="sideOpen" x-cloak class="sb-label">Profil</span>
 </a>
-
-{{-- Wishlist moved to less prominent position --}}
-<a href="{{ route('buyer.wishlist') }}" class="sb-item {{ Request::is('wishlist*') ? 'sb-active' : '' }}">
-    <span class="sb-icon">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>
-    </span>
-    <span x-show="sideOpen" x-cloak class="sb-label">Wishlist</span>
-</a>

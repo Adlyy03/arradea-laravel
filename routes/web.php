@@ -569,14 +569,6 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
             abort_if($order->user_id !== auth()->id(), 403);
             return view('buyer.orders.show', ['order' => $order->load(['product', 'store', 'chat'])]);
         })->name('buyer.orders.show');
-
-        // Wishlist routes
-        Route::get('/wishlist', fn() => view('buyer.wishlist'))->name('buyer.wishlist');
-        Route::post('/wishlist/{product}', fn(Product $product) => auth()->user()->wishlists()->toggle($product->id))->name('buyer.wishlist.toggle');
-
-        // Wishlist routes
-        Route::get('/wishlist', fn() => view('buyer.wishlist'))->name('buyer.wishlist');
-        Route::post('/wishlist/{product}', fn(Product $product) => auth()->user()->wishlists()->toggle($product->id))->name('buyer.wishlist.toggle');
     });
 
     // Public product routes (anyone can view products)

@@ -1,6 +1,10 @@
 @extends('layouts.app')
 @section('title', 'Arradea — Marketplace Warga')
 
+@push('styles')
+<link rel="stylesheet" href="{{ asset('css/welcome-page.css') }}">
+@endpush
+
 @section('content')
 @php
     use Illuminate\Support\Facades\Cache;
@@ -93,44 +97,44 @@
 </style>
 
 {{-- HERO --}}
-<section class="relative overflow-hidden min-h-[85vh] sm:min-h-[88vh] flex items-center" style="background:linear-gradient(to bottom,#ffffff 0%,#f7faf7 100%)">
+<section class="relative overflow-hidden min-h-[75vh] sm:min-h-[80vh] lg:min-h-[85vh] flex items-center" style="background:linear-gradient(to bottom,#ffffff 0%,#f7faf7 100%)">
     {{-- Blobs --}}
     <div class="hero-blob w-[500px] h-[500px] -top-32 -right-32" style="background:#72bf77"></div>
     <div class="hero-blob w-80 h-80 bottom-20 -left-20" style="background:#4db85a"></div>
 
-    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 py-12 sm:py-20 lg:py-28 w-full relative z-10">
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 sm:gap-16 lg:gap-24 items-center">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 lg:py-16 w-full relative z-10">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 sm:gap-12 lg:gap-16 items-center">
 
             {{-- Left --}}
-            <div class="space-y-6 sm:space-y-10 fade-up">
+            <div class="space-y-4 sm:space-y-6 lg:space-y-8 fade-up">
                 <div class="inline-flex items-center gap-2.5 px-3.5 py-2 rounded-full text-xs font-bold glass-card shadow-sm">
                     <span class="text-base sm:text-lg">🏘️</span>
                     <span style="color:#3fa348">Pasar Warga Arradea</span>
                 </div>
 
-                <h1 class="text-5xl sm:text-6xl lg:text-8xl font-black tracking-tighter leading-[0.88] text-gray-900">
+                <h1 class="text-4xl sm:text-5xl lg:text-7xl font-black tracking-tighter leading-[0.9] text-gray-900">
                     Segar<br>
                     <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Dekat</span><br>
                     Lengkap.
                 </h1>
 
-                <p class="text-base sm:text-xl text-gray-600 leading-relaxed max-w-lg font-medium">
+                <p class="text-sm sm:text-base lg:text-lg text-gray-600 leading-relaxed max-w-lg font-medium">
                     Dukung jualan tetangga! Dari makanan ibu-ibu komplek sampai jasa profesional, semua ada di sini.
                 </p>
 
-                <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-5">
-                    <a href="#feed" class="group px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-white text-sm sm:text-base transition-all duration-300 hover:-translate-y-1 active:scale-95 text-center" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.35)">
+                <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+                    <a href="{{ route('buyer.products') }}" class="group px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-white text-sm sm:text-base transition-all duration-300 hover:-translate-y-1 active:scale-95 text-center" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.35)">
                         <span class="flex items-center justify-center gap-2">
                             Belanja Sekarang
                             <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
                         </span>
                     </a>
                     @guest
-                        <a href="{{ route('register') }}" class="px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-gray-700 text-sm sm:text-base glass-card hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 text-center">
+                        <a href="{{ route('register') }}" class="px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-gray-700 text-sm sm:text-base glass-card hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 text-center">
                             Gabung Seller →
                         </a>
                     @else
-                        <a href="{{ Auth::user()->is_seller ? route('seller.dashboard') : route('buyer.dashboard') }}" class="px-6 sm:px-8 py-3.5 sm:py-4 rounded-2xl font-bold text-gray-700 text-sm sm:text-base glass-card hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 text-center">
+                        <a href="{{ Auth::user()->is_seller ? route('seller.dashboard') : route('buyer.dashboard') }}" class="px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-gray-700 text-sm sm:text-base glass-card hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 text-center">
                             Dashboard Saya →
                         </a>
                     @endguest
@@ -138,40 +142,40 @@
             </div>
 
             {{-- Right: Floating Cards --}}
-            <div class="relative hidden lg:block h-[520px] fade-up-2">
+            <div class="relative hidden lg:block h-[450px] fade-up-2">
                 {{-- Main visual --}}
                 <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="w-80 h-80 rounded-[5rem] flex items-center justify-center text-9xl shadow-2xl shadow-green-200/40 scale-in" style="background:linear-gradient(135deg,#f0faf1,#d8f3da)">
+                    <div class="w-72 h-72 rounded-[4rem] flex items-center justify-center text-8xl shadow-2xl shadow-green-200/40 scale-in" style="background:linear-gradient(135deg,#f0faf1,#d8f3da)">
                         🏪
                     </div>
                 </div>
 
                 {{-- Floating card 1 --}}
-                <div class="float absolute top-12 right-8 glass-card rounded-2xl p-5 shadow-xl" style="animation-delay:0s">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style="background:rgba(114,191,119,.15)">🛒</div>
+                <div class="float absolute top-8 right-6 glass-card rounded-xl p-4 shadow-xl" style="animation-delay:0s">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:rgba(114,191,119,.15)">🛒</div>
                         <div>
-                            <p class="text-sm font-black text-gray-900">Pesanan Baru!</p>
-                            <p class="text-xs text-gray-400 mt-0.5">2 menit yang lalu</p>
+                            <p class="text-xs font-black text-gray-900">Pesanan Baru!</p>
+                            <p class="text-[10px] text-gray-400 mt-0.5">2 menit lalu</p>
                         </div>
                     </div>
                 </div>
 
                 {{-- Floating card 2 --}}
-                <div class="float absolute bottom-16 left-8 glass-card rounded-2xl p-5 shadow-xl" style="animation-delay:1.5s">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl" style="background:rgba(245,158,11,.15)">⭐</div>
+                <div class="float absolute bottom-12 left-6 glass-card rounded-xl p-4 shadow-xl" style="animation-delay:1.5s">
+                    <div class="flex items-center gap-2.5">
+                        <div class="w-10 h-10 rounded-xl flex items-center justify-center text-xl" style="background:rgba(245,158,11,.15)">⭐</div>
                         <div>
-                            <p class="text-sm font-black text-gray-900">Rating Sempurna</p>
-                            <p class="text-xs text-gray-400 mt-0.5">Baru direview</p>
+                            <p class="text-xs font-black text-gray-900">Rating Sempurna</p>
+                            <p class="text-[10px] text-gray-400 mt-0.5">Baru direview</p>
                         </div>
                     </div>
                 </div>
 
                 {{-- Floating card 3 --}}
-                <div class="float absolute top-1/2 right-4 glass-card rounded-2xl p-4 shadow-xl" style="animation-delay:.8s">
-                    <p class="text-sm font-black text-gray-700">💰 Rp 350.000</p>
-                    <p class="text-xs text-gray-400 mt-0.5">Penjualan hari ini</p>
+                <div class="float absolute top-1/2 right-3 glass-card rounded-xl p-3 shadow-xl" style="animation-delay:.8s">
+                    <p class="text-xs font-black text-gray-700">💰 Rp 350.000</p>
+                    <p class="text-[10px] text-gray-400 mt-0.5">Penjualan hari ini</p>
                 </div>
             </div>
         </div>
@@ -180,14 +184,14 @@
 
 {{-- PROMO BANNER SLIDER --}}
 @if($discountedProducts->count() > 0 || $popularProducts->count() > 0)
-<section class="py-8 sm:py-10 bg-white">
+<section class="welcome-section bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
         {{-- Header + Nav --}}
-        <div class="flex items-center justify-between mb-4 sm:mb-5">
+        <div class="flex items-center justify-between mb-6 sm:mb-8 lg:mb-10">
             <div>
-                <h2 class="text-base sm:text-lg font-black tracking-tight text-gray-900">Promo <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Spesial</span></h2>
-                <p class="text-gray-400 text-[10px] sm:text-xs font-medium mt-0.5">Penawaran terbaik hari ini</p>
+                <h2 class="section-title text-left mb-1">Promo <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Spesial</span></h2>
+                <p class="text-gray-400 text-xs sm:text-sm font-medium">Penawaran terbaik hari ini</p>
             </div>
             <div class="flex items-center gap-2">
                 <button class="promo-nav" onclick="prevSlide()" aria-label="Sebelumnya">
@@ -220,7 +224,7 @@
                             <div class="grid grid-cols-4 gap-2 sm:gap-3">
                                 @foreach($discountedProducts->take(4) as $product)
                                 <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-red-200 hover:shadow-sm transition-all duration-200">
-                                    <div class="relative overflow-hidden bg-gray-50" style="height:80px">
+                                    <div class="relative overflow-hidden bg-gray-50" style="height:70px">
                                         <img src="{{ $product->image }}" alt="{{ $product->name }}"
                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             onerror="this.src='https://via.placeholder.com/200x200/fff5f5/ef4444?text=+'">
@@ -253,7 +257,7 @@
                             <div class="grid grid-cols-4 gap-2 sm:gap-3">
                                 @foreach($popularProducts->take(4) as $product)
                                 <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all duration-200">
-                                    <div class="relative overflow-hidden bg-gray-50" style="height:80px">
+                                    <div class="relative overflow-hidden bg-gray-50" style="height:70px">
                                         <img src="{{ $product->image }}" alt="{{ $product->name }}"
                                             class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                                             onerror="this.src='https://via.placeholder.com/200x200/eff6ff/3b82f6?text=+'">
@@ -343,28 +347,206 @@
 
 
 {{-- CTA BANNER --}}
-<section class="py-12 sm:py-20 bg-[#f7faf7]">
-    <div class="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-        <div class="relative overflow-hidden rounded-[2rem] sm:rounded-[2.5rem] p-8 sm:p-10 lg:p-20 text-white text-center shadow-2xl" style="background:linear-gradient(135deg,#0f1a11,#1e3a22,#0f1a11)">
-            <div class="absolute -top-32 -right-32 w-80 h-80 rounded-full opacity-15" style="background:#72bf77;filter:blur(80px)"></div>
-            <div class="absolute -bottom-32 -left-32 w-80 h-80 rounded-full opacity-10" style="background:#4db85a;filter:blur(80px)"></div>
+<section class="welcome-section bg-[#f7faf7]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="relative overflow-hidden rounded-xl sm:rounded-2xl lg:rounded-3xl p-6 sm:p-10 lg:p-16 text-white text-center shadow-2xl" style="background:linear-gradient(135deg,#0f1a11,#1e3a22,#0f1a11)">
+            <div class="absolute -top-32 -right-32 w-64 h-64 sm:w-80 sm:h-80 rounded-full opacity-15" style="background:#72bf77;filter:blur(80px)"></div>
+            <div class="absolute -bottom-32 -left-32 w-64 h-64 sm:w-80 sm:h-80 rounded-full opacity-10" style="background:#4db85a;filter:blur(80px)"></div>
             <div class="relative z-10 fade-up">
-                <p class="text-[10px] sm:text-xs font-black uppercase tracking-widest mb-3 sm:mb-4" style="color:#72bf77">Untuk Warga Arradea</p>
-                <h2 class="text-2xl sm:text-4xl lg:text-5xl font-black tracking-tight mb-4 sm:mb-5 leading-tight">Punya produk untuk dijual?</h2>
-                <p class="text-white/70 mb-8 sm:mb-10 max-w-2xl mx-auto font-medium text-sm sm:text-lg leading-relaxed">Bergabunglah sebagai seller dan mulai berjualan kepada tetangga-tetanggamu. Raih penghasilan tambahan dari rumah.</p>
+                <p class="section-label text-[#72bf77]">Untuk Warga Arradea</p>
+                <h2 class="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight mb-3 sm:mb-4 leading-tight text-white">Punya produk untuk dijual?</h2>
+                <p class="text-white/70 mb-6 sm:mb-8 max-w-2xl mx-auto font-medium text-xs sm:text-base leading-relaxed">Bergabunglah sebagai seller dan mulai berjualan kepada tetangga-tetanggamu. Raih penghasilan tambahan dari rumah.</p>
                 @guest
-                    <a href="{{ route('register') }}" class="inline-flex items-center gap-2 px-8 sm:px-10 py-3.5 sm:py-5 rounded-2xl font-bold text-gray-900 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-95 text-base sm:text-lg" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.4)">
+                    <a href="{{ route('register') }}" class="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-gray-900 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-95 text-sm sm:text-base" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.4)">
                         Daftar Jadi Seller
-                        <span class="text-xl sm:text-2xl">🚀</span>
+                        <span class="text-lg sm:text-xl">🚀</span>
                     </a>
                 @else
                     @if(!Auth::user()->is_seller && Auth::user()->role !== 'admin')
-                        <a href="{{ route('seller.apply') }}" class="inline-flex items-center gap-2 px-8 sm:px-10 py-3.5 sm:py-5 rounded-2xl font-bold text-gray-900 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-95 text-base sm:text-lg" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.4)">
+                        <a href="{{ route('seller.apply') }}" class="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-gray-900 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-95 text-sm sm:text-base" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.4)">
                             Buka Toko Sekarang
-                            <span class="text-xl sm:text-2xl">🚀</span>
+                            <span class="text-lg sm:text-xl">🚀</span>
                         </a>
                     @endif
                 @endguest
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- FEATURES SECTION --}}
+<section class="welcome-section bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="section-header fade-up">
+            <p class="section-label">Kenapa Arradea?</p>
+            <h2 class="section-title">Belanja Jadi Lebih <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Mudah</span></h2>
+            <p class="section-description">Platform marketplace khusus warga Arradea dengan fitur lengkap</p>
+        </div>
+
+        <div class="welcome-grid welcome-grid-4">
+            {{-- Feature 1 --}}
+            <div class="welcome-card glass-card text-center fade-up">
+                <div class="icon-container" style="background:rgba(114,191,119,.12)">🚀</div>
+                <h3 class="card-title">Cepat & Praktis</h3>
+                <p class="card-description">Pesan langsung dari tetangga, barang sampai lebih cepat</p>
+            </div>
+
+            {{-- Feature 2 --}}
+            <div class="welcome-card glass-card text-center fade-up-2">
+                <div class="icon-container" style="background:rgba(59,130,246,.12)">💰</div>
+                <h3 class="card-title">Harga Terjangkau</h3>
+                <p class="card-description">Tanpa biaya ongkir mahal, harga lebih bersahabat</p>
+            </div>
+
+            {{-- Feature 3 --}}
+            <div class="welcome-card glass-card text-center fade-up-3">
+                <div class="icon-container" style="background:rgba(245,158,11,.12)">🤝</div>
+                <h3 class="card-title">Dukung Tetangga</h3>
+                <p class="card-description">Bantu UMKM lokal berkembang di lingkungan kita</p>
+            </div>
+
+            {{-- Feature 4 --}}
+            <div class="welcome-card glass-card text-center fade-up">
+                <div class="icon-container" style="background:rgba(34,197,94,.12)">✅</div>
+                <h3 class="card-title">Terpercaya</h3>
+                <p class="card-description">Semua seller terverifikasi, transaksi aman</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- HOW IT WORKS --}}
+<section class="welcome-section bg-gradient-to-b from-[#f7faf7] to-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="section-header fade-up">
+            <p class="section-label">Mudah Banget!</p>
+            <h2 class="section-title">Cara <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Belanja</span></h2>
+            <p class="section-description">Hanya 3 langkah untuk mendapatkan produk yang kamu inginkan</p>
+        </div>
+
+        <div class="welcome-grid welcome-grid-3 max-w-5xl mx-auto relative">
+            {{-- Connector line (desktop only) --}}
+            <div class="hidden md:block absolute top-12 left-0 right-0 h-0.5 bg-gradient-to-r from-transparent via-green-200 to-transparent"></div>
+
+            {{-- Step 1 --}}
+            <div class="relative fade-up text-center">
+                <div class="step-container">
+                    <div class="step-circle" style="background:linear-gradient(135deg,#f0faf1,#d8f3da)">🔍</div>
+                    <div class="step-badge" style="background:#72bf77">1</div>
+                </div>
+                <h3 class="step-title">Cari Produk</h3>
+                <p class="step-description">Temukan produk yang kamu butuhkan dari seller terdekat</p>
+            </div>
+
+            {{-- Step 2 --}}
+            <div class="relative fade-up-2 text-center">
+                <div class="step-container">
+                    <div class="step-circle" style="background:linear-gradient(135deg,#fef3c7,#fde68a)">🛒</div>
+                    <div class="step-badge" style="background:#f59e0b">2</div>
+                </div>
+                <h3 class="step-title">Pesan & Bayar</h3>
+                <p class="step-description">Tambahkan ke keranjang dan lakukan pembayaran dengan mudah</p>
+            </div>
+
+            {{-- Step 3 --}}
+            <div class="relative fade-up-3 text-center">
+                <div class="step-container">
+                    <div class="step-circle" style="background:linear-gradient(135deg,#dbeafe,#bfdbfe)">📦</div>
+                    <div class="step-badge" style="background:#3b82f6">3</div>
+                </div>
+                <h3 class="step-title">Terima Barang</h3>
+                <p class="step-description">Barang diantar langsung ke rumahmu, cepat dan aman</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- STATS COUNTER --}}
+<section class="welcome-section bg-white">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="glass-card rounded-2xl lg:rounded-3xl p-8 sm:p-10 lg:p-12 shadow-xl">
+            <div class="welcome-grid welcome-grid-4">
+                {{-- Stat 1 --}}
+                <div class="text-center fade-up">
+                    <div class="stat-number">{{ \App\Models\Product::count() }}+</div>
+                    <p class="stat-label">Produk Tersedia</p>
+                </div>
+
+                {{-- Stat 2 --}}
+                <div class="text-center fade-up-2">
+                    <div class="stat-number">{{ \App\Models\User::where('is_seller', true)->count() }}+</div>
+                    <p class="stat-label">Seller Aktif</p>
+                </div>
+
+                {{-- Stat 3 --}}
+                <div class="text-center fade-up-3">
+                    <div class="stat-number">{{ \App\Models\Order::count() }}+</div>
+                    <p class="stat-label">Transaksi Sukses</p>
+                </div>
+
+                {{-- Stat 4 --}}
+                <div class="text-center fade-up">
+                    <div class="stat-number">100%</div>
+                    <p class="stat-label">Kepuasan Warga</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{{-- TESTIMONIALS --}}
+<section class="welcome-section bg-gradient-to-b from-white to-[#f7faf7]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="section-header fade-up">
+            <p class="section-label">Kata Mereka</p>
+            <h2 class="section-title">Testimoni <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Warga</span></h2>
+            <p class="section-description">Pengalaman nyata dari pengguna Arradea Marketplace</p>
+        </div>
+
+        <div class="welcome-grid welcome-grid-3">
+            {{-- Testimonial 1 --}}
+            <div class="testimonial-card glass-card fade-up hover:shadow-xl transition-all duration-300">
+                <div class="testimonial-stars">
+                    <span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span>
+                </div>
+                <p class="testimonial-text">"Belanja jadi gampang banget! Tinggal pesan dari tetangga, barang langsung sampai. Harga juga lebih murah dari marketplace lain."</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar" style="background:linear-gradient(135deg,#72bf77,#4db85a)">B</div>
+                    <div>
+                        <p class="testimonial-name">Bu Siti</p>
+                        <p class="testimonial-role">Pembeli Aktif</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Testimonial 2 --}}
+            <div class="testimonial-card glass-card fade-up-2 hover:shadow-xl transition-all duration-300">
+                <div class="testimonial-stars">
+                    <span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span>
+                </div>
+                <p class="testimonial-text">"Sebagai seller, Arradea sangat membantu! Bisa jualan ke tetangga sendiri, orderan juga banyak. Recommended!"</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar" style="background:linear-gradient(135deg,#f59e0b,#d97706)">P</div>
+                    <div>
+                        <p class="testimonial-name">Pak Budi</p>
+                        <p class="testimonial-role">Seller Toko Sayur</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Testimonial 3 --}}
+            <div class="testimonial-card glass-card fade-up-3 hover:shadow-xl transition-all duration-300">
+                <div class="testimonial-stars">
+                    <span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span><span>⭐</span>
+                </div>
+                <p class="testimonial-text">"Platform-nya user friendly, mudah dipakai. Chat sama seller juga responsif. Pokoknya top deh!"</p>
+                <div class="testimonial-author">
+                    <div class="testimonial-avatar" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">A</div>
+                    <div>
+                        <p class="testimonial-name">Andi</p>
+                        <p class="testimonial-role">Pembeli Setia</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
