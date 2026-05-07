@@ -823,6 +823,13 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
                 $payload['seller_approved_at'] = now();
                 $payload['seller_rejected_at'] = null;
                 $payload['seller_rejection_reason'] = null;
+
+                if ($user->store) {
+                    $user->store->update([
+                        'status' => 'active',
+                        'approved_at' => now(),
+                    ]);
+                }
             } else {
                 $payload['seller_status'] = 'none';
             }

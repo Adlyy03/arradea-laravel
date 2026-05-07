@@ -4,7 +4,7 @@
 @section('page_title', 'Verifikasi Seller')
 
 @section('content')
-<div class="space-y-6 lg:space-y-12">
+<div class="space-y-6 lg:space-y-12" x-data="{ approveUser: null, openApproveModal: false, rejectUser: null, openRejectModal: false, selectedUser: null, openDetailModal: false, loading: false, reason: '' }">
     <!-- Header -->
     <div class="flex flex-col lg:flex-row justify-between items-end gap-6 lg:gap-12 bg-white p-6 lg:p-12 lg:p-20 rounded-2xl lg:rounded-3xl lg:rounded-[4rem] shadow-sm border border-gray-100">
         <div class="max-w-2xl text-center md:text-left">
@@ -64,7 +64,7 @@
         @forelse($users as $user)
             <div class="bg-white rounded-2xl lg:rounded-3xl p-6 lg:p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-all" 
                  @click="openDetailModal = true; selectedUser = {{ json_encode(['id' => $user->id, 'name' => $user->name, 'phone' => $user->phone, 'wilayah' => $user->wilayah, 'seller_status' => $user->seller_status, 'seller_applied_at' => $user->seller_applied_at?->format('d M Y H:i'), 'seller_rejected_at' => $user->seller_rejected_at?->format('d M Y H:i'), 'seller_rejection_reason' => $user->seller_rejection_reason, 'latitude' => $user->latitude ?? -6.1753, 'longitude' => $user->longitude ?? 106.8249]) }}" 
-                 class="cursor-pointer" x-data>
+                 class="cursor-pointer">
 
                 <!-- Avatar & Status -->
                 <div class="flex items-start justify-between mb-4">
@@ -141,7 +141,7 @@
 </div>
 
 <!-- DETAIL MODAL -->
-<div x-data="{ selectedUser: null, openDetailModal: false }" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
      x-show="openDetailModal" @click.away="openDetailModal = false" x-cloak>
     <div class="bg-white rounded-[3rem] w-full max-w-4xl max-h-[90vh] overflow-y-auto p-8 lg:p-12 relative shadow-2xl"
          x-transition:enter="transition ease-out duration-300"
@@ -217,8 +217,7 @@
 </div>
 
 <!-- APPROVE MODAL -->
-<div x-data="{ approveUser: null, openApproveModal: false, loading: false }" 
-     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
      x-show="openApproveModal" @click.away="openApproveModal = false" x-cloak>
     <div class="bg-white rounded-[3rem] w-full max-w-md p-8 lg:p-10 relative shadow-2xl"
          x-transition:enter="transition ease-out duration-300"
@@ -265,8 +264,7 @@
 </div>
 
 <!-- REJECT MODAL -->
-<div x-data="{ rejectUser: null, openRejectModal: false, loading: false, reason: '' }" 
-     class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
      x-show="openRejectModal" @click.away="openRejectModal = false" x-cloak>
     <div class="bg-white rounded-[3rem] w-full max-w-md p-8 lg:p-10 relative shadow-2xl"
          x-transition:enter="transition ease-out duration-300"

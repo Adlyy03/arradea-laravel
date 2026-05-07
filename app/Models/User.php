@@ -53,6 +53,9 @@ class User extends Authenticatable
             'open_time'          => 'string',
             'close_time'         => 'string',
             'auto_schedule'      => 'boolean',
+            'seller_applied_at'  => 'datetime',
+            'seller_rejected_at' => 'datetime',
+            'seller_approved_at' => 'datetime',
             'password'           => 'hashed',
         ];
     }
