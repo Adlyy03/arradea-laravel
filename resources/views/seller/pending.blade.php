@@ -56,16 +56,12 @@
                     <span class="w-7 h-7 rounded-full bg-green-500 text-white text-xs font-black flex items-center justify-center shrink-0">✓</span>
                     <p class="text-gray-600 font-bold text-sm">Isi data toko</p>
                 </div>
-                <div class="flex items-center gap-3 p-3 rounded-xl">
-                    <span class="w-7 h-7 rounded-full bg-green-500 text-white text-xs font-black flex items-center justify-center shrink-0">✓</span>
-                    <p class="text-gray-600 font-bold text-sm">Verifikasi OTP via WhatsApp</p>
-                </div>
                 <div class="flex items-center gap-3 p-3 bg-orange-50 rounded-xl border border-orange-200">
-                    <span class="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-black flex items-center justify-center shrink-0 animate-pulse">3</span>
+                    <span class="w-7 h-7 rounded-full bg-orange-500 text-white text-xs font-black flex items-center justify-center shrink-0 animate-pulse">2</span>
                     <p class="text-orange-900 font-bold text-sm">Menunggu persetujuan admin <em>(kamu di sini)</em></p>
                 </div>
                 <div class="flex items-center gap-3 p-3 rounded-xl opacity-40">
-                    <span class="w-7 h-7 rounded-full bg-gray-300 text-white text-xs font-black flex items-center justify-center shrink-0">4</span>
+                    <span class="w-7 h-7 rounded-full bg-gray-300 text-white text-xs font-black flex items-center justify-center shrink-0">3</span>
                     <p class="text-gray-500 font-bold text-sm">Akses Seller Dashboard & mulai berjualan 🛒</p>
                 </div>
             </div>

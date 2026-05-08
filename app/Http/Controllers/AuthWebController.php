@@ -99,33 +99,14 @@ class AuthWebController extends Controller
      */
     public function register(Request $request)
     {
-        // Custom validation untuk phone - allow re-registration jika belum verifikasi
         $request->validate([
             'name'     => ['required', 'string', 'max:255'],
-            'phone'    => [
-                'required', 
-                'string', 
-                'max:20',
-                function ($attribute, $value, $fail) {
-                    $existingUser = User::where('phone', $value)->first();
-                    
-                    // Jika user sudah ada DAN sudah verifikasi phone, tolak
-                    if ($existingUser && $existingUser->phone_verified_at !== null) {
-                        $fail('Nomor HP sudah terdaftar dan terverifikasi. Silakan login.');
-                        return;
-                    }
-                    
-                    // Jika user ada tapi belum verifikasi, hapus user lama
-                    if ($existingUser && $existingUser->phone_verified_at === null) {
-                        // Hapus user lama yang belum verifikasi
-                        $existingUser->delete();
-                    }
-                }
-            ],
+            'phone'    => ['required', 'string', 'max:20', 'unique:users,phone'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'latitude' => ['nullable', 'numeric', 'between:-90,90'],
             'longitude' => ['nullable', 'numeric', 'between:-180,180'],
         ], [
+            'phone.unique'   => 'Nomor HP sudah terdaftar.',
             'password.min'   => 'Password minimal 8 karakter.',
             'password.regex' => 'Password tidak boleh mengandung spasi.',
         ]);

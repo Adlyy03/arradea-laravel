@@ -86,9 +86,10 @@
                 <h3 class="text-xl font-black text-gray-900 mb-4">Langkah Jadi Seller</h3>
                 <ol class="space-y-4 text-gray-600">
                     <li class="font-bold">1. Masuk / daftar sebagai pembeli terlebih dahulu.</li>
-                    <li class="font-bold">2. Isi data toko dan aktifkan mode seller.</li>
-                    <li class="font-bold">3. Langsung akses dashboard seller dan tambah produk.</li>
-                    <li class="font-bold">4. Tetap bisa belanja produk seller lain dari akun yang sama.</li>
+                    <li class="font-bold">2. Isi data toko dan ajukan menjadi seller.</li>
+                    <li class="font-bold">3. Tunggu persetujuan admin.</li>
+                    <li class="font-bold">4. Akses dashboard seller dan tambah produk.</li>
+                    <li class="font-bold">5. Tetap bisa belanja produk seller lain dari akun yang sama.</li>
                 </ol>
             </div>
         </div>

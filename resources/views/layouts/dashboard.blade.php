@@ -49,11 +49,26 @@
         /* Sidebar visibility control */
         .sidebar-hidden{transform:translateX(-100%) !important}
         .sidebar-visible{transform:translateX(0) !important}
+        
+        /* Hide floating chat when sidebar is open on mobile */
+        @media(max-width:1023px){
+            .floating-chat{
+                transition:opacity .3s ease, transform .3s ease;
+                opacity:1;
+                pointer-events:auto;
+                transform:scale(1) translateY(0);
+            }
+            .sidebar-open .floating-chat{
+                opacity:0;
+                pointer-events:none;
+                transform:scale(0.8) translateY(20px);
+            }
+        }
 
         /* ── Sidebar Core ─────────────────────────────── */
         .sb-item{
             display:flex;align-items:center;gap:12px;
-            padding:10px 12px;
+            padding:8px 10px;
             border-radius:12px;
             transition:all .25s cubic-bezier(.4,0,.2,1);
             font-weight:600;font-size:.875rem;
@@ -182,17 +197,168 @@
         .fade-up{animation:fadeUp .35s ease both}
         .badge-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
 
-        /* Mobile optimizations */
+        /* Mobile optimizations - Ultra Compact */
         @media(max-width:1023px){
-            .sb-section-label{padding-top:10px;padding-bottom:3px;font-size:.55rem}
-            .sb-item{padding:6px 8px;font-size:.75rem;gap:8px;border-radius:10px}
-            .sb-icon{width:28px;height:28px;border-radius:8px}
-            .sb-icon svg{width:14px;height:14px}
-            .sb-badge{font-size:.6rem;padding:2px 5px}
-            .sb-label{font-size:.75rem}
-            .sb-status-chip{margin:6px 4px 3px;padding:8px 10px;border-radius:10px;gap:8px}
-            .sb-chip-title{font-size:.65rem}
-            .sb-chip-desc{font-size:.65rem;margin-top:2px}
+            .sb-section-label{padding-top:6px;padding-bottom:2px;font-size:.5rem}
+            .sb-item{padding:4px 6px;font-size:.7rem;gap:6px;border-radius:8px;margin:1px 0}
+            .sb-icon{width:24px;height:24px;border-radius:6px}
+            .sb-icon svg{width:12px;height:12px}
+            .sb-badge{font-size:.55rem;padding:1.5px 4px}
+            .sb-label{font-size:.7rem}
+            .sb-status-chip{margin:4px 2px 2px;padding:5px 6px;border-radius:6px;gap:4px}
+            .sb-chip-title{font-size:.55rem}
+            .sb-chip-desc{font-size:.55rem;margin-top:1px}
+        }
+        
+        /* Mode Switch Tabs - Mobile Only */
+        .mode-switch-container{
+            padding:8px;
+            background:rgba(255,255,255,.08);
+            border-radius:10px;
+            margin:8px 8px 12px;
+        }
+        .mode-switch{
+            display:flex;
+            gap:4px;
+            background:rgba(0,0,0,.15);
+            padding:3px;
+            border-radius:8px;
+        }
+        .mode-tab{
+            flex:1;
+            padding:6px 8px;
+            border-radius:6px;
+            font-size:.7rem;
+            font-weight:700;
+            text-align:center;
+            color:rgba(255,255,255,.6);
+            cursor:pointer;
+            transition:all .2s;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        .mode-tab.active{
+            background:rgba(255,255,255,.25);
+            color:white;
+            box-shadow:0 2px 8px rgba(0,0,0,.15);
+        }
+        
+        /* Role Badge Styles */
+        .sb-role-badge{
+            display:inline-flex;
+            align-items:center;
+            gap:3px;
+            padding:3px 6px;
+            border-radius:5px;
+            font-size:.6rem;
+            font-weight:700;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        .sb-role-buyer{
+            background:rgba(59,130,246,.25);
+            color:#93c5fd;
+            border:1px solid rgba(59,130,246,.3);
+        }
+        .sb-role-seller{
+            background:rgba(245,158,11,.25);
+            color:#fbbf24;
+            border:1px solid rgba(245,158,11,.3);
+        }
+        .sb-role-verified{
+            display:inline-flex;
+            align-items:center;
+            padding:2px 5px;
+            border-radius:4px;
+            font-size:.55rem;
+            font-weight:700;
+            background:rgba(34,197,94,.25);
+            color:#86efac;
+            border:1px solid rgba(34,197,94,.3);
+        }
+        .sb-role-pending{
+            display:inline-flex;
+            align-items:center;
+            padding:2px 5px;
+            border-radius:4px;
+            font-size:.55rem;
+            font-weight:700;
+            background:rgba(245,158,11,.25);
+            color:#fbbf24;
+            border:1px solid rgba(245,158,11,.3);
+        }
+        .sb-role-badge-count{
+            padding:2px 5px;
+            border-radius:4px;
+            font-size:.55rem;
+            font-weight:700;
+            background:rgba(255,255,255,.15);
+            color:rgba(255,255,255,.8);
+        }
+        
+        /* Quick Stats Cards - Mobile */
+        .sb-stat-card{
+            background:rgba(255,255,255,.12);
+            border:1px solid rgba(255,255,255,.18);
+            border-radius:8px;
+            padding:6px;
+            text-align:center;
+            transition:all .2s;
+            text-decoration:none;
+            display:block;
+        }
+        .sb-stat-card:hover,.sb-stat-card.sb-stat-active{
+            background:rgba(255,255,255,.2);
+            border-color:rgba(255,255,255,.35);
+            transform:translateY(-1px);
+        }
+        .sb-stat-num{
+            font-size:1.1rem;
+            font-weight:800;
+            color:white;
+            line-height:1;
+            position:relative;
+            display:inline-block;
+        }
+        .sb-stat-lbl{
+            font-size:.6rem;
+            font-weight:600;
+            color:rgba(255,255,255,.65);
+            margin-top:3px;
+            text-transform:uppercase;
+            letter-spacing:.03em;
+        }
+        .sb-stat-dot{
+            position:absolute;
+            top:-2px;
+            right:-8px;
+            width:6px;
+            height:6px;
+            border-radius:50%;
+            background:#86efac;
+            animation:pulse 2s infinite;
+        }
+        .sb-stat-dot-amber{
+            background:#fbbf24;
+        }
+        .sb-stat-dot-red{
+            background:#f87171;
+        }
+        @keyframes pulse{
+            0%,100%{opacity:1;transform:scale(1)}
+            50%{opacity:.6;transform:scale(1.1)}
+        }
+        
+        /* Divider */
+        .sb-divider{
+            padding:6px 6px 2px;
+            font-size:.5rem;
+            font-weight:800;
+            letter-spacing:.1em;
+            text-transform:uppercase;
+            color:rgba(255,255,255,.35);
+            border-top:1px solid rgba(255,255,255,.08);
+            margin-top:6px;
         }
         
         /* Bottom navigation styles - Ultra Compact */
@@ -257,6 +423,7 @@
           chatModal: false,
           isMobile: window.innerWidth < 1024
       }"
+      :class="(isMobile && sideOpen) ? 'sidebar-open' : ''"
       @resize.window="isMobile = window.innerWidth < 1024; if (!isMobile) sideOpen = true; else sideOpen = false;">
 
 {{-- SIDEBAR - HIJAU GELAP GRADASI --}}
@@ -267,36 +434,36 @@
     style="border-right:2px solid #72bf77">
 
     {{-- Logo area --}}
-    <div class="flex items-center justify-between px-3 lg:px-4 h-[50px] lg:h-[60px] flex-shrink-0 border-b border-white/10">
-        <div class="flex items-center gap-2 lg:gap-3">
-            <div class="w-8 lg:w-10 h-8 lg:h-10 rounded-lg lg:rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm lg:text-base shadow-lg" style="background:white;color:#1e5128">
+    <div class="flex items-center justify-between px-2 lg:px-4 h-[44px] lg:h-[60px] flex-shrink-0 border-b border-white/10">
+        <div class="flex items-center gap-1.5 lg:gap-3">
+            <div class="w-7 lg:w-10 h-7 lg:h-10 rounded-lg lg:rounded-xl flex-shrink-0 flex items-center justify-center font-black text-xs lg:text-base shadow-lg" style="background:white;color:#1e5128">
                 A
             </div>
             <div x-show="sideOpen" x-cloak class="overflow-hidden">
-                <span class="text-white font-black text-sm lg:text-base tracking-tight block">Arradea</span>
-                <span class="text-[9px] lg:text-[10px] uppercase tracking-wider font-semibold text-white/70">Marketplace</span>
+                <span class="text-white font-black text-xs lg:text-base tracking-tight block">Arradea</span>
+                <span class="text-[8px] lg:text-[10px] uppercase tracking-wider font-semibold text-white/70">Marketplace</span>
             </div>
         </div>
         {{-- Close button for mobile --}}
         <button @click="sideOpen=false" 
                 x-show="sideOpen && isMobile" 
-                class="lg:hidden w-7 h-7 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="lg:hidden w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
     </div>
 
     {{-- User info card --}}
-    <div class="px-2.5 lg:px-3 pt-3 lg:pt-4 pb-1.5 lg:pb-2 flex-shrink-0">
+    <div class="px-2 lg:px-3 pt-2 lg:pt-4 pb-1 lg:pb-2 flex-shrink-0">
         <div x-show="sideOpen" x-cloak
-            class="flex items-center gap-2 lg:gap-3 p-2.5 lg:p-3 rounded-lg lg:rounded-xl bg-white/10 border border-white/20 backdrop-blur-sm">
-            <div class="w-8 lg:w-10 h-8 lg:h-10 rounded-lg lg:rounded-xl flex-shrink-0 flex items-center justify-center font-black text-xs lg:text-sm bg-white shadow-md" style="color:#1e5128">
+            class="flex items-center gap-1.5 lg:gap-3 p-1.5 lg:p-3 rounded-lg lg:rounded-xl bg-white/10 border border-white/20 backdrop-blur-sm">
+            <div class="w-7 lg:w-10 h-7 lg:h-10 rounded-lg lg:rounded-xl flex-shrink-0 flex items-center justify-center font-black text-[10px] lg:text-sm bg-white shadow-md" style="color:#1e5128">
                 {{ strtoupper(substr(Auth::user()->name,0,1)) }}
             </div>
             <div class="overflow-hidden flex-1 min-w-0">
-                <p class="text-white text-xs lg:text-sm font-bold truncate leading-tight">{{ Auth::user()->name }}</p>
-                <p class="text-[9px] lg:text-[10px] uppercase tracking-wide font-semibold truncate mt-0.5 lg:mt-1 text-white/60">
+                <p class="text-white text-[11px] lg:text-sm font-bold truncate leading-tight">{{ Auth::user()->name }}</p>
+                <p class="text-[8px] lg:text-[10px] uppercase tracking-wide font-semibold truncate mt-0.5 lg:mt-1 text-white/60">
                     @if(Auth::user()->role==='admin')
                         Admin
                     @elseif(Auth::user()->is_seller)
@@ -309,20 +476,20 @@
         </div>
         {{-- Collapsed: just avatar --}}
         <div x-show="!sideOpen" class="flex justify-center">
-            <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm bg-white shadow-md" style="color:#1e5128">
+            <div class="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-xs bg-white shadow-md" style="color:#1e5128">
                 {{ strtoupper(substr(Auth::user()->name,0,1)) }}
             </div>
         </div>
     </div>
 
     {{-- Nav --}}
-    <nav class="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2 space-y-1">
+    <nav class="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1.5 space-y-0.5">
         @if(Auth::user()->role === 'admin')
             @include('components.sidebar.admin')
         @else
             @include('components.sidebar.buyer')
             @if(Auth::user()->is_seller)
-                <div class="mt-2 pt-1" style="border-top:1px solid rgba(114,191,119,.08)">
+                <div class="mt-1.5 pt-0.5" style="border-top:1px solid rgba(114,191,119,.08)">
                     @include('components.sidebar.seller')
                 </div>
             @endif
@@ -330,7 +497,7 @@
     </nav>
 
     {{-- Logout --}}
-    <div class="p-3 flex-shrink-0 border-t border-white/10">
+    <div class="p-2 flex-shrink-0 border-t border-white/10">
         <form method="POST" action="{{ route('logout') }}" id="logoutForm">
             @csrf
             <button type="button" 
