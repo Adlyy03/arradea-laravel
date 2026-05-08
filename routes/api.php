@@ -31,6 +31,10 @@ Route::middleware(['auth:sanctum', 'arradea.access'])->group(function () {
     Route::get('/profile',  [AuthController::class, 'profile']);
     Route::patch('/profile/seller-mode', [AuthController::class, 'toggleSellerMode']);
     
+    // ─── Mode Switching (Buyer ⇄ Seller) ─────────────────────────────────────
+    Route::post('/mode/switch', [\App\Http\Controllers\ModeController::class, 'switch']);
+    Route::get('/mode/info', [\App\Http\Controllers\ModeController::class, 'info']);
+    
     // Notifications
     Route::get('/notifications', function (\Illuminate\Http\Request $request) {
         return response()->json([

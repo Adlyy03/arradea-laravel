@@ -29,14 +29,20 @@ class RoleMiddleware
             return redirect('/login');
         }
 
+        // Get active mode from session (for mode switching feature)
+        $activeMode = session('active_mode', $user->preferred_mode ?? 'buyer');
+
         $allowed = collect($roles)
-            ->contains(function (string $role) use ($user): bool {
+            ->contains(function (string $role) use ($user, $activeMode): bool {
                 if ($role === 'buyer') {
-                    return true;
+                    return true; // Everyone can access buyer routes
                 }
 
                 if ($role === 'seller') {
-                    return (bool) $user->is_seller;
+                    // Check if user is seller AND currently in seller mode
+                    return (bool) $user->is_seller 
+                        && $user->seller_status === 'approved'
+                        && $activeMode === 'seller';
                 }
 
                 if ($role === 'admin') {
@@ -50,12 +56,12 @@ class RoleMiddleware
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Forbidden. You do not have the required role.',
+                    'message' => 'Forbidden. You do not have the required role or mode.',
                 ], Response::HTTP_FORBIDDEN);
             }
             
             // For web routes, redirect to home with error
-            return redirect('/')->withErrors(['access' => 'You do not have permission to access this page.']);
+            return redirect('/')->withErrors(['access' => 'Anda tidak memiliki akses ke halaman ini. Pastikan Anda dalam mode yang sesuai.']);
         }
 
         return $next($request);

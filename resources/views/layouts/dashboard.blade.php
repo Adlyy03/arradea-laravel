@@ -63,6 +63,17 @@
                 pointer-events:none;
                 transform:scale(0.8) translateY(20px);
             }
+            
+            /* Hide sidebar completely on mobile */
+            aside {
+                display: none !important;
+            }
+            
+            /* Adjust main content for mobile without sidebar */
+            .min-h-screen {
+                margin-left: 0 !important;
+                padding-bottom: 70px !important;
+            }
         }
 
         /* ── Sidebar Core ─────────────────────────────── */
@@ -487,11 +498,16 @@
         @if(Auth::user()->role === 'admin')
             @include('components.sidebar.admin')
         @else
-            @include('components.sidebar.buyer')
-            @if(Auth::user()->is_seller)
-                <div class="mt-1.5 pt-0.5" style="border-top:1px solid rgba(114,191,119,.08)">
-                    @include('components.sidebar.seller')
-                </div>
+            @php
+                $activeMode = Auth::user()->getActiveMode();
+            @endphp
+            
+            @if($activeMode === 'seller' && Auth::user()->canSwitchToSellerMode())
+                {{-- Seller Mode: Show only seller menu --}}
+                @include('components.sidebar.seller')
+            @else
+                {{-- Buyer Mode: Show only buyer menu --}}
+                @include('components.sidebar.buyer')
             @endif
         @endif
     </nav>
@@ -567,55 +583,106 @@
 <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bottom-nav">
     <div class="flex items-center justify-around px-1 py-2 max-w-md mx-auto">
         @if(Auth::user()->role !== 'admin')
-            {{-- Home --}}
-            <a href="{{ route('buyer.dashboard') }}" class="bottom-nav-item {{ Request::is('buyer/dashboard') ? 'active' : 'text-gray-500' }}">
-                <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-                <span class="bottom-nav-label">Home</span>
-            </a>
+            @php
+                $activeMode = Auth::user()->getActiveMode();
+                $isBuyerMode = $activeMode === 'buyer';
+                $isSellerMode = $activeMode === 'seller' && Auth::user()->canSwitchToSellerMode();
+            @endphp
             
-            {{-- Shop --}}
-            <a href="{{ route('buyer.products') }}" class="bottom-nav-item {{ Request::is('products*') ? 'active' : 'text-gray-500' }}">
-                <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-                <span class="bottom-nav-label">Belanja</span>
-            </a>
-            
-            {{-- Cart --}}
-            <a href="{{ route('buyer.cart') }}" class="bottom-nav-item relative {{ Request::is('cart*') ? 'active' : 'text-gray-500' }}">
-                <div class="relative">
-                    <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 5h12"/></svg>
-                    @php $cc=Auth::user()->carts->count(); @endphp
-                    @if($cc>0)<span class="bottom-nav-badge">{{$cc>9?'9+':$cc}}</span>@endif
-                </div>
-                <span class="bottom-nav-label">Keranjang</span>
-            </a>
-            
-            {{-- Orders --}}
-            <a href="{{ route('buyer.orders') }}" class="bottom-nav-item {{ Request::is('orders*') ? 'active' : 'text-gray-500' }}">
-                <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                <span class="bottom-nav-label">Pesanan</span>
-            </a>
-            
-            {{-- Profile/More --}}
-            <a href="{{ route('profile') }}" class="bottom-nav-item {{ Request::is('profile*') ? 'active' : 'text-gray-500' }}">
-                <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-                <span class="bottom-nav-label">Profil</span>
-            </a>
+            @if($isSellerMode)
+                {{-- SELLER MODE NAVIGATION --}}
+                
+                {{-- Dashboard --}}
+                <a href="{{ route('seller.dashboard') }}" class="bottom-nav-item {{ Request::is('seller/dashboard') ? 'active' : 'text-gray-500' }}">
+                    <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                    <span class="bottom-nav-label">Dashboard</span>
+                </a>
+                
+                {{-- Products --}}
+                <a href="{{ route('seller.products') }}" class="bottom-nav-item {{ Request::is('seller/products*') ? 'active' : 'text-gray-500' }}">
+                    <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 11m8 4V21M4 11v10l8 4"/></svg>
+                    <span class="bottom-nav-label">Produk</span>
+                </a>
+                
+                {{-- Orders --}}
+                <a href="{{ route('seller.orders') }}" class="bottom-nav-item relative {{ Request::is('seller/orders*') ? 'active' : 'text-gray-500' }}">
+                    <div class="relative">
+                        <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        @php $sellerPendingOrders = Auth::user()->store ? Auth::user()->store->orders()->where('status','pending')->count() : 0; @endphp
+                        @if($sellerPendingOrders > 0)<span class="bottom-nav-badge">{{ $sellerPendingOrders > 9 ? '9+' : $sellerPendingOrders }}</span>@endif
+                    </div>
+                    <span class="bottom-nav-label">Pesanan</span>
+                </a>
+                
+                {{-- Messages --}}
+                <a href="{{ route('seller.messages') }}" class="bottom-nav-item relative {{ Request::is('seller/messages*') ? 'active' : 'text-gray-500' }}">
+                    <div class="relative">
+                        <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        @php $sellerUnread = \App\Models\Message::whereHas('chat', fn($q) => $q->where('seller_id', Auth::id()))->where('sender_id','!=',Auth::id())->where('is_read',false)->count(); @endphp
+                        @if($sellerUnread > 0)<span class="bottom-nav-badge">{{ $sellerUnread > 9 ? '9+' : $sellerUnread }}</span>@endif
+                    </div>
+                    <span class="bottom-nav-label">Pesan</span>
+                </a>
+                
+                {{-- Profile --}}
+                <a href="{{ route('profile') }}" class="bottom-nav-item {{ Request::is('profile*') ? 'active' : 'text-gray-500' }}">
+                    <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <span class="bottom-nav-label">Profil</span>
+                </a>
+                
+            @else
+                {{-- BUYER MODE NAVIGATION --}}
+                
+                {{-- Home --}}
+                <a href="{{ route('buyer.dashboard') }}" class="bottom-nav-item {{ Request::is('buyer/dashboard') ? 'active' : 'text-gray-500' }}">
+                    <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    <span class="bottom-nav-label">Home</span>
+                </a>
+                
+                {{-- Shop --}}
+                <a href="{{ route('buyer.products') }}" class="bottom-nav-item {{ Request::is('products*') ? 'active' : 'text-gray-500' }}">
+                    <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                    <span class="bottom-nav-label">Belanja</span>
+                </a>
+                
+                {{-- Cart --}}
+                <a href="{{ route('buyer.cart') }}" class="bottom-nav-item relative {{ Request::is('cart*') ? 'active' : 'text-gray-500' }}">
+                    <div class="relative">
+                        <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 5h12"/></svg>
+                        @php $cc=Auth::user()->carts->count(); @endphp
+                        @if($cc>0)<span class="bottom-nav-badge">{{$cc>9?'9+':$cc}}</span>@endif
+                    </div>
+                    <span class="bottom-nav-label">Keranjang</span>
+                </a>
+                
+                {{-- Orders --}}
+                <a href="{{ route('buyer.orders') }}" class="bottom-nav-item {{ Request::is('buyer/orders*','orders*') ? 'active' : 'text-gray-500' }}">
+                    <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    <span class="bottom-nav-label">Pesanan</span>
+                </a>
+                
+                {{-- Profile --}}
+                <a href="{{ route('profile') }}" class="bottom-nav-item {{ Request::is('profile*') ? 'active' : 'text-gray-500' }}">
+                    <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+                    <span class="bottom-nav-label">Profil</span>
+                </a>
+            @endif
             
         @else
-            {{-- Admin navigation --}}
-            <a href="/admin/dashboard" class="bottom-nav-item active">
+            {{-- ADMIN NAVIGATION --}}
+            <a href="/admin/dashboard" class="bottom-nav-item {{ Request::is('admin/dashboard') ? 'active' : 'text-gray-500' }}">
                 <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
                 <span class="bottom-nav-label">Panel</span>
             </a>
-            <a href="{{ route('admin.users.index') }}" class="bottom-nav-item text-gray-500">
+            <a href="{{ route('admin.users.index') }}" class="bottom-nav-item {{ Request::is('admin/users*') ? 'active' : 'text-gray-500' }}">
                 <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
                 <span class="bottom-nav-label">Users</span>
             </a>
-            <a href="{{ route('admin.verifications.index') }}" class="bottom-nav-item text-gray-500">
+            <a href="{{ route('admin.verifications.index') }}" class="bottom-nav-item {{ Request::is('admin/verifications*') ? 'active' : 'text-gray-500' }}">
                 <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                 <span class="bottom-nav-label">Verifikasi</span>
             </a>
-            <a href="{{ route('profile') }}" class="bottom-nav-item text-gray-500">
+            <a href="{{ route('profile') }}" class="bottom-nav-item {{ Request::is('profile*') ? 'active' : 'text-gray-500' }}">
                 <svg class="bottom-nav-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
                 <span class="bottom-nav-label">Profil</span>
             </a>

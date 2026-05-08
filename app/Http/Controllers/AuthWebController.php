@@ -142,15 +142,20 @@ class AuthWebController extends Controller
      */
     protected function redirectUser($user)
     {
+        // Initialize mode on login using SellerModeService
+        $modeService = app(\App\Services\SellerModeService::class);
+        $activeMode = $modeService->initializeModeOnLogin($user);
+
         if ($user->role === 'admin') {
             return redirect('/admin/dashboard')->with('success', 'Selamat datang kembali, Admin!');
         }
 
-        if ($user->is_seller) {
+        // Redirect based on active mode
+        if ($activeMode === 'seller' && $user->canSwitchToSellerMode()) {
             return redirect('/seller/dashboard')->with('success', 'Selamat berjualan di Arradea!');
         }
 
-        return redirect('/')->with('success', '✅ Nomor HP berhasil diverifikasi!');
+        return redirect('/')->with('success', '✅ Selamat datang di Arradea!');
     }
 
     /**

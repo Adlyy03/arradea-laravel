@@ -73,60 +73,57 @@
     </a>
 </div>
 
-{{-- ============================================================
-     MOBILE sidebar: Mode tabs (Buyer/Seller)
-     Navigasi utama ada di bottom nav
-     ============================================================ --}}
-<div class="lg:hidden" x-data="{ buyerMode: true }">
-
-    {{-- Role badge --}}
-    <div class="flex items-center gap-2 px-1 mb-2.5">
-        <span class="sb-role-badge sb-role-buyer">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
-            Pembeli
-        </span>
-        @if($cartCount > 0)
-            <span class="sb-role-badge-count">{{ $cartCount }} item</span>
-        @endif
-    </div>
-
-    {{-- Quick Stats Row --}}
-    <div class="grid grid-cols-2 gap-1.5 mb-2.5">
-        <a href="{{ route('buyer.cart') }}" class="sb-stat-card {{ Request::is('cart*') ? 'sb-stat-active' : '' }}">
-            <div class="sb-stat-num">{{ $cartCount }}</div>
-            <div class="sb-stat-lbl">Keranjang</div>
-        </a>
-        <a href="{{ route('buyer.orders') }}" class="sb-stat-card {{ Request::is('orders*') ? 'sb-stat-active' : '' }}">
-            <div class="sb-stat-num">
-                {{ $pendingOrderCount }}
-                @if($pendingOrderCount > 0)<span class="sb-stat-dot"></span>@endif
+<div class="lg:hidden mt-2 space-y-4 px-2">
+    {{-- Buyer Info Card --}}
+    <div class="p-3 bg-white/10 rounded-xl border border-white/20 backdrop-blur-md shadow-sm">
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-blue-500/20 text-blue-300 border border-blue-500/30">
+                    Mode Pembeli
+                </span>
             </div>
-            <div class="sb-stat-lbl">Pending</div>
-        </a>
+            @if($cartCount > 0)
+                <span class="text-[10px] font-bold text-white/70">{{ $cartCount }} Item di Keranjang</span>
+            @endif
+        </div>
+        
+        <div class="grid grid-cols-2 gap-2">
+            <a href="{{ route('buyer.cart') }}" class="flex flex-col items-center justify-center p-3 rounded-lg bg-black/20 hover:bg-black/30 border border-white/5 transition-all">
+                <span class="text-xl font-black text-white mb-1">{{ $cartCount }}</span>
+                <span class="text-[9px] uppercase tracking-wider text-white/60 font-bold">Keranjang</span>
+            </a>
+            <a href="{{ route('buyer.orders') }}" class="flex flex-col items-center justify-center p-3 rounded-lg bg-black/20 hover:bg-black/30 border border-white/5 transition-all relative">
+                @if($pendingOrderCount > 0)
+                    <span class="absolute top-2.5 right-2.5 w-2 h-2 bg-amber-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
+                @endif
+                <span class="text-xl font-black text-white mb-1">{{ $pendingOrderCount }}</span>
+                <span class="text-[9px] uppercase tracking-wider text-white/60 font-bold">Pending</span>
+            </a>
+        </div>
     </div>
 
-    {{-- Divider --}}
-    <div class="sb-divider">Menu Lainnya</div>
-
-    {{-- Chat (hanya di mobile sidebar) --}}
-    <button @click="sideOpen=false; chatModal=true" class="sb-item w-full text-left">
-        <span class="sb-icon" style="position:relative">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+    {{-- Menu Actions --}}
+    <div class="space-y-1.5">
+        <button @click="sideOpen=false; chatModal=true" class="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10 transition-all group">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-white/10 group-hover:bg-white/20 flex items-center justify-center text-white relative transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                    @if($unreadMsgCount > 0)
+                        <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 border-2 border-[#1e5128] rounded-full"></span>
+                    @endif
+                </div>
+                <span class="text-sm font-bold text-white/90">Chat Seller</span>
+            </div>
             @if($unreadMsgCount > 0)
-                <span class="sb-icon-dot sb-icon-dot-red"></span>
+                <span class="px-2 py-0.5 rounded-md text-[10px] font-black bg-red-500 text-white shadow-md">{{ $unreadMsgCount }} Baru</span>
             @endif
-        </span>
-        <span class="sb-label flex-1">Chat Seller</span>
-        @if($unreadMsgCount > 0)
-            <span class="sb-badge sb-badge-red">{{ $unreadMsgCount }}</span>
-        @endif
-    </button>
+        </button>
 
-    <a href="{{ route('profile') }}" class="sb-item {{ Request::is('profile*') ? 'sb-active' : '' }}">
-        <span class="sb-icon">
-            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
-        </span>
-        <span class="sb-label">Profil & Akun</span>
-    </a>
-
+        <a href="{{ route('profile') }}" class="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10 transition-all group">
+            <div class="w-9 h-9 rounded-lg bg-white/10 group-hover:bg-white/20 flex items-center justify-center text-white transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            </div>
+            <span class="text-sm font-bold text-white/90">Profil & Akun</span>
+        </a>
+    </div>
 </div>

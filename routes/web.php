@@ -20,6 +20,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 
+// Load debug routes
+if (file_exists(__DIR__ . '/debug.php')) {
+    require __DIR__ . '/debug.php';
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Arradea Marketplace — Web Routes (Final Production-Ready Interface)
@@ -634,7 +639,10 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
             $pendingBuyers = User::whereNotNull('phone_verified_at')
                                  ->whereNull('access_code_id')
                                  ->where('role', '!=', 'admin')
-                                 ->whereNull('seller_status')
+                                 ->where(function ($q) {
+                                     $q->whereNull('seller_status')
+                                       ->orWhere('seller_status', 'none');
+                                 })
                                  ->latest()
                                  ->paginate(20, ['*'], 'buyers_page');
 
@@ -878,5 +886,9 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
 Route::middleware('auth')->group(function () {
     // Logout tersedia untuk semua user yang sudah auth
     Route::post('/logout', [AuthWebController::class, 'logout'])->name('logout');
+
+    // ─── Mode Switching (Buyer ⇄ Seller) ───────────────────────────────────
+    Route::post('/mode/switch', [\App\Http\Controllers\ModeController::class, 'switch'])->name('mode.switch');
+    Route::get('/mode/info', [\App\Http\Controllers\ModeController::class, 'info'])->name('mode.info');
 });
 

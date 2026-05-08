@@ -34,6 +34,7 @@ class User extends Authenticatable
         'open_time',
         'close_time',
         'auto_schedule',
+        'preferred_mode',
     ];
 
     protected $hidden = [
@@ -98,5 +99,45 @@ class User extends Authenticatable
     public function username()
     {
         return 'phone';
+    }
+
+    // ─── Mode Switching Methods ─────────────────────────────────────────────────
+
+    /**
+     * Get the current active mode from session.
+     * Falls back to preferred_mode if session is empty.
+     */
+    public function getActiveMode(): string
+    {
+        return session('active_mode', $this->preferred_mode ?? 'buyer');
+    }
+
+    /**
+     * Set the active mode in session and update preferred_mode in DB.
+     */
+    public function setActiveMode(string $mode): void
+    {
+        if (!in_array($mode, ['buyer', 'seller'])) {
+            throw new \InvalidArgumentException("Invalid mode: {$mode}");
+        }
+
+        session(['active_mode' => $mode]);
+        $this->update(['preferred_mode' => $mode]);
+    }
+
+    /**
+     * Check if user is currently in seller mode.
+     */
+    public function isInSellerMode(): bool
+    {
+        return $this->getActiveMode() === 'seller';
+    }
+
+    /**
+     * Check if user can switch to seller mode.
+     */
+    public function canSwitchToSellerMode(): bool
+    {
+        return $this->is_seller && $this->seller_status === 'approved';
     }
 }
