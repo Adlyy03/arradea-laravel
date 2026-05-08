@@ -103,6 +103,91 @@
         </div>
     </div>
 
+    {{-- Mode Switcher (only for sellers) --}}
+    @if(auth()->user()->canSwitchToSellerMode())
+    <div class="profile-card rounded-2xl lg:rounded-3xl overflow-hidden shadow-lg">
+        <div class="p-6 lg:p-8">
+            <div class="flex items-center justify-between mb-4 lg:mb-5">
+                <div>
+                    <h3 class="text-base lg:text-lg font-black text-gray-900">Mode Akun</h3>
+                    <p class="text-xs lg:text-sm text-gray-500 mt-1">Pilih mode yang ingin Anda gunakan</p>
+                </div>
+                <x-mode-badge :mode="auth()->user()->getActiveMode()" />
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
+                {{-- Buyer Mode --}}
+                <form method="POST" action="{{ route('mode.switch') }}">
+                    @csrf
+                    <input type="hidden" name="mode" value="buyer">
+                    <button 
+                        type="submit"
+                        class="w-full flex items-center gap-4 p-4 lg:p-5 rounded-xl lg:rounded-2xl border-2 transition-all duration-200 hover:shadow-md {{ auth()->user()->getActiveMode() === 'buyer' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300' }}"
+                    >
+                        <div class="flex-shrink-0 w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center rounded-xl lg:rounded-2xl {{ auth()->user()->getActiveMode() === 'buyer' ? 'bg-blue-100' : 'bg-gray-100' }}">
+                            <span class="text-2xl lg:text-3xl">🛒</span>
+                        </div>
+                        <div class="flex-1 text-left">
+                            <div class="font-bold text-sm lg:text-base text-gray-900 flex items-center gap-2">
+                                Mode Buyer
+                                @if(auth()->user()->getActiveMode() === 'buyer')
+                                    <span class="text-[10px] lg:text-xs px-2 py-0.5 bg-blue-500 text-white rounded-full font-black uppercase">Aktif</span>
+                                @endif
+                            </div>
+                            <div class="text-xs lg:text-sm text-gray-500 mt-0.5">Belanja produk dari seller</div>
+                        </div>
+                        @if(auth()->user()->getActiveMode() === 'buyer')
+                            <svg class="w-5 h-5 lg:w-6 lg:h-6 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                        @endif
+                    </button>
+                </form>
+
+                {{-- Seller Mode --}}
+                <form method="POST" action="{{ route('mode.switch') }}">
+                    @csrf
+                    <input type="hidden" name="mode" value="seller">
+                    <button 
+                        type="submit"
+                        class="w-full flex items-center gap-4 p-4 lg:p-5 rounded-xl lg:rounded-2xl border-2 transition-all duration-200 hover:shadow-md {{ auth()->user()->getActiveMode() === 'seller' ? 'border-amber-500 bg-amber-50' : 'border-gray-200 hover:border-amber-300' }}"
+                    >
+                        <div class="flex-shrink-0 w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center rounded-xl lg:rounded-2xl {{ auth()->user()->getActiveMode() === 'seller' ? 'bg-amber-100' : 'bg-gray-100' }}">
+                            <span class="text-2xl lg:text-3xl">🏪</span>
+                        </div>
+                        <div class="flex-1 text-left">
+                            <div class="font-bold text-sm lg:text-base text-gray-900 flex items-center gap-2">
+                                Mode Seller
+                                @if(auth()->user()->getActiveMode() === 'seller')
+                                    <span class="text-[10px] lg:text-xs px-2 py-0.5 bg-amber-500 text-white rounded-full font-black uppercase">Aktif</span>
+                                @endif
+                            </div>
+                            <div class="text-xs lg:text-sm text-gray-500 mt-0.5">Kelola toko dan produk</div>
+                        </div>
+                        @if(auth()->user()->getActiveMode() === 'seller')
+                            <svg class="w-5 h-5 lg:w-6 lg:h-6 text-amber-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                            </svg>
+                        @endif
+                    </button>
+                </form>
+            </div>
+
+            <div class="mt-4 lg:mt-5 p-3 lg:p-4 rounded-xl lg:rounded-2xl" style="background:rgba(249,250,251,0.6);border:1px solid rgba(229,231,235,0.8)">
+                <div class="flex items-start gap-2 lg:gap-3">
+                    <svg class="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-[10px] lg:text-xs text-gray-600 leading-relaxed">
+                        <strong class="font-bold text-gray-700">Mode Buyer:</strong> Akses fitur belanja, keranjang, dan pesanan.<br>
+                        <strong class="font-bold text-gray-700">Mode Seller:</strong> Akses dashboard toko, kelola produk, dan pesanan masuk.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
+
     {{-- Seller CTA --}}
     @if(!auth()->user()->is_seller)
     <div class="profile-cta relative overflow-hidden rounded-2xl lg:rounded-3xl p-6 lg:p-8 shadow-xl" style="background:linear-gradient(135deg,#0f1a11 0%,#1e3a22 50%,#0f1a11 100%)">

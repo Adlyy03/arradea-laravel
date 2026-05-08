@@ -1,17 +1,11 @@
-/* Mobile Optimizations for Arradea Dashboard - Ultra Compact & Modern */
+/* Mobile Optimizations for Arradea Dashboard */
 
 /* Ensure proper mobile viewport handling */
 @media (max-width: 1023px) {
-    /* Reset base font size for mobile */
-    html {
-        font-size: 14px !important;
-    }
-    
     /* Main content adjustments */
     .main-content {
         margin-left: 0 !important;
-        padding: 8px !important;
-        padding-bottom: 70px !important; /* Space for bottom nav */
+        padding-bottom: 80px; /* Space for bottom nav */
     }
     
     /* Ultra compact topbar */

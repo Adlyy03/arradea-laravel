@@ -20,6 +20,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 
+// Load debug routes
+if (file_exists(__DIR__ . '/debug.php')) {
+    require __DIR__ . '/debug.php';
+}
+
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Arradea Marketplace — Web Routes (Final Production-Ready Interface)
@@ -424,7 +429,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
         return view('seller.apply', ['user' => $user]);
     })->name('seller.apply');
 
-    // Step 1: Buyer isi form toko → buat/update data toko (pending) → kirim OTP → redirect ke verify
+    // Step 1: Buyer isi form toko → buat/update data toko (pending) → langsung ke halaman pending
     Route::post('/seller/apply', function (Request $request) {
         $request->validate([
             'store_name'        => ['required', 'string', 'max:255'],
@@ -460,69 +465,17 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
             $user->update($userLocationData);
         }
 
-        // Generate & kirim OTP ke nomor HP buyer yang sudah login
-        $otp = \App\Models\Otp::createForPhone($user->phone);
-
-        Http::withHeaders(['Authorization' => env('FONNTE_TOKEN')])
-            ->post('https://api.fonnte.com/send', [
-                'target'  => $user->phone,
-                'message' => "Halo {$user->name}!\n\nKamu mengajukan diri jadi Seller di Arradea.\n\nKode OTP verifikasi kamu:\n\n*{$otp->code}*\n\n_Kode berlaku 10 menit. Jangan bagikan ke siapa pun._",
-            ]);
-
-        // Tandai bahwa user sedang dalam proses upgrade seller
+        // Tandai bahwa user sedang dalam proses upgrade seller (langsung tanpa OTP)
         $user->update([
             'seller_status'     => 'pending',
             'seller_applied_at' => now(),
+            'seller_otp_verified' => true,
         ]);
-
-        return redirect()->route('seller.verify-otp');
-    })->name('seller.apply.store');
-
-    // Step 2: Halaman input OTP (harus login)
-    Route::get('/seller/verify-otp', function () {
-        $user = auth()->user();
-        if ($user->seller_status !== 'pending') {
-            return redirect()->route('seller.apply')->with('info', 'Silakan isi data toko terlebih dahulu.');
-        }
-        return view('seller.verify-otp', compact('user'));
-    })->name('seller.verify-otp');
-
-    // Step 3: Proses verifikasi OTP seller
-    Route::post('/seller/verify-otp', function (Request $request) {
-        $request->validate([
-            'code' => ['required', 'string', 'size:6', 'regex:/^[0-9]{6}$/'],
-        ], [
-            'code.required' => 'Kode OTP harus diisi.',
-            'code.size'     => 'Kode OTP harus 6 digit.',
-            'code.regex'    => 'Kode OTP hanya boleh berisi angka.',
-        ]);
-
-        $user = auth()->user();
-        $otp  = \App\Models\Otp::where('phone', $user->phone)
-            ->where('verified_at', null)
-            ->latest()
-            ->first();
-
-        if (!$otp) {
-            return back()->withErrors(['code' => 'OTP tidak ditemukan. Coba kirim ulang.']);
-        }
-        if ($otp->isExpired()) {
-            return back()->withErrors(['code' => 'OTP sudah kadaluarsa. Coba kirim ulang.']);
-        }
-        if ($otp->attempts >= 5) {
-            return back()->withErrors(['code' => 'Terlalu banyak percobaan. Kirim ulang kode OTP.']);
-        }
-        if (!$otp->verify($request->code)) {
-            return back()->withErrors(['code' => '❌ OTP Salah. Coba lagi.']);
-        }
-
-        // Tandai OTP sudah diverifikasi, nunggu approval admin
-        $user->update(['seller_otp_verified' => true]);
 
         return redirect()->route('seller.pending');
-    })->name('seller.verify-otp.submit');
+    })->name('seller.apply.store');
 
-    // Step 4: Halaman nunggu approval admin
+    // Step 2: Halaman nunggu approval admin
     Route::get('/seller/pending', function () {
         $user = auth()->user();
         if ($user->is_seller) {
@@ -530,20 +483,6 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
         }
         return view('seller.pending', compact('user'));
     })->name('seller.pending');
-
-    // Kirim ulang OTP seller
-    Route::post('/seller/verify-otp/resend', function (Request $request) {
-        $user = auth()->user();
-        $otp  = \App\Models\Otp::createForPhone($user->phone);
-
-        Http::withHeaders(['Authorization' => env('FONNTE_TOKEN')])
-            ->post('https://api.fonnte.com/send', [
-                'target'  => $user->phone,
-                'message' => "Kode OTP baru untuk upgrade Seller di Arradea:\n\n*{$otp->code}*\n\n_Kode berlaku 10 menit._",
-            ]);
-
-        return back()->with('status', '✅ Kode OTP baru telah dikirim ke WhatsApp kamu.');
-    })->name('seller.verify-otp.resend');
 
 
     // 🛒 BUYER
@@ -700,14 +639,17 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
             $pendingBuyers = User::whereNotNull('phone_verified_at')
                                  ->whereNull('access_code_id')
                                  ->where('role', '!=', 'admin')
-                                 ->where('seller_otp_verified', false)
+                                 ->where(function ($q) {
+                                     $q->whereNull('seller_status')
+                                       ->orWhere('seller_status', 'none');
+                                 })
                                  ->latest()
                                  ->paginate(20, ['*'], 'buyers_page');
 
-            // Calon seller: buyer existing yang sudah verify OTP seller upgrade
+            // Calon seller: buyer yang sudah ajukan upgrade seller
             $pendingSellers = User::whereNotNull('phone_verified_at')
                                   ->whereNotNull('access_code_id')
-                                  ->where('seller_otp_verified', true)
+                                  ->where('seller_status', 'pending')
                                   ->where('is_seller', false)
                                   ->latest()
                                   ->paginate(20, ['*'], 'sellers_page');
@@ -815,6 +757,13 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
                 $payload['seller_approved_at'] = now();
                 $payload['seller_rejected_at'] = null;
                 $payload['seller_rejection_reason'] = null;
+
+                if ($user->store) {
+                    $user->store->update([
+                        'status' => 'active',
+                        'approved_at' => now(),
+                    ]);
+                }
             } else {
                 $payload['seller_status'] = 'none';
             }
@@ -937,5 +886,9 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
 Route::middleware('auth')->group(function () {
     // Logout tersedia untuk semua user yang sudah auth
     Route::post('/logout', [AuthWebController::class, 'logout'])->name('logout');
+
+    // ─── Mode Switching (Buyer ⇄ Seller) ───────────────────────────────────
+    Route::post('/mode/switch', [\App\Http\Controllers\ModeController::class, 'switch'])->name('mode.switch');
+    Route::get('/mode/info', [\App\Http\Controllers\ModeController::class, 'info'])->name('mode.info');
 });
 
