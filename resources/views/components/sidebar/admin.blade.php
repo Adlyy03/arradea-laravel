@@ -1,11 +1,11 @@
-@php
+<?php
     $pendingBuyerCount = \App\Models\User::whereNotNull('phone_verified_at')
         ->whereNull('access_code_id')->where('role','!=','admin')
         ->where(fn($q) => $q->whereNull('seller_status')->orWhere('seller_status','none'))->count();
     $pendingSellerCount = \App\Models\User::whereNotNull('phone_verified_at')
         ->whereNotNull('access_code_id')->where('seller_status','pending')->where('is_seller',false)->count();
     $pendingCount = $pendingBuyerCount + $pendingSellerCount;
-@endphp
+?>
 
 <a href="/admin/dashboard" class="sb-item {{ Request::is('admin/dashboard') ? 'sb-active' : '' }}">
     <span class="sb-icon">
