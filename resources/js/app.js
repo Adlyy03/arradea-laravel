@@ -1,7 +1,45 @@
 import './bootstrap';
 import Alpine from 'alpinejs';
+import AOS from 'aos';
+import { gsap } from 'gsap';
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
+// Import splash screen - PREMIUM & FAST!
+import './splash';
+
+// Import performance optimizations
+import './performance';
+
+// Import welcome page interactions (only loads on welcome page)
+if (document.querySelector('.welcome-section')) {
+    import('./welcome-interactions');
+}
+
+// Register GSAP plugins
+gsap.registerPlugin(ScrollToPlugin, ScrollTrigger);
+
+// Initialize Alpine.js
 window.Alpine = Alpine;
+Alpine.start();
+
+// Initialize AOS (Animate On Scroll)
+document.addEventListener('DOMContentLoaded', () => {
+    AOS.init({
+        duration: 800,
+        easing: 'ease-in-out',
+        once: true,
+        offset: 100,
+        delay: 100,
+        disable: 'mobile', // Disable on mobile for better performance
+    });
+    
+    // Refresh AOS on dynamic content
+    setTimeout(() => AOS.refresh(), 500);
+});
+
+// Make GSAP available globally
+window.gsap = gsap;
 
 // Enhanced Toast Notification System
 window.Arradea = {
@@ -31,13 +69,21 @@ window.Arradea = {
             
             document.body.appendChild(toast);
             
-            // Trigger show animation
-            setTimeout(() => toast.classList.add('show'), 100);
+            // Trigger show animation with GSAP
+            gsap.fromTo(toast, 
+                { x: 100, opacity: 0 },
+                { x: 0, opacity: 1, duration: 0.3, ease: 'power2.out' }
+            );
             
             // Auto remove
             setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => toast.remove(), 300);
+                gsap.to(toast, {
+                    x: 100,
+                    opacity: 0,
+                    duration: 0.3,
+                    ease: 'power2.in',
+                    onComplete: () => toast.remove()
+                });
             }, duration);
         },
         
@@ -53,7 +99,7 @@ window.Arradea = {
             element.disabled = true;
             element.dataset.originalText = element.textContent;
             element.innerHTML = `
-                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white inline-block" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -70,20 +116,26 @@ window.Arradea = {
     // Smooth Page Transitions
     pageTransition: {
         init() {
-            // Add fade effect to page loads
-            document.addEventListener('DOMContentLoaded', () => {
-                document.body.style.opacity = '0';
-                setTimeout(() => {
-                    document.body.style.transition = 'opacity 0.3s ease';
-                    document.body.style.opacity = '1';
-                }, 50);
+            // Fade in on page load after splash
+            window.addEventListener('splashComplete', () => {
+                gsap.from('body', {
+                    opacity: 0,
+                    duration: 0.5,
+                    ease: 'power2.out'
+                });
             });
         }
+    },
+    
+    // Scroll to top with animation
+    scrollToTop() {
+        gsap.to(window, {
+            scrollTo: { y: 0 },
+            duration: 0.8,
+            ease: 'power2.inOut'
+        });
     }
 };
-
-// Initialize Alpine.js
-Alpine.start();
 
 // Initialize page transitions
 window.Arradea.pageTransition.init();
@@ -129,4 +181,66 @@ document.addEventListener('keydown', (e) => {
             sidebarToggle.sideOpen = !sidebarToggle.sideOpen;
         }
     }
+    
+    // Escape to close modals
+    if (e.key === 'Escape') {
+        const modals = document.querySelectorAll('[x-data]');
+        modals.forEach(modal => {
+            if (modal.__x && modal.__x.$data.open) {
+                modal.__x.$data.open = false;
+            }
+        });
+    }
 });
+
+// Smooth scroll for anchor links
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            const href = this.getAttribute('href');
+            if (href !== '#' && href !== '#!') {
+                e.preventDefault();
+                const target = document.querySelector(href);
+                if (target) {
+                    gsap.to(window, {
+                        scrollTo: { y: target, offsetY: 80 },
+                        duration: 0.8,
+                        ease: 'power2.inOut'
+                    });
+                }
+            }
+        });
+    });
+});
+
+// Add scroll-to-top button
+const createScrollTopButton = () => {
+    const button = document.createElement('button');
+    button.id = 'scroll-to-top';
+    button.className = 'fixed bottom-20 right-6 w-12 h-12 bg-sage text-white rounded-full shadow-lg hover:bg-primary-600 transition-all duration-300 opacity-0 pointer-events-none z-40 flex items-center justify-center';
+    button.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/>
+        </svg>
+    `;
+    button.onclick = () => window.Arradea.scrollToTop();
+    document.body.appendChild(button);
+    
+    // Show/hide on scroll
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 300) {
+            button.classList.remove('opacity-0', 'pointer-events-none');
+        } else {
+            button.classList.add('opacity-0', 'pointer-events-none');
+        }
+    });
+};
+
+// Initialize scroll-to-top button
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', createScrollTopButton);
+} else {
+    createScrollTopButton();
+}
+
+console.log('🚀 Arradea Marketplace - Modern UI Loaded');

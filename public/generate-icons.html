@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate PWA Icons - Arradea</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f9fafb;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #72bf77;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+        canvas {
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        button {
+            background: #72bf77;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5da866;
+        }
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .icon-item {
+            text-align: center;
+            padding: 15px;
+            background: #f9fafb;
+            border-radius: 8px;
+        }
+        .icon-item img {
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 8px;
+        }
+        .icon-item span {
+            font-size: 12px;
+            color: #6b7280;
+            font-weight: 600;
+        }
+        .instructions {
+            background: #fef3c7;
+            border: 1px solid #fde68a;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+        .instructions h3 {
+            color: #92400e;
+            margin-top: 0;
+        }
+        .instructions ol {
+            color: #78350f;
+            line-height: 1.8;
+        }
+        .instructions code {
+            background: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #92400e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎨 PWA Icon Generator</h1>
+        <p class="subtitle">Generate all required PWA icons for Arradea Marketplace</p>
+
+        <div class="instructions">
+            <h3>📋 Instructions:</h3>
+            <ol>
+                <li>Click "Generate All Icons" button below</li>
+                <li>Download all generated icons</li>
+                <li>Create folder: <code>public/images/icons/</code></li>
+                <li>Place all downloaded icons in that folder</li>
+                <li>Your PWA is ready! 🚀</li>
+            </ol>
+        </div>
+
+        <canvas id="canvas" width="512" height="512"></canvas>
+        
+        <div>
+            <button onclick="generateAllIcons()">🎨 Generate All Icons</button>
+            <button onclick="downloadAll()">📥 Download All</button>
+        </div>
+
+        <div class="icon-grid" id="iconGrid"></div>
+    </div>
+
+    <script>
+        const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+        const generatedIcons = [];
+
+        function drawIcon(canvas, size) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = size;
+            canvas.height = size;
+
+            // Background gradient
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#72bf77');
+            gradient.addColorStop(1, '#4db85a');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+
+            // Draw letter "A"
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.6}px -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('A', size / 2, size / 2);
+
+            return canvas.toDataURL('image/png');
+        }
+
+        function generateAllIcons() {
+            const canvas = document.getElementById('canvas');
+            const iconGrid = document.getElementById('iconGrid');
+            iconGrid.innerHTML = '';
+            generatedIcons.length = 0;
+
+            sizes.forEach(size => {
+                const dataUrl = drawIcon(canvas, size);
+                generatedIcons.push({ size, dataUrl });
+
+                const iconItem = document.createElement('div');
+                iconItem.className = 'icon-item';
+                iconItem.innerHTML = `
+                    <img src="${dataUrl}" alt="${size}x${size}">
+                    <span>${size}x${size}</span>
+                    <br>
+                    <button onclick="downloadIcon(${size}, '${dataUrl}')" style="font-size: 11px; padding: 6px 12px; margin-top: 8px;">Download</button>
+                `;
+                iconGrid.appendChild(iconItem);
+            });
+
+            // Reset canvas to 512x512 for display
+            drawIcon(canvas, 512);
+        }
+
+        function downloadIcon(size, dataUrl) {
+            const link = document.createElement('a');
+            link.download = `icon-${size}x${size}.png`;
+            link.href = dataUrl;
+            link.click();
+        }
+
+        function downloadAll() {
+            if (generatedIcons.length === 0) {
+                alert('Please generate icons first!');
+                return;
+            }
+
+            generatedIcons.forEach(({ size, dataUrl }) => {
+                setTimeout(() => {
+                    downloadIcon(size, dataUrl);
+                }, size * 10); // Stagger downloads
+            });
+        }
+
+        // Generate on load
+        window.addEventListener('load', generateAllIcons);
+    </script>
+</body>
+</html>

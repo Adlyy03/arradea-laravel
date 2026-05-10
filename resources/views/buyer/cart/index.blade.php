@@ -75,7 +75,8 @@
     @endforelse
 
     @if($carts->isNotEmpty())
-    <div class="bg-white rounded-2xl border border-gray-100 p-5">
+    {{-- Desktop Summary --}}
+    <div class="hidden sm:block bg-white rounded-2xl border border-gray-100 p-5">
         <div class="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-4">
             <div class="space-y-0.5">
                 @if(($totalOriginal ?? 0) > ($totalFinal ?? 0))
@@ -99,6 +100,38 @@
             </div>
         </div>
     </div>
+
+    {{-- Mobile Sticky Checkout --}}
+    <div class="sm:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 shadow-2xl" style="padding-bottom:env(safe-area-inset-bottom)">
+        <div class="px-5 py-3">
+            <div class="flex items-center justify-between mb-3">
+                <div>
+                    @if(($totalOriginal ?? 0) > ($totalFinal ?? 0))
+                        <p class="text-[10px] text-gray-400 line-through">Rp {{ number_format($totalOriginal,0,',','.') }}</p>
+                    @endif
+                    <p class="text-xs text-gray-500 font-medium">Total</p>
+                    <p class="text-xl font-black text-gray-900">Rp {{ number_format($totalFinal ?? 0,0,',','.') }}</p>
+                </div>
+                <button type="button" onclick="document.getElementById('mobile-checkout-form').classList.toggle('hidden')" class="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-600 bg-gray-100">
+                    + Catatan
+                </button>
+            </div>
+            <form id="mobile-checkout-form-main" action="{{ route('buyer.cart.checkout') }}" method="POST">
+                @csrf
+                <div id="mobile-checkout-form" class="hidden mb-3">
+                    <textarea name="notes" rows="2" maxlength="1000"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 transition resize-none"
+                        placeholder="Catatan untuk penjual (opsional)"
+                        style="--tw-ring-color:rgba(114,191,119,.4)">{{ old('notes') }}</textarea>
+                </div>
+                <button type="submit" class="w-full py-3.5 rounded-xl font-black text-base text-white transition active:scale-95" style="background:#72bf77;box-shadow:0 4px 20px rgba(114,191,119,.4)">
+                    Pesan Sekarang →
+                </button>
+            </form>
+        </div>
+    </div>
+    {{-- Spacer for sticky button --}}
+    <div class="sm:hidden h-32"></div>
     @endif
 </div>
 

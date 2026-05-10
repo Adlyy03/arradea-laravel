@@ -88,11 +88,11 @@
         </div>
         
         <div class="grid grid-cols-2 gap-2">
-            <a href="{{ route('buyer.cart') }}" class="flex flex-col items-center justify-center p-3 rounded-lg bg-black/20 hover:bg-black/30 border border-white/5 transition-all">
+            <a href="{{ route('buyer.cart') }}" @click="if(isMobile) sideOpen=false" class="flex flex-col items-center justify-center p-3 rounded-lg bg-black/20 hover:bg-black/30 border border-white/5 transition-all">
                 <span class="text-xl font-black text-white mb-1">{{ $cartCount }}</span>
                 <span class="text-[9px] uppercase tracking-wider text-white/60 font-bold">Keranjang</span>
             </a>
-            <a href="{{ route('buyer.orders') }}" class="flex flex-col items-center justify-center p-3 rounded-lg bg-black/20 hover:bg-black/30 border border-white/5 transition-all relative">
+            <a href="{{ route('buyer.orders') }}" @click="if(isMobile) sideOpen=false" class="flex flex-col items-center justify-center p-3 rounded-lg bg-black/20 hover:bg-black/30 border border-white/5 transition-all relative">
                 @if($pendingOrderCount > 0)
                     <span class="absolute top-2.5 right-2.5 w-2 h-2 bg-amber-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(251,191,36,0.8)]"></span>
                 @endif
@@ -119,7 +119,7 @@
             @endif
         </button>
 
-        <a href="{{ route('profile') }}" class="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10 transition-all group">
+        <a href="{{ route('profile') }}" @click="if(isMobile) sideOpen=false" class="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10 transition-all group">
             <div class="w-9 h-9 rounded-lg bg-white/10 group-hover:bg-white/20 flex items-center justify-center text-white transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             </div>

@@ -2,8 +2,24 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    {{-- PWA Meta Tags --}}
+    <meta name="theme-color" content="#72bf77">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Arradea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Arradea">
+    
+    {{-- PWA Manifest --}}
+    <link rel="manifest" href="/manifest.json">
+    
+    {{-- Apple Touch Icons --}}
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/icons/icon-192x192.png">
     <title>@yield('title', 'Arradea Dashboard')</title>
     
     {{-- Flash Messages for Toast System --}}
@@ -22,22 +38,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: { 50:'#f0faf1',100:'#d8f3da',200:'#b3e6b8',300:'#7fd189',400:'#4db85a',500:'#72bf77',600:'#3fa348',700:'#2d7a34',800:'#255f2a',900:'#1a4220' },
-                        sage: '#72bf77',
-                        dark: '#0f1911',
-                    },
-                    fontFamily: { sans: ['Plus Jakarta Sans','sans-serif'], dm: ['DM Sans','sans-serif'] },
-                }
-            }
-        }
-    </script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
     <link rel="stylesheet" href="{{ asset('css/mobile-optimizations.css') }}">
     <style>
         [x-cloak]{display:none!important}
@@ -64,16 +67,23 @@
                 transform:scale(0.8) translateY(20px);
             }
             
-            /* Hide sidebar completely on mobile */
-            aside {
-                display: none !important;
-            }
-            
             /* Adjust main content for mobile without sidebar */
             .min-h-screen {
                 margin-left: 0 !important;
                 padding-bottom: 70px !important;
             }
+        }
+        
+        /* Overlay for mobile sidebar */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+            transition: opacity 0.3s ease;
         }
 
         /* ── Sidebar Core ─────────────────────────────── */
@@ -194,10 +204,8 @@
         
         /* Mobile topbar optimizations */
         @media(max-width:1023px){
-            .topbar-glass{height:44px !important;padding:0 10px !important}
-            .topbar-glass h1,.topbar-glass .text-xl,.topbar-glass .text-2xl{font-size:14px !important;font-weight:700 !important}
-            .topbar-glass button{padding:6px !important;width:32px !important;height:32px !important}
-            .topbar-glass svg{width:16px !important;height:16px !important}
+            .topbar-glass{height:56px !important;padding:0 12px !important}
+            .topbar-glass h1,.topbar-glass .text-xl,.topbar-glass .text-2xl{font-size:15px !important;font-weight:700 !important}
         }
 
         /* Stat card */
@@ -210,15 +218,15 @@
 
         /* Mobile optimizations - Ultra Compact */
         @media(max-width:1023px){
-            .sb-section-label{padding-top:6px;padding-bottom:2px;font-size:.5rem}
-            .sb-item{padding:4px 6px;font-size:.7rem;gap:6px;border-radius:8px;margin:1px 0}
-            .sb-icon{width:24px;height:24px;border-radius:6px}
-            .sb-icon svg{width:12px;height:12px}
-            .sb-badge{font-size:.55rem;padding:1.5px 4px}
-            .sb-label{font-size:.7rem}
-            .sb-status-chip{margin:4px 2px 2px;padding:5px 6px;border-radius:6px;gap:4px}
-            .sb-chip-title{font-size:.55rem}
-            .sb-chip-desc{font-size:.55rem;margin-top:1px}
+            .sb-section-label{padding-top:8px;padding-bottom:4px;font-size:.6rem}
+            .sb-item{padding:6px 8px;font-size:.75rem;gap:8px;border-radius:10px;margin:2px 0}
+            .sb-icon{width:28px;height:28px;border-radius:8px}
+            .sb-icon svg{width:14px;height:14px}
+            .sb-badge{font-size:.6rem;padding:2px 6px}
+            .sb-label{font-size:.75rem}
+            .sb-status-chip{margin:6px 4px 4px;padding:8px 10px;border-radius:8px;gap:6px}
+            .sb-chip-title{font-size:.6rem}
+            .sb-chip-desc{font-size:.6rem;margin-top:2px}
         }
         
         /* Mode Switch Tabs - Mobile Only */
@@ -437,44 +445,57 @@
       :class="(isMobile && sideOpen) ? 'sidebar-open' : ''"
       @resize.window="isMobile = window.innerWidth < 1024; if (!isMobile) sideOpen = true; else sideOpen = false;">
 
+{{-- Overlay for mobile sidebar --}}
+<div x-show="sideOpen && isMobile" 
+     x-cloak
+     @click="sideOpen = false"
+     class="sidebar-overlay"
+     x-transition:enter="transition ease-out duration-300"
+     x-transition:enter-start="opacity-0"
+     x-transition:enter-end="opacity-100"
+     x-transition:leave="transition ease-in duration-200"
+     x-transition:leave-start="opacity-100"
+     x-transition:leave-end="opacity-0">
+</div>
+
 {{-- SIDEBAR - HIJAU GELAP GRADASI --}}
 <aside 
     x-cloak
     class="fixed top-0 left-0 h-screen flex flex-col overflow-hidden transition-all duration-300 ease-out shadow-2xl"
-    :style="isMobile ? (sideOpen ? 'width:240px; transform:translateX(0); z-index:50; background:linear-gradient(180deg, #1e5128 0%, #2d6a3e 50%, #1e5128 100%)' : 'width:240px; transform:translateX(-100%); z-index:50; background:linear-gradient(180deg, #1e5128 0%, #2d6a3e 50%, #1e5128 100%)') : (sideOpen ? 'width:200px; transform:translateX(0); z-index:30; background:linear-gradient(180deg, #1e5128 0%, #2d6a3e 50%, #1e5128 100%)' : 'width:50px; transform:translateX(0); z-index:30; background:linear-gradient(180deg, #1e5128 0%, #2d6a3e 50%, #1e5128 100%)')"
+    :style="isMobile ? (sideOpen ? 'width:260px; transform:translateX(0); z-index:50; background:linear-gradient(180deg, #1e5128 0%, #2d6a3e 50%, #1e5128 100%)' : 'width:260px; transform:translateX(-100%); z-index:50; background:linear-gradient(180deg, #1e5128 0%, #2d6a3e 50%, #1e5128 100%)') : (sideOpen ? 'width:240px; transform:translateX(0); z-index:30; background:linear-gradient(180deg, #1e5128 0%, #2d6a3e 50%, #1e5128 100%)' : 'width:70px; transform:translateX(0); z-index:30; background:linear-gradient(180deg, #1e5128 0%, #2d6a3e 50%, #1e5128 100%)')"
     style="border-right:2px solid #72bf77">
 
     {{-- Logo area --}}
-    <div class="flex items-center justify-between px-2 lg:px-4 h-[44px] lg:h-[60px] flex-shrink-0 border-b border-white/10">
-        <div class="flex items-center gap-1.5 lg:gap-3">
-            <div class="w-7 lg:w-10 h-7 lg:h-10 rounded-lg lg:rounded-xl flex-shrink-0 flex items-center justify-center font-black text-xs lg:text-base shadow-lg" style="background:white;color:#1e5128">
+    <div class="flex items-center justify-between px-3 lg:px-4 h-[56px] lg:h-[60px] flex-shrink-0 border-b border-white/10">
+        <div class="flex items-center gap-2 lg:gap-3">
+            <div class="w-9 lg:w-10 h-9 lg:h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm lg:text-base shadow-lg" style="background:white;color:#1e5128">
                 A
             </div>
             <div x-show="sideOpen" x-cloak class="overflow-hidden">
-                <span class="text-white font-black text-xs lg:text-base tracking-tight block">Arradea</span>
-                <span class="text-[8px] lg:text-[10px] uppercase tracking-wider font-semibold text-white/70">Marketplace</span>
+                <span class="text-white font-black text-base lg:text-base tracking-tight block">Arradea</span>
+                <span class="text-[10px] lg:text-[10px] uppercase tracking-wider font-semibold text-white/70">Marketplace</span>
             </div>
         </div>
         {{-- Close button for mobile --}}
         <button @click="sideOpen=false" 
                 x-show="sideOpen && isMobile" 
-                class="lg:hidden w-6 h-6 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
-            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                class="lg:hidden w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
             </svg>
         </button>
     </div>
 
     {{-- User info card --}}
-    <div class="px-2 lg:px-3 pt-2 lg:pt-4 pb-1 lg:pb-2 flex-shrink-0">
+    <div class="px-3 lg:px-3 pt-3 lg:pt-4 pb-2 lg:pb-2 flex-shrink-0">
         <div x-show="sideOpen" x-cloak
-            class="flex items-center gap-1.5 lg:gap-3 p-1.5 lg:p-3 rounded-lg lg:rounded-xl bg-white/10 border border-white/20 backdrop-blur-sm">
-            <div class="w-7 lg:w-10 h-7 lg:h-10 rounded-lg lg:rounded-xl flex-shrink-0 flex items-center justify-center font-black text-[10px] lg:text-sm bg-white shadow-md" style="color:#1e5128">
+            class="flex items-center gap-2 lg:gap-3 p-2 lg:p-3 rounded-xl bg-white/10 border border-white/20 backdrop-blur-sm">
+            <div class="w-9 lg:w-10 h-9 lg:h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-xs lg:text-sm bg-white shadow-md" style="color:#1e5128">
                 {{ strtoupper(substr(Auth::user()->name,0,1)) }}
             </div>
             <div class="overflow-hidden flex-1 min-w-0">
-                <p class="text-white text-[11px] lg:text-sm font-bold truncate leading-tight">{{ Auth::user()->name }}</p>
-                <p class="text-[8px] lg:text-[10px] uppercase tracking-wide font-semibold truncate mt-0.5 lg:mt-1 text-white/60">
+                <p class="text-white text-sm lg:text-sm font-bold truncate leading-tight">{{ Auth::user()->name }}</p>
+                <p class="text-[10px] lg:text-[10px] uppercase tracking-wide font-semibold truncate mt-1 lg:mt-1 text-white/60">
                     @if(Auth::user()->role==='admin')
                         Admin
                     @elseif(Auth::user()->is_seller)
@@ -487,14 +508,14 @@
         </div>
         {{-- Collapsed: just avatar --}}
         <div x-show="!sideOpen" class="flex justify-center">
-            <div class="w-9 h-9 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-xs bg-white shadow-md" style="color:#1e5128">
+            <div class="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm bg-white shadow-md" style="color:#1e5128">
                 {{ strtoupper(substr(Auth::user()->name,0,1)) }}
             </div>
         </div>
     </div>
 
     {{-- Nav --}}
-    <nav class="flex-1 overflow-y-auto overflow-x-hidden px-2 py-1.5 space-y-0.5">
+    <nav class="flex-1 overflow-y-auto overflow-x-hidden px-3 py-2 space-y-1">
         @if(Auth::user()->role === 'admin')
             @include('components.sidebar.admin')
         @else
@@ -513,7 +534,7 @@
     </nav>
 
     {{-- Logout --}}
-    <div class="p-2 flex-shrink-0 border-t border-white/10">
+    <div class="p-3 flex-shrink-0 border-t border-white/10">
         <form method="POST" action="{{ route('logout') }}" id="logoutForm">
             @csrf
             <button type="button" 
@@ -530,10 +551,10 @@
 
 {{-- MAIN --}}
 <div class="min-h-screen flex flex-col transition-all duration-300 ease-out" 
-     :class="isMobile ? 'ml-0 pb-20' : (sideOpen ? 'ml-[200px]' : 'ml-[50px]')">
+     :class="isMobile ? 'ml-0 pb-20' : (sideOpen ? 'ml-[240px]' : 'ml-[70px]')">
 
     {{-- TOPBAR --}}
-    <header class="sticky top-0 z-30 h-12 topbar-glass border-b border-green-100/40 flex items-center justify-between px-3 lg:px-4">
+    <header class="sticky top-0 z-30 h-14 lg:h-12 topbar-glass border-b border-green-100/40 flex items-center justify-between px-3 lg:px-4">
         <div class="flex items-center gap-2">
             {{-- Hamburger: desktop only --}}
             <button @click="sideOpen=!sideOpen" 
@@ -552,10 +573,8 @@
                 <svg class="absolute left-2.5 top-1.5 w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 <input type="text" placeholder="Cari..." class="h-7 w-40 bg-gray-100/80 border border-gray-200/60 rounded-lg pl-7 pr-2 text-xs focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage/50 transition">
             </div>
-            <div class="w-7 h-7 rounded-lg bg-white border border-gray-200/60 flex items-center justify-center text-gray-400 relative shadow-sm hover:border-sage/40 transition cursor-pointer">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
-            </div>
-            <div class="w-7 h-7 rounded-lg flex items-center justify-center font-bold text-xs" style="background:rgba(114,191,119,.2);color:#3fa348">
+            
+            <div class="w-8 h-8 lg:w-7 lg:h-7 rounded-lg flex items-center justify-center font-bold text-xs" style="background:rgba(114,191,119,.2);color:#3fa348">
                 {{ strtoupper(substr(Auth::user()->name,0,1)) }}
             </div>
         </div>
@@ -730,7 +749,6 @@
         </div>
     </div>
 </div>
-
 {{-- FLOATING CHAT BUTTON (mobile only) --}}
 @if(Auth::user()->role !== 'admin')
 <button @click="chatModal=true" class="lg:hidden fixed bottom-20 right-4 z-40 w-12 h-12 rounded-full shadow-xl flex items-center justify-center text-white transition-all duration-300 hover:scale-110 active:scale-95 floating-chat" style="background:linear-gradient(135deg,#72bf77,#4db85a)">
@@ -779,6 +797,138 @@
     };
 })();
 </script>
+
+{{-- Floating Customer Service Button (Non-Admin Only) --}}
+@if(Auth::check() && Auth::user()->role !== 'admin')
+<button @click="$refs.complaintModal.showModal()" 
+        class="fixed bottom-[136px] lg:bottom-6 right-4 lg:right-6 z-40 w-12 h-12 lg:w-14 lg:h-14 rounded-full shadow-xl flex items-center justify-center text-white transition-all duration-300 hover:scale-110 active:scale-95"
+        style="background:linear-gradient(135deg,#72bf77,#4db85a)">
+    <svg class="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+    </svg>
+</button>
+
+{{-- Complaint Modal --}}
+<dialog x-ref="complaintModal" class="rounded-2xl p-0 backdrop:bg-black/50 max-w-md w-full">
+    <div class="bg-white rounded-2xl overflow-hidden">
+        <div class="flex items-center justify-between p-4 border-b border-gray-100">
+            <h3 class="font-black text-gray-900">Customer Service</h3>
+            <button @click="$refs.complaintModal.close()" class="w-8 h-8 rounded-lg hover:bg-gray-100 flex items-center justify-center text-gray-400 transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+        
+        <form action="{{ route('complaints.store') }}" method="POST" class="p-4 space-y-4" onsubmit="return handleComplaintSubmit(event)">
+            @csrf
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Subjek</label>
+                <input type="text" name="subject" required
+                    class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-sage/30 text-sm"
+                    placeholder="Contoh: Produk tidak sesuai">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">Pesan Keluhan</label>
+                <textarea name="message" rows="4" required
+                    class="w-full px-4 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-sage/30 text-sm"
+                    placeholder="Jelaskan keluhan Anda..."></textarea>
+            </div>
+
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 py-2.5 rounded-xl text-sm font-bold text-white transition hover:opacity-90" style="background:#72bf77">
+                    Kirim
+                </button>
+                <button type="button" @click="$refs.complaintModal.close()" class="px-6 py-2.5 rounded-xl text-sm font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition">
+                    Batal
+                </button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<script>
+function handleComplaintSubmit(e) {
+    e.preventDefault();
+    const form = e.target;
+    const formData = new FormData(form);
+    
+    fetch(form.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            document.querySelector('dialog').close();
+            
+            // Show success popup
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'success',
+                    iconColor: '#72bf77',
+                    title: '✅ Keluhan Terkirim',
+                    text: 'Keluhan akan dilanjutkan oleh admin',
+                    confirmButtonText: 'OK',
+                    confirmButtonColor: '#72bf77',
+                    background: '#fff',
+                    color: '#111827',
+                    customClass: {
+                        popup: 'rounded-2xl shadow-2xl',
+                        title: 'text-lg font-black',
+                        htmlContainer: 'text-sm text-gray-500',
+                        confirmButton: 'rounded-xl px-5 py-2.5 font-bold text-sm'
+                    },
+                    buttonsStyling: false
+                });
+            }
+            
+            // Reset form
+            form.reset();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                icon: 'error',
+                title: 'Gagal',
+                text: 'Terjadi kesalahan, silakan coba lagi',
+                confirmButtonColor: '#dc2626'
+            });
+        }
+    });
+    
+    return false;
+}
+</script>
+@endif
+
 @stack('scripts')
+
+{{-- PWA Service Worker Registration --}}
+<script>
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('✅ Service Worker registered:', registration.scope);
+                })
+                .catch(error => {
+                    console.error('❌ Service Worker registration failed:', error);
+                });
+        });
+    }
+
+    // Detect if running as PWA
+    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+        console.log('🚀 Running as PWA');
+        document.body.classList.add('pwa-mode');
+    }
+</script>
 </body>
 </html>

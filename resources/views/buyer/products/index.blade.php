@@ -42,10 +42,10 @@
         .product-btn { padding: 7px 10px !important; font-size: 10px !important; border-radius: 7px !important; }
         .discount-badge { top: 4px !important; left: 4px !important; padding: 2px 5px !important; font-size: 8px !important; border-radius: 5px !important; }
         .search-bar { padding: 12px !important; border-radius: 14px !important; }
-        .search-bar input { height: 38px !important; font-size: 13px !important; border-radius: 11px !important; }
+        .search-bar input { height: 38px !important; font-size: 13px !important; border-radius: 11px !important; padding-left: 12px !important; }
         .search-bar button { height: 38px !important; padding: 0 14px !important; font-size: 12px !important; border-radius: 11px !important; }
-        .category-pills { gap: 7px !important; padding-bottom: 5px !important; }
-        .category-pill { padding: 6px 12px !important; font-size: 11px !important; border-radius: 9px !important; }
+        .category-pills { gap: 6px !important; padding-bottom: 5px !important; }
+        .category-pill { padding: 12px 12px !important; font-size: 11px !important; border-radius: 8px !important; white-space: nowrap !important; line-height: 1.3 !important; }
         .results-header { font-size: 12px !important; }
         .price-row { flex-direction: column !important; align-items: flex-start !important; gap: 2px !important; }
     }
@@ -59,20 +59,19 @@
 @endpush
 
 @section('content')
-<div class="space-y-5 fade-up">
+<div data-aos="fade-up" class="space-y-5">
 
     {{-- Search & Filter --}}
-    <div class="search-bar bg-white rounded-xl lg:rounded-2xl border border-gray-100 p-3 lg:p-4">
+    <div data-aos="fade-down" data-aos-delay="100" class="search-bar bg-white rounded-xl lg:rounded-2xl border border-gray-100 p-3 lg:p-4">
         <form action="{{ route('buyer.products') }}" method="GET">
             @if(request('category'))
                 <input type="hidden" name="category" value="{{ request('category') }}">
             @endif
             <div class="flex gap-2">
                 <div class="relative flex-1">
-                    <svg class="absolute left-2.5 lg:left-3.5 top-2 lg:top-2.5 w-3.5 lg:w-4 h-3.5 lg:h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                     <input id="product-search" type="search" name="q" value="{{ $keyword ?? request('q') }}"
                         placeholder="Cari produk..."
-                        class="w-full h-9 lg:h-10 bg-gray-50 border border-gray-200 rounded-lg lg:rounded-xl pl-8 lg:pl-10 pr-3 lg:pr-4 text-xs lg:text-sm font-medium focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)">
+                        class="w-full h-9 lg:h-10 bg-gray-50 border border-gray-200 rounded-lg lg:rounded-xl pl-3 lg:pl-4 pr-3 lg:pr-4 text-xs lg:text-sm font-medium focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)">
                 </div>
                 <button type="submit" class="h-9 lg:h-10 px-4 lg:px-5 rounded-lg lg:rounded-xl text-xs lg:text-sm font-bold text-white transition hover:opacity-90" style="background:#72bf77">Cari</button>
             </div>
@@ -80,13 +79,13 @@
     </div>
 
     {{-- Category Pills --}}
-    <div class="category-pills flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+    <div data-aos="fade-right" data-aos-delay="150" class="category-pills flex gap-2 overflow-x-auto pb-1 scrollbar-none">
         <a href="{{ route('buyer.products', array_filter(['q'=>request('q')])) }}"
-            class="category-pill flex-shrink-0 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg lg:rounded-xl text-[10px] lg:text-xs font-bold transition {{ !request('category') ? 'text-white shadow-md' : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-300' }}"
+            class="category-pill flex-shrink-0 px-4 py-1.5 rounded-lg text-xs font-bold transition {{ !request('category') ? 'text-white' : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-300' }}"
             style="{{ !request('category') ? 'background:#72bf77' : '' }}">Semua</a>
         @foreach($categories as $cat)
         <a href="{{ route('buyer.products', array_filter(['category'=>$cat->slug,'q'=>request('q')])) }}"
-            class="category-pill flex-shrink-0 px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg lg:rounded-xl text-[10px] lg:text-xs font-bold transition {{ request('category')===$cat->slug ? 'text-white shadow-md' : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-300' }}"
+            class="category-pill flex-shrink-0 px-4 py-1.5 rounded-lg text-xs font-bold transition {{ request('category')===$cat->slug ? 'text-white' : 'bg-white border border-gray-200 text-gray-500 hover:border-gray-300' }}"
             style="{{ request('category')===$cat->slug ? 'background:#72bf77' : '' }}">{{ $cat->name }}</a>
         @endforeach
     </div>
@@ -106,7 +105,7 @@
             $isDiscount = $product->discount_percent > 0;
             $finalPrice = $isDiscount ? $product->price * (1 - $product->discount_percent/100) : $product->price;
         @endphp
-        <div class="product-card group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg hover:shadow-green-100/40 hover:border-green-200/50 transition-all duration-300" data-product-id="{{ $product->id }}">
+        <div data-aos="fade-up" data-aos-delay="{{ ($loop->index % 6) * 50 }}" class="product-card group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg hover:shadow-green-100/40 hover:border-green-200/50 transition-all duration-300" data-product-id="{{ $product->id }}">
             <div class="product-image-wrapper relative w-full aspect-square overflow-hidden bg-gray-50">
                 <img src="{{ $product->image ?? 'https://via.placeholder.com/400x400/f0faf1/72bf77?text=Produk' }}"
                     alt="{{ $product->name }}"

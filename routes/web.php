@@ -198,6 +198,12 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
             ]);
         Route::post('products/bulk-update-stock', [\App\Http\Controllers\AdminProductController::class, 'bulkUpdateStock'])->name('admin.products.bulk-update-stock');
         Route::post('products/bulk-delete', [\App\Http\Controllers\AdminProductController::class, 'bulkDelete'])->name('admin.products.bulk-delete');
+        
+        // Complaints Management
+        Route::prefix('complaints')->name('admin.complaints.')->group(function () {
+            Route::get('/', [\App\Http\Controllers\ComplaintController::class, 'adminIndex'])->name('index');
+            Route::get('/export', [\App\Http\Controllers\ComplaintController::class, 'export'])->name('export');
+        });
     });
 
     // 🏪 SELLER
@@ -898,6 +904,14 @@ Route::middleware('auth')->group(function () {
 
     // ─── Mode Switching (Buyer ⇄ Seller) ───────────────────────────────────
     Route::post('/mode/switch', [\App\Http\Controllers\ModeController::class, 'switch'])->name('mode.switch');
+
+    // ─── Complaints (Keluhan ke Admin) ─────────────────────────────────────
+    Route::prefix('complaints')->name('complaints.')->group(function () {
+        Route::get('/', [\App\Http\Controllers\ComplaintController::class, 'index'])->name('index');
+        Route::get('/create', [\App\Http\Controllers\ComplaintController::class, 'create'])->name('create');
+        Route::post('/', [\App\Http\Controllers\ComplaintController::class, 'store'])->name('store');
+        Route::get('/{complaint}', [\App\Http\Controllers\ComplaintController::class, 'show'])->name('show');
+    });
     Route::get('/mode/info', [\App\Http\Controllers\ModeController::class, 'info'])->name('mode.info');
 });
 

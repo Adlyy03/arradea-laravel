@@ -2,8 +2,24 @@
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    
+    {{-- PWA Meta Tags --}}
+    <meta name="theme-color" content="#72bf77">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Arradea">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="Arradea">
+    
+    {{-- PWA Manifest --}}
+    <link rel="manifest" href="/manifest.json">
+    
+    {{-- Apple Touch Icons --}}
+    <link rel="apple-touch-icon" sizes="180x180" href="/images/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/images/icons/icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/images/icons/icon-192x192.png">
     <title>@yield('title', 'Arradea Marketplace')</title>
     
     {{-- Flash Messages for Toast System --}}
@@ -22,41 +38,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800;900&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: {
-                            50: '#f0faf1', 100: '#d8f3da', 200: '#b3e6b8', 300: '#7fd189',
-                            400: '#4db85a', 500: '#72bf77', 600: '#3fa348', 700: '#2d7a34',
-                            800: '#255f2a', 900: '#1a4220',
-                        },
-                        sage: '#72bf77',
-                    },
-                    fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], dm: ['DM Sans', 'sans-serif'] },
-                }
-            }
-        }
-    </script>
-    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    <style>
-        [x-cloak]{display:none!important}
-        *{-webkit-font-smoothing:antialiased}
-        .glass{background:rgba(255,255,255,0.85);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
-        .glass-dark{background:rgba(15,25,17,0.9);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
-        .nav-link{position:relative;transition:color .2s}
-        .nav-link::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:#72bf77;transition:width .3s cubic-bezier(.4,0,.2,1)}
-        .nav-link:hover::after{width:100%}
-        .btn-primary{background:#72bf77;transition:all .2s;box-shadow:0 4px 20px rgba(114,191,119,.35)}
-        .btn-primary:hover{background:#3fa348;transform:translateY(-1px);box-shadow:0 8px 30px rgba(114,191,119,.45)}
-        .btn-primary:active{transform:translateY(0)}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-        .fade-up{animation:fadeUp .4s ease both}
-        ::-webkit-scrollbar{width:5px;height:5px}
-        ::-webkit-scrollbar-thumb{background:#c1dfc3;border-radius:10px}
-    </style>
+    
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    
     @stack('styles')
 </head>
 <body class="bg-[#f7faf7] text-gray-900 font-sans antialiased" x-data="{ mobileOpen: false }">
@@ -276,5 +260,65 @@
     })();
     </script>
     @stack('scripts')
+
+    {{-- PWA Service Worker Registration & Install Prompt --}}
+    <script>
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => {
+                        console.log('✅ Service Worker registered:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('❌ Service Worker registration failed:', error);
+                    });
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        const installButton = document.getElementById('pwa-install-btn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            // Prevent default mini-infobar
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install button if exists
+            if (installButton) {
+                installButton.style.display = 'flex';
+            }
+        });
+
+        // Handle install button click
+        if (installButton) {
+            installButton.addEventListener('click', async () => {
+                if (!deferredPrompt) return;
+                
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                
+                console.log(`User response: ${outcome}`);
+                deferredPrompt = null;
+                installButton.style.display = 'none';
+            });
+        }
+
+        // Track if app is installed
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ PWA installed successfully!');
+            deferredPrompt = null;
+            if (installButton) {
+                installButton.style.display = 'none';
+            }
+        });
+
+        // Detect if running as PWA
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            console.log('🚀 Running as PWA');
+            document.body.classList.add('pwa-mode');
+        }
+    </script>
 </body>
 </html>

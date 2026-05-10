@@ -33,47 +33,47 @@
     <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
 
         {{-- Top bar --}}
-        <div class="flex items-center justify-between p-4 border-b border-gray-50" style="background:linear-gradient(to right,#f0faf1,#fff)">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-2xl flex items-center justify-center text-sm font-black flex-shrink-0"
+        <div class="flex items-center justify-between p-3 lg:p-4 border-b border-gray-50" style="background:linear-gradient(to right,#f0faf1,#fff)">
+            <div class="flex items-center gap-2 lg:gap-3 min-w-0 flex-1">
+                <div class="w-9 lg:w-10 h-9 lg:h-10 rounded-xl lg:rounded-2xl flex items-center justify-center text-xs lg:text-sm font-black flex-shrink-0"
                      style="background:rgba(114,191,119,.15);color:#3fa348">
                     {{ strtoupper(substr($withName, 0, 1)) }}
                 </div>
-                <div>
-                    <p class="font-black text-gray-900 text-sm">{{ $withName }}</p>
-                    <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                <div class="min-w-0 flex-1">
+                    <p class="font-black text-gray-900 text-xs lg:text-sm truncate">{{ $withName }}</p>
+                    <p class="text-[9px] lg:text-[10px] font-bold text-gray-400 uppercase tracking-widest truncate">
                         Order #{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }} · {{ $order->product->name ?? '' }}
                     </p>
                 </div>
             </div>
-            <div class="flex items-center gap-2">
-                <span class="{{ $statusClass }} px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest">{{ $statusLabel }}</span>
+            <div class="flex items-center gap-1.5 lg:gap-2 flex-shrink-0">
+                <span class="{{ $statusClass }} px-2 lg:px-2.5 py-0.5 lg:py-1 rounded-lg text-[9px] lg:text-[10px] font-black uppercase tracking-widest">{{ $statusLabel }}</span>
                 @if($isSellerView && $order->status === 'pending')
                 <form action="/web/order/{{ $order->id }}/status" method="POST" class="inline">
                     @csrf @method('PUT')
                     <input type="hidden" name="status" value="accepted">
-                    <button type="submit" class="px-3 py-1.5 rounded-lg text-[10px] font-black text-white transition hover:opacity-80" style="background:#72bf77">Proses</button>
+                    <button type="submit" class="px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black text-white transition hover:opacity-80" style="background:#72bf77">Proses</button>
                 </form>
                 @endif
             </div>
         </div>
 
         {{-- Order Mini Info --}}
-        <div class="flex items-center gap-4 px-4 py-3 bg-gray-50/50 border-b border-gray-50">
+        <div class="flex items-center gap-3 lg:gap-4 px-3 lg:px-4 py-2.5 lg:py-3 bg-gray-50/50 border-b border-gray-50">
             @if($order->product?->image)
-            <img src="{{ $order->product->image }}" alt="" class="w-10 h-10 rounded-xl object-cover border border-gray-100 flex-shrink-0">
+            <img src="{{ $order->product->image }}" alt="" class="w-9 lg:w-10 h-9 lg:h-10 rounded-lg lg:rounded-xl object-cover border border-gray-100 flex-shrink-0">
             @endif
             <div class="flex-1 min-w-0">
-                <p class="text-xs font-black text-gray-700 truncate">{{ $order->product->name ?? '—' }}</p>
-                <p class="text-[10px] text-gray-400">{{ $order->quantity }}× · Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
+                <p class="text-[11px] lg:text-xs font-black text-gray-700 truncate">{{ $order->product->name ?? '—' }}</p>
+                <p class="text-[9px] lg:text-[10px] text-gray-400">{{ $order->quantity }}× · Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
             </div>
-            <span class="text-[10px] font-bold text-gray-400 flex-shrink-0">{{ $order->created_at->format('d M Y') }}</span>
+            <span class="text-[9px] lg:text-[10px] font-bold text-gray-400 flex-shrink-0">{{ $order->created_at->format('d M Y') }}</span>
         </div>
 
         {{-- Messages Area --}}
         <div id="messages"
-             class="flex flex-col overflow-y-auto p-4 space-y-3"
-             style="height:55vh;min-height:300px;max-height:520px;scroll-behavior:smooth;">
+             class="flex flex-col overflow-y-auto p-3 lg:p-4 space-y-2 lg:space-y-3"
+             style="height:50vh;min-height:280px;max-height:520px;scroll-behavior:smooth;">
 
             @forelse($messages as $message)
             @php $isOwn = $message->sender_id === auth()->id(); @endphp
@@ -121,24 +121,24 @@
         </div>
 
         {{-- Message Input --}}
-        <div class="p-4 border-t border-gray-100" style="background:#fafafa">
+        <div class="p-3 lg:p-4 border-t border-gray-100" style="background:#fafafa">
             <form id="chat-form" action="{{ route('chat.store', $chat) }}" method="POST">
                 @csrf
-                <div class="flex gap-2 items-end">
+                <div class="flex gap-1.5 lg:gap-2 items-end">
                     <div class="flex-1 relative">
                         <textarea id="chat-message-input"
                                   name="message"
                                   placeholder="Ketik pesan..."
                                   rows="1"
-                                  class="w-full bg-white border border-gray-200 rounded-2xl px-4 py-3 text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition resize-none overflow-hidden"
+                                  class="w-full bg-white border border-gray-200 rounded-xl lg:rounded-2xl px-3 lg:px-4 py-2.5 lg:py-3 text-xs lg:text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:border-transparent transition resize-none overflow-hidden"
                                   style="--tw-ring-color:rgba(114,191,119,.4);max-height:120px"
                                   required></textarea>
                     </div>
                     <button type="submit"
                             id="send-btn"
-                            class="w-11 h-11 rounded-2xl flex items-center justify-center flex-shrink-0 text-white transition hover:opacity-90 active:scale-95 shadow-md"
+                            class="w-10 lg:w-11 h-10 lg:h-11 rounded-xl lg:rounded-2xl flex items-center justify-center flex-shrink-0 text-white transition hover:opacity-90 active:scale-95 shadow-md"
                             style="background:#72bf77;box-shadow:0 4px 14px rgba(114,191,119,.35)">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-4 lg:w-5 h-4 lg:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/>
                         </svg>
                     </button>

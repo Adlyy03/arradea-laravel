@@ -1,21 +1,50 @@
+/* Import AOS styles */
+@import 'aos/dist/aos.css';
+
+/* Import modern design system */
 @import './app-modern.css';
 
+/* Tailwind directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Base styles */
 @layer base {
     body {
         @apply bg-[#f8faf8] text-slate-900 antialiased;
     }
+    
+    * {
+        @apply antialiased;
+    }
 }
 
-/* Legacy glass class for backward compatibility */
-.glass {
-    @apply bg-white/70 backdrop-blur-xl border-b border-white/20;
+/* Component layer */
+@layer components {
+    /* Legacy glass class for backward compatibility */
+    .glass {
+        @apply bg-white/70 backdrop-blur-xl border-b border-white/20;
+    }
+    
+    .glass-card {
+        @apply bg-white/75 backdrop-blur-xl border border-primary-100/40 rounded-2xl;
+    }
+    
+    .btn-primary {
+        @apply bg-sage hover:bg-primary-600 text-white font-semibold px-6 py-3 rounded-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-lg active:scale-95;
+    }
+    
+    .btn-secondary {
+        @apply bg-white hover:bg-gray-50 text-gray-700 font-semibold px-6 py-3 rounded-xl border border-gray-200 transition-all duration-300 hover:-translate-y-0.5;
+    }
+    
+    .input-modern {
+        @apply w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-sage focus:ring-2 focus:ring-sage/20 transition-all duration-200 outline-none;
+    }
 }
 
-/* Enhanced Tailwind utilities with Arradea design system */
+/* Utility layer */
 @layer utilities {
     .text-sage {
         color: #72bf77;
@@ -36,4 +65,57 @@
     .focus\:ring-sage:focus {
         --tw-ring-color: rgba(114, 191, 119, 0.5);
     }
+    
+    /* Gradient utilities */
+    .gradient-sage {
+        background: linear-gradient(135deg, #72bf77, #4db85a);
+    }
+    
+    .gradient-sage-light {
+        background: linear-gradient(135deg, #f0faf1, #d8f3da);
+    }
+    
+    /* Animation utilities */
+    .animate-delay-100 {
+        animation-delay: 100ms;
+    }
+    
+    .animate-delay-200 {
+        animation-delay: 200ms;
+    }
+    
+    .animate-delay-300 {
+        animation-delay: 300ms;
+    }
+    
+    .animate-delay-400 {
+        animation-delay: 400ms;
+    }
+    
+    .animate-delay-500 {
+        animation-delay: 500ms;
+    }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    @apply w-2 h-2;
+}
+
+::-webkit-scrollbar-track {
+    @apply bg-transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 rounded-full hover:bg-sage transition-colors;
+}
+
+/* Selection color */
+::selection {
+    @apply bg-sage/20 text-gray-900;
+}
+
+/* Focus visible for accessibility */
+:focus-visible {
+    @apply outline-2 outline-offset-2 outline-sage;
 }

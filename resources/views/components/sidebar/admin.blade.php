@@ -5,6 +5,7 @@
     $pendingSellerCount = \App\Models\User::whereNotNull('phone_verified_at')
         ->whereNotNull('access_code_id')->where('seller_status','pending')->where('is_seller',false)->count();
     $pendingCount = $pendingBuyerCount + $pendingSellerCount;
+    $pendingComplaints = \App\Models\Complaint::where('status', 'pending')->count();
 ?>
 
 <a href="/admin/dashboard" class="sb-item {{ Request::is('admin/dashboard') ? 'sb-active' : '' }}">
@@ -49,6 +50,19 @@
     <span x-show="sideOpen" x-cloak class="sb-label flex-1">Verif. Pendaftar</span>
     @if($pendingCount > 0)
         <span x-show="sideOpen" x-cloak class="sb-badge sb-badge-red">{{ $pendingCount }}</span>
+    @endif
+</a>
+
+<a href="{{ route('admin.complaints.index') }}" class="sb-item {{ Request::is('admin/complaints*') ? 'sb-active' : '' }}">
+    <span class="sb-icon" style="position:relative">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+        @if($pendingComplaints > 0)
+            <span class="sb-icon-dot sb-icon-dot-red"></span>
+        @endif
+    </span>
+    <span x-show="sideOpen" x-cloak class="sb-label flex-1">Keluhan User</span>
+    @if($pendingComplaints > 0)
+        <span x-show="sideOpen" x-cloak class="sb-badge sb-badge-red">{{ $pendingComplaints }}</span>
     @endif
 </a>
 
