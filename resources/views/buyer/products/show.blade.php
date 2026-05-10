@@ -86,7 +86,7 @@
             <!-- Product Image -->
             <div class="relative">
                 <div class="product-detail-image aspect-square rounded-xl lg:rounded-2xl overflow-hidden bg-gray-50 border border-gray-100 shadow-lg">
-                    <img src="{{ $product->image ?? 'https://via.placeholder.com/700?text=No+Image' }}" alt="{{ $product->name }}" class="w-full h-full object-cover">
+                    <img src="{{ $product->image ?? 'https://via.placeholder.com/700?text=No+Image' }}" alt="{{ $product->name }}" class="w-full h-full object-cover object-center block">
                 </div>
                 @php $basePricing = $product->calculatePricing('default', 1); @endphp
                 @if(($basePricing['discount_percent'] ?? 0) > 0)

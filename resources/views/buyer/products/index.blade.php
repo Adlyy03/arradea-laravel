@@ -10,11 +10,15 @@
         .product-card { border-radius: 10px !important; }
         .product-image-wrapper { 
             aspect-ratio: 1 / 1 !important;
-            max-height: 140px !important;
+            width: 100% !important;
+            overflow: hidden !important;
         }
         .product-image { 
-            object-fit: cover !important;
+            width: 100% !important;
             height: 100% !important;
+            object-fit: cover !important;
+            object-position: center !important;
+            display: block !important;
         }
         .product-content { padding: 8px !important; }
         .product-category { font-size: 8px !important; margin-bottom: 2px !important; }
@@ -89,10 +93,10 @@
             $finalPrice = $isDiscount ? $product->price * (1 - $product->discount_percent/100) : $product->price;
         @endphp
         <div class="product-card group bg-white rounded-xl lg:rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:shadow-green-100/40 hover:border-green-200/50 transition-all duration-300" data-product-id="{{ $product->id }}">
-            <div class="product-image-wrapper relative aspect-square overflow-hidden bg-gray-50">
+            <div class="product-image-wrapper relative w-full aspect-square overflow-hidden bg-gray-50">
                 <img src="{{ $product->image ?? 'https://via.placeholder.com/400x400/f0faf1/72bf77?text=Produk' }}"
                     alt="{{ $product->name }}"
-                    class="product-image w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    class="product-image w-full h-full object-cover object-center block transition-transform duration-500 group-hover:scale-105"
                     onerror="this.src='https://via.placeholder.com/400x400/f0faf1/72bf77?text=Produk'">
                 @if($isDiscount)
                     <span class="discount-badge absolute top-2 lg:top-3 left-2 lg:left-3 px-1.5 lg:px-2 py-0.5 rounded-lg text-[9px] lg:text-[10px] font-black text-white" style="background:#72bf77">-{{ $product->discount_percent }}%</span>

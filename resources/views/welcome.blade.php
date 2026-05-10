@@ -226,7 +226,7 @@
                                 <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-red-200 hover:shadow-sm transition-all duration-200">
                                     <div class="relative overflow-hidden bg-gray-50" style="height:70px">
                                         <img src="{{ $product->image }}" alt="{{ $product->name }}"
-                                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            class="w-full h-full object-cover object-center block group-hover:scale-105 transition-transform duration-300"
                                             onerror="this.src='https://via.placeholder.com/200x200/fff5f5/ef4444?text=+'">
                                         <span class="absolute top-1 left-1 px-1 py-0.5 rounded text-[8px] font-black text-white leading-none" style="background:#ef4444">-{{ $product->discount_percent }}%</span>
                                     </div>
@@ -259,7 +259,7 @@
                                 <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all duration-200">
                                     <div class="relative overflow-hidden bg-gray-50" style="height:70px">
                                         <img src="{{ $product->image }}" alt="{{ $product->name }}"
-                                            class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                            class="w-full h-full object-cover object-center block group-hover:scale-105 transition-transform duration-300"
                                             onerror="this.src='https://via.placeholder.com/200x200/eff6ff/3b82f6?text=+'">
                                         <span class="absolute top-1 left-1 px-1 py-0.5 rounded text-[8px] font-black text-white leading-none" style="background:#3b82f6">🔥{{ $product->orders_count }}x</span>
                                     </div>
