@@ -33,6 +33,12 @@ class Product extends Model
         'variants' => 'array',
     ];
 
+    protected $appends = [
+        'final_price',
+        'has_active_discount',
+        'active_discount_percent',
+    ];
+
     // Default image fallback
     public function getImageAttribute($value)
     {
@@ -84,7 +90,7 @@ class Product extends Model
      */
     public function getActiveDiscountPercent(?string $variantKey = null, ?\Carbon\CarbonInterface $at = null): float
     {
-        $at = $at ?: now();
+        $at = $at ?: now('Asia/Jakarta');
 
         $variant = $this->getVariant($variantKey);
         if ($variant) {
@@ -107,6 +113,31 @@ class Product extends Model
         }
 
         return 0;
+    }
+
+    /**
+     * Accessor: Get active discount percent (untuk JSON response)
+     */
+    public function getActiveDiscountPercentAttribute(): float
+    {
+        return $this->getActiveDiscountPercent();
+    }
+
+    /**
+     * Accessor: Check if product has active discount
+     */
+    public function getHasActiveDiscountAttribute(): bool
+    {
+        return $this->getActiveDiscountPercent() > 0;
+    }
+
+    /**
+     * Accessor: Get final price after discount
+     */
+    public function getFinalPriceAttribute(): float
+    {
+        $discountPercent = $this->getActiveDiscountPercent();
+        return max(0, $this->price * (1 - ($discountPercent / 100)));
     }
 
     /**

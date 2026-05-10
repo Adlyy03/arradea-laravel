@@ -142,13 +142,14 @@ class AuthWebController extends Controller
      */
     protected function redirectUser($user)
     {
-        // Initialize mode on login using SellerModeService
-        $modeService = app(\App\Services\SellerModeService::class);
-        $activeMode = $modeService->initializeModeOnLogin($user);
-
+        // Admin langsung ke dashboard admin (monitoring only)
         if ($user->role === 'admin') {
             return redirect('/admin/dashboard')->with('success', 'Selamat datang kembali, Admin!');
         }
+
+        // Initialize mode on login using SellerModeService
+        $modeService = app(\App\Services\SellerModeService::class);
+        $activeMode = $modeService->initializeModeOnLogin($user);
 
         // Redirect based on active mode
         if ($activeMode === 'seller' && $user->canSwitchToSellerMode()) {

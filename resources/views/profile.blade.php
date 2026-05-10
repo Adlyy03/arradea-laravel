@@ -103,77 +103,24 @@
         </div>
     </div>
 
-    {{-- Mode Switcher (only for sellers) --}}
-    @if(auth()->user()->canSwitchToSellerMode())
+    {{-- Mode Switcher (only for sellers, not admin) --}}
+    @if(auth()->user()->canSwitchToSellerMode() && auth()->user()->role !== 'admin')
     <div class="profile-card rounded-2xl lg:rounded-3xl overflow-hidden shadow-lg">
-        <div class="p-6 lg:p-8">
+        <div class="p-5 lg:p-8">
+            {{-- Section Header --}}
             <div class="flex items-center justify-between mb-4 lg:mb-5">
                 <div>
                     <h3 class="text-base lg:text-lg font-black text-gray-900">Mode Akun</h3>
-                    <p class="text-xs lg:text-sm text-gray-500 mt-1">Pilih mode yang ingin Anda gunakan</p>
+                    <p class="text-xs lg:text-sm text-gray-500 mt-0.5">Pilih mode yang ingin kamu aktifkan</p>
                 </div>
                 <x-mode-badge :mode="auth()->user()->getActiveMode()" />
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 lg:gap-4">
-                {{-- Buyer Mode --}}
-                <form method="POST" action="{{ route('mode.switch') }}">
-                    @csrf
-                    <input type="hidden" name="mode" value="buyer">
-                    <button 
-                        type="submit"
-                        class="w-full flex items-center gap-4 p-4 lg:p-5 rounded-xl lg:rounded-2xl border-2 transition-all duration-200 hover:shadow-md {{ auth()->user()->getActiveMode() === 'buyer' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300' }}"
-                    >
-                        <div class="flex-shrink-0 w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center rounded-xl lg:rounded-2xl {{ auth()->user()->getActiveMode() === 'buyer' ? 'bg-blue-100' : 'bg-gray-100' }}">
-                            <span class="text-2xl lg:text-3xl">🛒</span>
-                        </div>
-                        <div class="flex-1 text-left">
-                            <div class="font-bold text-sm lg:text-base text-gray-900 flex items-center gap-2">
-                                Mode Buyer
-                                @if(auth()->user()->getActiveMode() === 'buyer')
-                                    <span class="text-[10px] lg:text-xs px-2 py-0.5 bg-blue-500 text-white rounded-full font-black uppercase">Aktif</span>
-                                @endif
-                            </div>
-                            <div class="text-xs lg:text-sm text-gray-500 mt-0.5">Belanja produk dari seller</div>
-                        </div>
-                        @if(auth()->user()->getActiveMode() === 'buyer')
-                            <svg class="w-5 h-5 lg:w-6 lg:h-6 text-blue-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                            </svg>
-                        @endif
-                    </button>
-                </form>
+            {{-- Mode Switcher Component (desktop = inline cards, mobile = bottom sheet) --}}
+            <x-bottom-sheet-switcher :user="auth()->user()" />
 
-                {{-- Seller Mode --}}
-                <form method="POST" action="{{ route('mode.switch') }}">
-                    @csrf
-                    <input type="hidden" name="mode" value="seller">
-                    <button 
-                        type="submit"
-                        class="w-full flex items-center gap-4 p-4 lg:p-5 rounded-xl lg:rounded-2xl border-2 transition-all duration-200 hover:shadow-md {{ auth()->user()->getActiveMode() === 'seller' ? 'border-amber-500 bg-amber-50' : 'border-gray-200 hover:border-amber-300' }}"
-                    >
-                        <div class="flex-shrink-0 w-12 h-12 lg:w-14 lg:h-14 flex items-center justify-center rounded-xl lg:rounded-2xl {{ auth()->user()->getActiveMode() === 'seller' ? 'bg-amber-100' : 'bg-gray-100' }}">
-                            <span class="text-2xl lg:text-3xl">🏪</span>
-                        </div>
-                        <div class="flex-1 text-left">
-                            <div class="font-bold text-sm lg:text-base text-gray-900 flex items-center gap-2">
-                                Mode Seller
-                                @if(auth()->user()->getActiveMode() === 'seller')
-                                    <span class="text-[10px] lg:text-xs px-2 py-0.5 bg-amber-500 text-white rounded-full font-black uppercase">Aktif</span>
-                                @endif
-                            </div>
-                            <div class="text-xs lg:text-sm text-gray-500 mt-0.5">Kelola toko dan produk</div>
-                        </div>
-                        @if(auth()->user()->getActiveMode() === 'seller')
-                            <svg class="w-5 h-5 lg:w-6 lg:h-6 text-amber-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
-                            </svg>
-                        @endif
-                    </button>
-                </form>
-            </div>
-
-            <div class="mt-4 lg:mt-5 p-3 lg:p-4 rounded-xl lg:rounded-2xl" style="background:rgba(249,250,251,0.6);border:1px solid rgba(229,231,235,0.8)">
+            {{-- Info note - desktop only --}}
+            <div class="hidden md:block mt-5 p-3 lg:p-4 rounded-xl lg:rounded-2xl" style="background:rgba(249,250,251,0.6);border:1px solid rgba(229,231,235,0.8)">
                 <div class="flex items-start gap-2 lg:gap-3">
                     <svg class="w-4 h-4 lg:w-5 lg:h-5 text-gray-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -189,7 +136,7 @@
     @endif
 
     {{-- Seller CTA --}}
-    @if(!auth()->user()->is_seller)
+    @if(!auth()->user()->is_seller && auth()->user()->role !== 'admin')
     <div class="profile-cta relative overflow-hidden rounded-2xl lg:rounded-3xl p-6 lg:p-8 shadow-xl" style="background:linear-gradient(135deg,#0f1a11 0%,#1e3a22 50%,#0f1a11 100%)">
         <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-12" style="background:#72bf77;filter:blur(70px)"></div>
         <div class="absolute -bottom-16 -left-12 w-48 h-48 rounded-full opacity-10" style="background:#4db85a;filter:blur(50px)"></div>
@@ -229,6 +176,7 @@
     @endif
 
     {{-- Quick Actions --}}
+    @if(auth()->user()->role !== 'admin')
     <div class="profile-quick-actions profile-card rounded-2xl lg:rounded-3xl p-5 lg:p-6 shadow-lg">
         <h3 class="text-xs lg:text-sm font-black text-gray-700 uppercase tracking-wider mb-4 lg:mb-5">Aksi Cepat</h3>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:gap-4">
@@ -252,5 +200,135 @@
             </a>
         </div>
     </div>
+    @else
+    <div class="profile-quick-actions profile-card rounded-2xl lg:rounded-3xl p-5 lg:p-6 shadow-lg">
+        <h3 class="text-xs lg:text-sm font-black text-gray-700 uppercase tracking-wider mb-4 lg:mb-5">Aksi Admin</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 lg:gap-4">
+            <a href="/admin/dashboard" class="action-card flex flex-col items-center gap-2 lg:gap-3 p-4 lg:p-5 rounded-xl lg:rounded-2xl text-center shadow-sm" style="background:rgba(239,246,255,0.6);border:1px solid rgba(191,219,254,0.4)">
+                <span class="text-2xl lg:text-3xl">📊</span>
+                <span class="text-xs lg:text-sm font-bold text-gray-700">Dashboard</span>
+            </a>
+            <a href="/admin/users-verification" class="action-card flex flex-col items-center gap-2 lg:gap-3 p-4 lg:p-5 rounded-xl lg:rounded-2xl text-center shadow-sm" style="background:rgba(254,243,199,0.6);border:1px solid rgba(253,230,138,0.4)">
+                <span class="text-2xl lg:text-3xl">✅</span>
+                <span class="text-xs lg:text-sm font-bold text-gray-700">Verifikasi User</span>
+            </a>
+            <a href="/admin/sellers" class="action-card flex flex-col items-center gap-2 lg:gap-3 p-4 lg:p-5 rounded-xl lg:rounded-2xl text-center shadow-sm" style="background:rgba(240,250,241,0.6);border:1px solid rgba(114,191,119,0.15)">
+                <span class="text-2xl lg:text-3xl">🏪</span>
+                <span class="text-xs lg:text-sm font-bold text-gray-700">Kelola Seller</span>
+            </a>
+        </div>
+    </div>
+    @endif
+    {{-- ═══════════════════════════════════════
+         MOBILE NAVIGATION MENU (lg:hidden)
+         Replaces sidebar for mobile users
+    ═══════════════════════════════════════ --}}
+    <div class="lg:hidden profile-card rounded-2xl shadow-lg overflow-hidden">
+        <div class="p-5">
+            <h3 class="text-xs font-black text-gray-500 uppercase tracking-wider mb-4">Menu</h3>
+
+            @php
+                $mobileActiveMode = auth()->user()->getActiveMode();
+                $isMobileSeller   = $mobileActiveMode === 'seller' && auth()->user()->canSwitchToSellerMode();
+            @endphp
+
+            <div class="flex flex-col gap-1">
+
+                @if($isMobileSeller)
+                    {{-- ── SELLER LINKS ─────────────────── --}}
+                    <p class="text-[10px] font-black text-amber-500 uppercase tracking-widest px-2 pt-1 pb-0.5">Mode Seller</p>
+                    <a href="{{ route('seller.dashboard') }}"
+                       class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-amber-50 transition group {{ request()->routeIs('seller.dashboard') ? 'bg-amber-50' : '' }}">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fffbeb;">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-800">Dashboard Seller</span>
+                        <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                    <a href="{{ route('seller.products') }}"
+                       class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-amber-50 transition {{ request()->routeIs('seller.products*') ? 'bg-amber-50' : '' }}">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fffbeb;">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 11m8 4V21M4 11v10l8 4"/></svg>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-800">Kelola Produk</span>
+                        <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                    <a href="{{ route('seller.orders') }}"
+                       class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-amber-50 transition {{ request()->routeIs('seller.orders*') ? 'bg-amber-50' : '' }}">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fffbeb;">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-800">Pesanan Masuk</span>
+                        <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                    <a href="{{ route('seller.messages') }}"
+                       class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-amber-50 transition {{ request()->routeIs('seller.messages*') ? 'bg-amber-50' : '' }}">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fffbeb;">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 12 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-800">Pesan Masuk</span>
+                        <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+
+                    <div class="border-t border-gray-100 my-2"></div>
+                    <p class="text-[10px] font-black text-blue-400 uppercase tracking-widest px-2 pb-0.5">Mode Buyer</p>
+                @endif
+
+                {{-- ── BUYER LINKS (always shown) ─────── --}}
+                <a href="{{ route('buyer.dashboard') }}"
+                   class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-blue-50 transition {{ request()->routeIs('buyer.dashboard') ? 'bg-blue-50' : '' }}">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#eff6ff;">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-800">Dashboard Buyer</span>
+                    <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </a>
+                <a href="{{ route('buyer.products') }}"
+                   class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-blue-50 transition">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#eff6ff;">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-800">Belanja Produk</span>
+                    <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </a>
+                <a href="{{ route('buyer.cart') }}"
+                   class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-blue-50 transition">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#eff6ff;">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 5h12"/></svg>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-800">Keranjang</span>
+                    @php $cartCount = auth()->user()->carts->count(); @endphp
+                    @if($cartCount > 0)
+                        <span class="ml-auto bg-blue-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">{{ $cartCount }}</span>
+                    @else
+                        <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    @endif
+                </a>
+                <a href="{{ route('buyer.orders') }}"
+                   class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-blue-50 transition">
+                    <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#eff6ff;">
+                        <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                    </div>
+                    <span class="text-sm font-semibold text-gray-800">Pesanan Saya</span>
+                    <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </a>
+
+                {{-- ── Logout ───────────────────────────── --}}
+                <div class="border-t border-gray-100 my-2"></div>
+                <form method="POST" action="{{ route('logout') }}" class="m-0">
+                    @csrf
+                    <button type="button" onclick="confirmLogout(event)"
+                        class="w-full flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-red-50 transition text-left">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-red-50">
+                            <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                        </div>
+                        <span class="text-sm font-semibold text-red-500">Keluar</span>
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </div>
+
 </div>
 @endsection

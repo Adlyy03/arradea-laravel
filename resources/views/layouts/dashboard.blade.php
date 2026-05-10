@@ -535,14 +535,16 @@
     {{-- TOPBAR --}}
     <header class="sticky top-0 z-30 h-12 topbar-glass border-b border-green-100/40 flex items-center justify-between px-3 lg:px-4">
         <div class="flex items-center gap-2">
+            {{-- Hamburger: desktop only --}}
             <button @click="sideOpen=!sideOpen" 
-                    class="w-7 h-7 rounded-lg bg-white border border-gray-200/60 flex items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-sage/40 transition shadow-sm">
+                    class="hidden lg:flex w-7 h-7 rounded-lg bg-white border border-gray-200/60 items-center justify-center text-gray-500 hover:bg-gray-50 hover:border-sage/40 transition shadow-sm">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h8m-8 6h16"/></svg>
             </button>
-            <div class="hidden sm:flex items-center gap-1 text-xs text-gray-400">
-                <a href="{{ url('/') }}" class="hover:text-sage transition">Beranda</a>
-                <span>/</span>
-                <span class="text-gray-700 font-semibold">@yield('page_title','Dashboard')</span>
+            {{-- Breadcrumb desktop / Page title mobile --}}
+            <div class="flex items-center gap-1 text-xs text-gray-400">
+                <a href="{{ url('/') }}" class="hidden lg:inline hover:text-sage transition">Beranda</a>
+                <span class="hidden lg:inline">/</span>
+                <span class="text-gray-800 font-bold text-sm lg:text-xs lg:font-semibold lg:text-gray-700">@yield('page_title','Dashboard')</span>
             </div>
         </div>
         <div class="flex items-center gap-2">

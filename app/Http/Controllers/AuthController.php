@@ -160,10 +160,11 @@ class AuthController extends Controller
 
         $user = $request->user();
 
+        // Admin tidak bisa toggle seller mode (hanya monitoring)
         if ($user->role === 'admin') {
             return response()->json([
                 'success' => false,
-                'message' => 'Admin account cannot toggle seller mode.',
+                'message' => 'Admin account cannot toggle seller mode. Admin is for monitoring only.',
             ], 422);
         }
 

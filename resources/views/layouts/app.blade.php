@@ -103,7 +103,7 @@
                                 </div>
                                 <svg class="w-3.5 h-3.5 text-gray-400" :class="open && 'rotate-180'" style="transition:.2s" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 9l-7 7-7-7"/></svg>
                             </button>
-                            <div x-show="open" @click.away="open=false" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="absolute right-0 mt-2 w-52 bg-white rounded-2xl shadow-xl border border-gray-100 py-1.5 z-50">
+                            <div x-show="open" @click.away="open=false" x-cloak x-transition:enter="transition ease-out duration-150" x-transition:enter-start="opacity-0 -translate-y-2" x-transition:enter-end="opacity-100 translate-y-0" class="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 py-1.5 z-50">
                                 <div class="px-4 py-2.5 border-b border-gray-50">
                                     <p class="text-xs font-black text-gray-900 truncate">{{ Auth::user()->name }}</p>
                                     <p class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mt-0.5">{{ Auth::user()->is_seller ? 'Seller + Buyer' : 'Buyer' }}</p>
@@ -111,8 +111,8 @@
 
                                 {{-- Mode Switcher (only for sellers) --}}
                                 @if(Auth::user()->canSwitchToSellerMode())
-                                    <div class="px-4 py-2.5 border-b border-gray-50">
-                                        <p class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-2">Mode Aktif</p>
+                                    <div class="px-3 py-3 border-b border-gray-50">
+                                        <p class="text-[10px] text-gray-400 uppercase tracking-wider font-semibold mb-2 px-1">Mode Aktif</p>
                                         <x-bottom-sheet-switcher :user="Auth::user()" />
                                     </div>
                                 @endif

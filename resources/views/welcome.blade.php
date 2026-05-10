@@ -123,20 +123,38 @@
                 </p>
 
                 <div class="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
-                    <a href="{{ route('buyer.products') }}" class="group px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-white text-sm sm:text-base transition-all duration-300 hover:-translate-y-1 active:scale-95 text-center" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.35)">
-                        <span class="flex items-center justify-center gap-2">
-                            Belanja Sekarang
-                            <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-                        </span>
-                    </a>
                     @guest
+                        <a href="{{ route('buyer.products') }}" class="group px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-white text-sm sm:text-base transition-all duration-300 hover:-translate-y-1 active:scale-95 text-center" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.35)">
+                            <span class="flex items-center justify-center gap-2">
+                                Belanja Sekarang
+                                <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                            </span>
+                        </a>
                         <a href="{{ route('register') }}" class="px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-gray-700 text-sm sm:text-base glass-card hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 text-center">
                             Gabung Seller →
                         </a>
                     @else
-                        <a href="{{ Auth::user()->is_seller ? route('seller.dashboard') : route('buyer.dashboard') }}" class="px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-gray-700 text-sm sm:text-base glass-card hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 text-center">
-                            Dashboard Saya →
-                        </a>
+                        @if(Auth::user()->role === 'admin')
+                            <a href="/admin/dashboard" class="px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-gray-700 text-sm sm:text-base glass-card hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 text-center">
+                                Dashboard Admin →
+                            </a>
+                        @else
+                            <a href="{{ route('buyer.products') }}" class="group px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-white text-sm sm:text-base transition-all duration-300 hover:-translate-y-1 active:scale-95 text-center" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.35)">
+                                <span class="flex items-center justify-center gap-2">
+                                    Belanja Sekarang
+                                    <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+                                </span>
+                            </a>
+                            @php
+                                $welcomeActiveMode = Auth::user()->getActiveMode();
+                                $dashboardRoute = ($welcomeActiveMode === 'seller' && Auth::user()->canSwitchToSellerMode())
+                                    ? route('seller.dashboard')
+                                    : route('buyer.dashboard');
+                            @endphp
+                            <a href="{{ $dashboardRoute }}" class="px-5 sm:px-7 py-3 sm:py-3.5 rounded-xl sm:rounded-2xl font-bold text-gray-700 text-sm sm:text-base glass-card hover:shadow-lg transition-all duration-300 hover:-translate-y-0.5 text-center">
+                                Dashboard Saya →
+                            </a>
+                        @endif
                     @endguest
                 </div>
             </div>
@@ -182,169 +200,6 @@
     </div>
 </section>
 
-{{-- PROMO BANNER SLIDER --}}
-@if($discountedProducts->count() > 0 || $popularProducts->count() > 0)
-<section class="welcome-section bg-white">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-
-        {{-- Header + Nav --}}
-        <div class="flex items-center justify-between mb-6 sm:mb-8 lg:mb-10">
-            <div>
-                <h2 class="section-title text-left mb-1">Promo <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Spesial</span></h2>
-                <p class="text-gray-400 text-xs sm:text-sm font-medium">Penawaran terbaik hari ini</p>
-            </div>
-            <div class="flex items-center gap-2">
-                <button class="promo-nav" onclick="prevSlide()" aria-label="Sebelumnya">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"/></svg>
-                </button>
-                <div class="promo-dots" id="promoDots"></div>
-                <button class="promo-nav" onclick="nextSlide()" aria-label="Berikutnya">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/></svg>
-                </button>
-            </div>
-        </div>
-
-        {{-- Slider --}}
-        <div class="promo-slider fade-up-2">
-            <div class="promo-overflow">
-                <div class="promo-track">
-
-                    {{-- Slide 1: Diskon --}}
-@if($discountedProducts->count() > 0)
-<div class="promo-slide">
-    <div class="bg-gradient-to-r from-red-50 to-orange-50 border border-red-100 rounded-xl p-3 sm:p-4">
-        <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-                <span class="text-base">🔥</span>
-                <p class="text-xs sm:text-sm font-black text-gray-900">Diskon Spesial — hemat hingga {{ $discountedProducts->max('discount_percent') }}%</p>
-            </div>
-            <a href="{{ route('buyer.products') }}" class="text-[10px] font-bold text-red-500 hover:text-red-600 transition whitespace-nowrap hidden sm:block">Lihat semua →</a>
-        </div>
-        <div class="grid gap-2 sm:gap-3" style="grid-template-columns: repeat(5, minmax(0, 120px))">
-            @foreach($discountedProducts->take(5) as $product)
-            <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-red-200 hover:shadow-sm transition-all duration-200">
-                <div class="relative overflow-hidden bg-gray-50" style="aspect-ratio:1/1;width:100%">
-                    <img src="{{ $product->image }}" alt="{{ $product->name }}"
-                        class="w-full h-full object-cover object-center block group-hover:scale-105 transition-transform duration-300"
-                        onerror="this.src='https://via.placeholder.com/200x200/fff5f5/ef4444?text=+'">
-                    <span class="absolute top-1 left-1 px-1 py-0.5 rounded text-[8px] font-black text-white leading-none" style="background:#ef4444">-{{ $product->discount_percent }}%</span>
-                </div>
-                <div class="p-1.5">
-                    <p class="text-[9px] sm:text-[10px] font-semibold text-gray-800 line-clamp-1 leading-tight">{{ $product->name }}</p>
-                    @php $fp = $product->price * (1 - $product->discount_percent / 100); @endphp
-                    <p class="text-[8px] text-gray-400 line-through leading-none mt-0.5">Rp {{ number_format($product->price,0,',','.') }}</p>
-                    <p class="text-[9px] sm:text-[10px] font-black text-red-600 leading-tight">Rp {{ number_format($fp,0,',','.') }}</p>
-                </div>
-            </a>
-            @endforeach
-        </div>
-    </div>
-</div>
-@endif
-
-{{-- Slide 2: Populer --}}
-@if($popularProducts->count() > 0)
-<div class="promo-slide">
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-3 sm:p-4">
-        <div class="flex items-center justify-between mb-3">
-            <div class="flex items-center gap-2">
-                <span class="text-base">⭐</span>
-                <p class="text-xs sm:text-sm font-black text-gray-900">Paling Laris — favorit warga Arradea</p>
-            </div>
-            <a href="{{ route('buyer.products') }}" class="text-[10px] font-bold text-blue-500 hover:text-blue-600 transition whitespace-nowrap hidden sm:block">Lihat semua →</a>
-        </div>
-        <div class="grid gap-2 sm:gap-3" style="grid-template-columns: repeat(5, 1fr)">
-            @foreach($popularProducts->take(5) as $product)
-            <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all duration-200">
-                <div class="relative overflow-hidden bg-gray-50" style="aspect-ratio:1/1;width:100%">
-                    <img src="{{ $product->image }}" alt="{{ $product->name }}"
-                        class="w-full h-full object-cover object-center block group-hover:scale-105 transition-transform duration-300"
-                        onerror="this.src='https://via.placeholder.com/200x200/eff6ff/3b82f6?text=+'">
-                    <span class="absolute top-1 left-1 px-1 py-0.5 rounded text-[8px] font-black text-white leading-none" style="background:#3b82f6">🔥{{ $product->orders_count }}x</span>
-                </div>
-                <div class="p-1.5">
-                    <p class="text-[9px] sm:text-[10px] font-semibold text-gray-800 line-clamp-1 leading-tight">{{ $product->name }}</p>
-                    @if($product->discount_percent > 0)
-                        @php $fp = $product->price * (1 - $product->discount_percent / 100); @endphp
-                        <p class="text-[8px] text-gray-400 line-through leading-none mt-0.5">Rp {{ number_format($product->price,0,',','.') }}</p>
-                        <p class="text-[9px] sm:text-[10px] font-black leading-tight" style="color:#72bf77">Rp {{ number_format($fp,0,',','.') }}</p>
-                    @else
-                        <p class="text-[9px] sm:text-[10px] font-black text-gray-900 leading-tight mt-0.5">Rp {{ number_format($product->price,0,',','.') }}</p>
-                    @endif
-                </div>
-            </a>
-            @endforeach
-        </div>
-    </div>
-</div>
-@endif
-
-                </div>
-            </div>
-
-            {{-- Dots mobile --}}
-            <div class="flex sm:hidden justify-center mt-2.5 gap-1.5" id="promoDotsMobile"></div>
-        </div>
-
-    </div>
-</section>
-
-<script>
-(function() {
-    let cur = 0;
-    const track   = document.querySelector('.promo-track');
-    const slides  = document.querySelectorAll('.promo-slide');
-    const dotsEl  = document.getElementById('promoDots');
-    const dotsElM = document.getElementById('promoDotsMobile');
-    let timer;
-
-    if (!slides.length || !track) return;
-
-    // Build dots for both containers
-    [dotsEl, dotsElM].forEach(function(container) {
-        if (!container) return;
-        slides.forEach(function(_, i) {
-            const d = document.createElement('button');
-            d.className = 'promo-dot' + (i === 0 ? ' active' : '');
-            d.setAttribute('aria-label', 'Slide ' + (i + 1));
-            d.onclick = function() { go(i); reset(); };
-            container.appendChild(d);
-        });
-    });
-
-    function update() {
-        track.style.transform = 'translateX(-' + (cur * 100) + '%)';
-        document.querySelectorAll('.promo-dot').forEach(function(d, i) {
-            d.classList.toggle('active', i % slides.length === cur);
-        });
-    }
-
-    function go(n) { cur = (n + slides.length) % slides.length; update(); }
-    window.nextSlide = function() { go(cur + 1); reset(); };
-    window.prevSlide = function() { go(cur - 1); reset(); };
-
-    function start() { if (slides.length > 1) timer = setInterval(function() { go(cur + 1); }, 5500); }
-    function reset() { clearInterval(timer); start(); }
-
-    update();
-    start();
-
-    // Touch swipe
-    let tx = 0;
-    const wrap = document.querySelector('.promo-overflow');
-    if (wrap) {
-        wrap.addEventListener('touchstart', function(e) { tx = e.changedTouches[0].screenX; clearInterval(timer); }, { passive: true });
-        wrap.addEventListener('touchend', function(e) {
-            const diff = tx - e.changedTouches[0].screenX;
-            if (Math.abs(diff) > 40) diff > 0 ? go(cur + 1) : go(cur - 1);
-            start();
-        }, { passive: true });
-    }
-})();
-</script>
-@endif
-
-
 {{-- CTA BANNER --}}
 <section class="welcome-section bg-[#f7faf7]">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -355,19 +210,21 @@
                 <p class="section-label text-[#72bf77]">Untuk Warga Arradea</p>
                 <h2 class="text-xl sm:text-3xl lg:text-4xl font-black tracking-tight mb-3 sm:mb-4 leading-tight text-white">Punya produk untuk dijual?</h2>
                 <p class="text-white/70 mb-6 sm:mb-8 max-w-2xl mx-auto font-medium text-xs sm:text-base leading-relaxed">Bergabunglah sebagai seller dan mulai berjualan kepada tetangga-tetanggamu. Raih penghasilan tambahan dari rumah.</p>
-                @guest
-                    <a href="{{ route('register') }}" class="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-gray-900 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-95 text-sm sm:text-base" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.4)">
-                        Daftar Jadi Seller
-                        <span class="text-lg sm:text-xl">🚀</span>
-                    </a>
-                @else
-                    @if(!Auth::user()->is_seller && Auth::user()->role !== 'admin')
-                        <a href="{{ route('seller.apply') }}" class="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-gray-900 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-95 text-sm sm:text-base" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.4)">
-                            Buka Toko Sekarang
+                @if(Auth::guest() || (Auth::check() && Auth::user()->role !== 'admin'))
+                    @guest
+                        <a href="{{ route('register') }}" class="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-gray-900 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-95 text-sm sm:text-base" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.4)">
+                            Daftar Jadi Seller
                             <span class="text-lg sm:text-xl">🚀</span>
                         </a>
-                    @endif
-                @endguest
+                    @else
+                        @if(!Auth::user()->is_seller)
+                            <a href="{{ route('seller.apply') }}" class="inline-flex items-center gap-2 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-gray-900 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl active:scale-95 text-sm sm:text-base" style="background:linear-gradient(135deg,#72bf77,#4db85a);box-shadow:0 12px 40px rgba(114,191,119,.4)">
+                                Buka Toko Sekarang
+                                <span class="text-lg sm:text-xl">🚀</span>
+                            </a>
+                        @endif
+                    @endguest
+                @endif
             </div>
         </div>
     </div>

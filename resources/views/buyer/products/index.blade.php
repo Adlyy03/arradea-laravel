@@ -4,7 +4,19 @@
 
 @push('styles')
 <style>
-    /* Mobile product optimizations - Ultra Compact */
+    /* Force 3 columns on mobile */
+    .product-grid {
+        display: grid !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    }
+    
+    @media(min-width: 1024px) {
+        .product-grid {
+            grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+        }
+    }
+    
+    /* Mobile product grid - 3 columns compact */
     @media(max-width:1023px){
         .product-grid { gap: 8px !important; }
         .product-card { border-radius: 10px !important; }
@@ -20,26 +32,28 @@
             object-position: center !important;
             display: block !important;
         }
-        .product-content { padding: 8px !important; }
-        .product-category { font-size: 8px !important; margin-bottom: 2px !important; }
+        .product-content { padding: 7px !important; }
+        .product-category { display: none !important; }
         .product-store { font-size: 9px !important; margin-bottom: 3px !important; }
-        .product-name { font-size: 12px !important; line-height: 1.3 !important; margin-bottom: 6px !important; }
-        .product-price { font-size: 13px !important; }
-        .product-stock { font-size: 9px !important; }
-        .product-btn { padding: 6px 8px !important; font-size: 10px !important; border-radius: 8px !important; }
-        .discount-badge { top: 6px !important; left: 6px !important; padding: 2px 5px !important; font-size: 8px !important; border-radius: 6px !important; }
-        .search-bar { padding: 10px !important; border-radius: 12px !important; }
-        .search-bar input { height: 36px !important; font-size: 12px !important; border-radius: 10px !important; }
-        .search-bar button { height: 36px !important; padding: 0 12px !important; font-size: 11px !important; border-radius: 10px !important; }
-        .category-pills { gap: 6px !important; padding-bottom: 4px !important; }
-        .category-pill { padding: 5px 10px !important; font-size: 10px !important; border-radius: 8px !important; }
-        .results-header { font-size: 11px !important; }
+        .product-name { font-size: 11px !important; line-height: 1.3 !important; margin-bottom: 4px !important; -webkit-line-clamp: 2 !important; }
+        .product-price { font-size: 11px !important; }
+        .product-old-price { font-size: 9px !important; }
+        .product-stock { display: none !important; }
+        .product-btn { padding: 7px 10px !important; font-size: 10px !important; border-radius: 7px !important; }
+        .discount-badge { top: 4px !important; left: 4px !important; padding: 2px 5px !important; font-size: 8px !important; border-radius: 5px !important; }
+        .search-bar { padding: 12px !important; border-radius: 14px !important; }
+        .search-bar input { height: 38px !important; font-size: 13px !important; border-radius: 11px !important; }
+        .search-bar button { height: 38px !important; padding: 0 14px !important; font-size: 12px !important; border-radius: 11px !important; }
+        .category-pills { gap: 7px !important; padding-bottom: 5px !important; }
+        .category-pill { padding: 6px 12px !important; font-size: 11px !important; border-radius: 9px !important; }
+        .results-header { font-size: 12px !important; }
+        .price-row { flex-direction: column !important; align-items: flex-start !important; gap: 2px !important; }
     }
     
     @media(max-width:375px){
-        .product-image-wrapper { max-height: 120px !important; }
-        .product-name { font-size: 11px !important; }
-        .product-price { font-size: 12px !important; }
+        .product-name { font-size: 10px !important; }
+        .product-price { font-size: 10px !important; }
+        .product-btn { font-size: 9px !important; padding: 6px 8px !important; }
     }
 </style>
 @endpush
@@ -85,47 +99,47 @@
         </p>
     </div>
 
-    {{-- Product Grid --}}
-    <div class="product-grid grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+    {{-- Product Grid: 3 cols mobile, 6 cols desktop --}}
+    <div class="product-grid grid grid-cols-3 lg:grid-cols-6 gap-2 lg:gap-4">
         @forelse($products as $product)
         @php
             $isDiscount = $product->discount_percent > 0;
             $finalPrice = $isDiscount ? $product->price * (1 - $product->discount_percent/100) : $product->price;
         @endphp
-        <div class="product-card group bg-white rounded-xl lg:rounded-2xl border border-gray-100 overflow-hidden hover:shadow-lg hover:shadow-green-100/40 hover:border-green-200/50 transition-all duration-300" data-product-id="{{ $product->id }}">
+        <div class="product-card group bg-white rounded-xl border border-gray-100 overflow-hidden hover:shadow-lg hover:shadow-green-100/40 hover:border-green-200/50 transition-all duration-300" data-product-id="{{ $product->id }}">
             <div class="product-image-wrapper relative w-full aspect-square overflow-hidden bg-gray-50">
                 <img src="{{ $product->image ?? 'https://via.placeholder.com/400x400/f0faf1/72bf77?text=Produk' }}"
                     alt="{{ $product->name }}"
                     class="product-image w-full h-full object-cover object-center block transition-transform duration-500 group-hover:scale-105"
                     onerror="this.src='https://via.placeholder.com/400x400/f0faf1/72bf77?text=Produk'">
                 @if($isDiscount)
-                    <span class="discount-badge absolute top-2 lg:top-3 left-2 lg:left-3 px-1.5 lg:px-2 py-0.5 rounded-lg text-[9px] lg:text-[10px] font-black text-white" style="background:#72bf77">-{{ $product->discount_percent }}%</span>
+                    <span class="discount-badge absolute top-2 left-2 px-1.5 py-0.5 rounded-lg text-[9px] font-black text-white" style="background:#72bf77">-{{ $product->discount_percent }}%</span>
                 @endif
                 @if($product->stock === 0)
                     <div class="absolute inset-0 bg-white/70 flex items-center justify-center">
-                        <span class="px-2 lg:px-3 py-1 lg:py-1.5 bg-gray-800 text-white text-[10px] lg:text-xs font-black rounded-lg lg:rounded-xl">Habis</span>
+                        <span class="px-2 py-1 bg-gray-800 text-white text-[9px] font-black rounded-lg">Habis</span>
                     </div>
                 @endif
             </div>
-            <div class="product-content p-3 lg:p-4">
-                <p class="product-category text-[8px] lg:text-[9px] font-black uppercase tracking-wider text-gray-400 mb-0.5">{{ $product->category->name ?? 'Umum' }}</p>
-                <p class="product-store text-[9px] lg:text-[10px] font-bold truncate mb-1" style="color:#72bf77">🏪 {{ $product->store->name ?? 'Arradea' }}</p>
-                <h3 class="product-name font-black text-gray-900 line-clamp-2 text-xs lg:text-sm leading-snug mb-2">{{ $product->name }}</h3>
-                <div class="flex items-end justify-between mb-2 lg:mb-3">
+            <div class="product-content p-2 lg:p-3">
+                <p class="product-category text-[8px] font-black uppercase tracking-wider text-gray-400 mb-0.5 hidden lg:block">{{ $product->category->name ?? 'Umum' }}</p>
+                <p class="product-store text-[8px] lg:text-[10px] font-bold truncate mb-1" style="color:#72bf77">🏪 {{ $product->store->name ?? 'Arradea' }}</p>
+                <h3 class="product-name font-black text-gray-900 line-clamp-2 text-[10px] lg:text-xs leading-snug mb-1.5">{{ $product->name }}</h3>
+                <div class="price-row flex items-end justify-between mb-1.5 lg:mb-2">
                     <div>
                         @if($isDiscount)
-                            <p class="text-[9px] lg:text-[10px] text-gray-400 line-through">Rp {{ number_format($product->price,0,',','.') }}</p>
-                            <p class="product-price font-black text-sm lg:text-base leading-none" style="color:#72bf77">Rp {{ number_format($finalPrice,0,',','.') }}</p>
+                            <p class="product-old-price text-[8px] lg:text-[9px] text-gray-400 line-through">Rp {{ number_format($product->price,0,',','.') }}</p>
+                            <p class="product-price font-black text-[10px] lg:text-sm leading-none" style="color:#72bf77">Rp {{ number_format($finalPrice,0,',','.') }}</p>
                         @else
-                            <p class="product-price font-black text-sm lg:text-base leading-none text-gray-900">Rp {{ number_format($product->price,0,',','.') }}</p>
+                            <p class="product-price font-black text-[10px] lg:text-sm leading-none text-gray-900">Rp {{ number_format($product->price,0,',','.') }}</p>
                         @endif
                     </div>
-                    <span class="product-stock text-[9px] lg:text-[10px] font-bold {{ $product->stock > 5 ? 'text-green-600' : 'text-amber-500' }}">Stok {{ $product->stock }}</span>
+                    <span class="product-stock text-[8px] lg:text-[9px] font-bold {{ $product->stock > 5 ? 'text-green-600' : 'text-amber-500' }} hidden lg:block">Stok {{ $product->stock }}</span>
                 </div>
                 <a href="{{ route('buyer.products.show', $product->id) }}"
-                    class="product-btn block w-full py-2 lg:py-2.5 rounded-lg lg:rounded-xl text-[10px] lg:text-xs font-black text-white text-center transition hover:opacity-90 {{ $product->stock === 0 ? 'opacity-50 pointer-events-none' : '' }}"
+                    class="product-btn block w-full py-1.5 lg:py-2 rounded-lg text-[9px] lg:text-[10px] font-black text-white text-center transition hover:opacity-90 {{ $product->stock === 0 ? 'opacity-50 pointer-events-none' : '' }}"
                     style="background:#72bf77">
-                    {{ $product->stock > 0 ? 'Lihat & Beli' : 'Habis' }}
+                    {{ $product->stock > 0 ? 'Beli' : 'Habis' }}
                 </a>
             </div>
         </div>

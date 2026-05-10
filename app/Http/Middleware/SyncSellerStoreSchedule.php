@@ -27,6 +27,7 @@ class SyncSellerStoreSchedule
         $openTime = (string) $user->open_time;
         $closeTime = (string) $user->close_time;
 
+        // Handle normal hours (e.g., 08:00 - 22:00) and overnight hours (e.g., 22:00 - 02:00)
         $isOpen = $openTime <= $closeTime
             ? ($now >= $openTime && $now <= $closeTime)
             : ($now >= $openTime || $now <= $closeTime);

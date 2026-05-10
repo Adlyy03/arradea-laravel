@@ -39,7 +39,7 @@
     <span x-show="sideOpen" x-cloak class="sb-label">Kelola Produk</span>
 </a>
 
-<a href="{{ route('admin.verifications.index') }}" class="sb-item {{ Request::is('admin/verifications*') ? 'sb-active' : '' }}">
+<a href="{{ route('admin.users.verification') }}" class="sb-item {{ Request::is('admin/users-verification*') ? 'sb-active' : '' }}">
     <span class="sb-icon" style="position:relative">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
         @if($pendingCount > 0)
@@ -52,16 +52,6 @@
     @endif
 </a>
 
-<<<<<<< HEAD
-<a href="{{ route('admin.users.verification') }}" class="sb-item {{ Request::is('admin/users-verification*') ? 'sb-active' : '' }}">
-    <span class="sb-icon">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
-    </span>
-    <span x-show="sideOpen" x-cloak class="sb-label">Verif. Pendaftar</span>
-</a>
-
-=======
->>>>>>> 6a3c91470385ad3c2d6a30f696af018960f026f1
 <div x-show="sideOpen" x-cloak class="sb-section-label">
     <span>Analytics</span>
 </div>

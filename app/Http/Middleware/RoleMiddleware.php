@@ -35,10 +35,18 @@ class RoleMiddleware
         $allowed = collect($roles)
             ->contains(function (string $role) use ($user, $activeMode): bool {
                 if ($role === 'buyer') {
-                    return true; // Everyone can access buyer routes
+                    // Admin tidak bisa akses buyer routes (tidak bisa belanja)
+                    if ($user->role === 'admin') {
+                        return false;
+                    }
+                    return true; // Non-admin dapat akses buyer routes
                 }
 
                 if ($role === 'seller') {
+                    // Admin tidak bisa akses seller routes
+                    if ($user->role === 'admin') {
+                        return false;
+                    }
                     // Check if user is seller AND currently in seller mode
                     return (bool) $user->is_seller 
                         && $user->seller_status === 'approved'

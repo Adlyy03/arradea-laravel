@@ -13,6 +13,11 @@ class CartController extends Controller
      */
     public function index()
     {
+        // Admin tidak bisa belanja
+        if (auth()->user()->role === 'admin') {
+            abort(403, 'Admin tidak memiliki akses ke fitur belanja.');
+        }
+
         $carts = auth()->user()->carts()->with('product.store')->get();
         $totalOriginal = 0;
         $totalFinal = 0;
@@ -32,6 +37,11 @@ class CartController extends Controller
      */
     public function store(Request $request)
     {
+        // Admin tidak bisa belanja
+        if (auth()->user()->role === 'admin') {
+            return back()->withErrors(['access' => 'Admin tidak memiliki akses ke fitur belanja.']);
+        }
+
         $request->validate([
             'product_id' => 'required|exists:products,id',
             'variant_key' => 'nullable|string|max:120',
@@ -108,6 +118,11 @@ class CartController extends Controller
      */
     public function checkout(Request $request)
     {
+        // Admin tidak bisa belanja
+        if (auth()->user()->role === 'admin') {
+            return back()->withErrors(['access' => 'Admin tidak memiliki akses ke fitur belanja.']);
+        }
+
         $validated = $request->validate([
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);

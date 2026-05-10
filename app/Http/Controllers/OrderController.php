@@ -71,6 +71,18 @@ class OrderController extends Controller
     {
         $user = $request->user();
 
+        // Admin tidak bisa belanja
+        if ($user->role === 'admin') {
+            if ($request->expectsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Admin tidak memiliki akses ke fitur belanja.',
+                ], 403);
+            }
+
+            return back()->withErrors(['access' => 'Admin tidak memiliki akses ke fitur belanja.']);
+        }
+
         if ($request->filled('product_id')) {
             $product = Product::findOrFail($request->product_id);
             $variantKey = $request->input('variant_key', 'default');

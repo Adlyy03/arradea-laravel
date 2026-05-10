@@ -585,6 +585,11 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
         return view('profile');
     })->name('profile');
 
+    // Mode Switcher Demo (for testing)
+    Route::get('/mode-switcher-demo', function () {
+        return view('mode-switcher-demo');
+    })->name('mode.switcher.demo');
+
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('/map-users', [AdminUserController::class, 'mapUsers'])->name('admin.map-users');
 
