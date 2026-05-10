@@ -1,0 +1,259 @@
+/* ============================================
+   ARRADEA SPLASH SCREEN STYLES
+   Premium & Fast - Only 1 second!
+   ============================================ */
+
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    overflow: hidden;
+    background: #ffffff;
+}
+
+/* ============================================
+   SPLASH SCREEN CONTAINER
+   ============================================ */
+.splash-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #72bf77 0%, #4db85a 100%);
+    transition: opacity 0.25s ease-in-out, transform 0.25s ease-in-out;
+}
+
+/* ============================================
+   SPLASH CONTENT
+   ============================================ */
+.splash-content {
+    text-align: center;
+    position: relative;
+}
+
+/* ============================================
+   LOGO SECTION
+   ============================================ */
+.splash-logo {
+    margin-bottom: 16px;
+}
+
+.logo-box {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: scale(0);
+    transition: transform 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.logo-letter {
+    font-size: 36px;
+    font-weight: 900;
+    color: #72bf77;
+    line-height: 1;
+}
+
+/* ============================================
+   BRAND SECTION
+   ============================================ */
+.splash-brand {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+}
+
+.brand-title {
+    font-size: 30px;
+    font-weight: 900;
+    color: #ffffff;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+    margin-bottom: 4px;
+}
+
+.brand-subtitle {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-top: 4px;
+}
+
+/* ============================================
+   LOADING BAR SECTION
+   ============================================ */
+.splash-loader {
+    margin-top: 24px;
+    opacity: 0;
+    transition: opacity 0.15s ease-out;
+}
+
+.loader-track {
+    width: 128px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 9999px;
+    margin: 0 auto;
+    overflow: hidden;
+}
+
+.loading-bar {
+    height: 100%;
+    width: 0%;
+    background: #ffffff;
+    border-radius: 9999px;
+    transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+/* Tablet */
+@media (max-width: 768px) {
+    .logo-box {
+        width: 72px;
+        height: 72px;
+        border-radius: 14px;
+    }
+    
+    .logo-letter {
+        font-size: 32px;
+    }
+    
+    .brand-title {
+        font-size: 28px;
+    }
+    
+    .brand-subtitle {
+        font-size: 11px;
+    }
+    
+    .loader-track {
+        width: 112px;
+    }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+    .logo-box {
+        width: 64px;
+        height: 64px;
+        border-radius: 12px;
+    }
+    
+    .logo-letter {
+        font-size: 28px;
+    }
+    
+    .brand-title {
+        font-size: 24px;
+    }
+    
+    .brand-subtitle {
+        font-size: 10px;
+    }
+    
+    .splash-loader {
+        margin-top: 20px;
+    }
+    
+    .loader-track {
+        width: 96px;
+        height: 3px;
+    }
+}
+
+/* ============================================
+   ANIMATIONS & EFFECTS
+   ============================================ */
+
+/* Pulse animation for logo */
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+.logo-box.pulse {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+/* Shimmer effect for loading bar */
+@keyframes shimmer {
+    0% {
+        background-position: -200% center;
+    }
+    100% {
+        background-position: 200% center;
+    }
+}
+
+.loading-bar.shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0.8) 0%,
+        rgba(255, 255, 255, 1) 50%,
+        rgba(255, 255, 255, 0.8) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .splash-screen,
+    .logo-box,
+    .splash-brand,
+    .splash-loader,
+    .loading-bar {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .splash-screen {
+        background: #000000;
+    }
+    
+    .logo-box {
+        border: 2px solid #ffffff;
+    }
+    
+    .brand-title,
+    .brand-subtitle {
+        text-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
+    }
+}
+
+/* ============================================
+   PRINT STYLES
+   ============================================ */
+@media print {
+    .splash-screen {
+        display: none !important;
+    }
+}

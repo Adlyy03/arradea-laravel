@@ -79,6 +79,17 @@
                 </button>
             </div>
         </form>
+
+        {{-- Pengaturan Mode --}}
+            <div class="bg-white rounded-xl lg:rounded-2xl border border-gray-100 overflow-hidden">
+                <div class="px-4 lg:px-5 py-3 lg:py-4 border-b border-gray-50">
+                    <h2 class="text-xs lg:text-sm font-black text-gray-700 uppercase tracking-widest">⚙️ Pengaturan Mode</h2>
+                    <p class="text-[10px] lg:text-xs text-gray-500 mt-1">Pilih mode untuk mengakses fitur yang berbeda</p>
+                </div>
+                <div class="p-4 lg:p-5">
+                    <x-bottom-sheet-switcher :user="Auth::user()" />
+                </div>
+            </div>
     </div>
 </div>
 @endsection

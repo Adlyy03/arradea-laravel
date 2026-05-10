@@ -194,7 +194,7 @@
             @if($pendingCount > 0)<span class="text-[9px] lg:text-[10px] font-black text-amber-500">{{ $pendingCount }} pending</span>@endif
         </a>
         <a href="{{ route('seller.messages') }}" class="quick-link flex flex-col items-center gap-1.5 lg:gap-2 p-3 lg:p-4 rounded-xl lg:rounded-2xl text-center bg-white border border-gray-100 hover:border-green-200 hover:shadow-md transition group">
-            <span class="text-xl lg:text-2xl group-hover:scale-110 transition">�</span>
+            <span class="text-xl lg:text-2xl group-hover:scale-110 transition">💬</span>
             <span class="text-[11px] lg:text-xs font-black text-gray-700">Pesan</span>
         </a>
         <a href="{{ route('seller.analytics') }}" class="quick-link flex flex-col items-center gap-1.5 lg:gap-2 p-3 lg:p-4 rounded-xl lg:rounded-2xl text-center bg-white border border-gray-100 hover:border-green-200 hover:shadow-md transition group">
@@ -202,5 +202,7 @@
             <span class="text-[11px] lg:text-xs font-black text-gray-700">Analitik</span>
         </a>
     </div>
+
+    
 </div>
 @endsection

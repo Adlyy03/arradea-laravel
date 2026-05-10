@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arradea Splash Screen Demo</title>
+    <link rel="stylesheet" href="splash-demo.css">
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="arradea-splash" class="splash-screen">
+        <div class="splash-content">
+            <!-- Logo Container -->
+            <div class="splash-logo">
+                <div class="logo-box">
+                    <span class="logo-letter">A</span>
+                </div>
+            </div>
+            
+            <!-- Brand Name -->
+            <div class="splash-brand">
+                <h1 class="brand-title">Arradea</h1>
+                <p class="brand-subtitle">Marketplace Warga</p>
+            </div>
+            
+            <!-- Loading Bar -->
+            <div class="splash-loader">
+                <div class="loader-track">
+                    <div class="loading-bar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content (akan muncul setelah splash) -->
+    <div id="main-content" style="display: none;">
+        <div style="max-width: 800px; margin: 0 auto; padding: 40px 20px; text-align: center;">
+            <h1 style="font-size: 32px; font-weight: 900; color: #1f2937; margin-bottom: 16px;">
+                Selamat Datang di Arradea! 🎉
+            </h1>
+            <p style="font-size: 18px; color: #6b7280; margin-bottom: 32px;">
+                Marketplace lokal untuk warga sekitar
+            </p>
+            <button onclick="location.reload()" style="background: #72bf77; color: white; padding: 12px 32px; border: none; border-radius: 12px; font-size: 16px; font-weight: 700; cursor: pointer;">
+                Lihat Splash Lagi
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Splash Screen Animation
+        document.addEventListener('DOMContentLoaded', function() {
+            const splash = document.getElementById('arradea-splash');
+            const mainContent = document.getElementById('main-content');
+            const logoBox = document.querySelector('.logo-box');
+            const brand = document.querySelector('.splash-brand');
+            const loader = document.querySelector('.splash-loader');
+            const loadingBar = document.querySelector('.loading-bar');
+
+            // Animation Timeline
+            setTimeout(() => {
+                // Logo scale in
+                logoBox.style.transform = 'scale(1)';
+            }, 100);
+
+            setTimeout(() => {
+                // Brand fade in
+                brand.style.opacity = '1';
+                brand.style.transform = 'translateY(0)';
+            }, 400);
+
+            setTimeout(() => {
+                // Loader fade in
+                loader.style.opacity = '1';
+            }, 550);
+
+            setTimeout(() => {
+                // Loading bar animation
+                loadingBar.style.width = '100%';
+            }, 650);
+
+            // Hide splash and show content
+            setTimeout(() => {
+                splash.style.opacity = '0';
+                splash.style.transform = 'scale(1.05)';
+                
+                setTimeout(() => {
+                    splash.style.display = 'none';
+                    mainContent.style.display = 'block';
+                    document.body.style.overflow = '';
+                }, 250);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

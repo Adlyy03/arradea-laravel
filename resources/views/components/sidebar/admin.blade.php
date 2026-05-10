@@ -5,7 +5,7 @@
     $pendingSellerCount = \App\Models\User::whereNotNull('phone_verified_at')
         ->whereNotNull('access_code_id')->where('seller_status','pending')->where('is_seller',false)->count();
     $pendingCount = $pendingBuyerCount + $pendingSellerCount;
-    $pendingComplaints = \App\Models\Complaint::where('status', 'pending')->count();
+    $pendingComplaints = \App\Models\Complaint::count();
 ?>
 
 <a href="/admin/dashboard" class="sb-item {{ Request::is('admin/dashboard') ? 'sb-active' : '' }}">

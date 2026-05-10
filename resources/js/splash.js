@@ -8,14 +8,14 @@ import { gsap } from 'gsap';
 class SplashScreen {
     constructor() {
         this.splashElement = null;
-        this.isFirstVisit = true; // Selalu muncul setiap refresh!
         this.minDuration = 1000; // Cuma 1 detik!
         this.startTime = Date.now();
     }
 
     create() {
-        // Selalu show, gak pake session lagi!
-        if (!this.isFirstVisit) {
+        // Hanya tampilkan splash screen di halaman welcome (root path)
+        const isWelcomePage = window.location.pathname === '/' || window.location.pathname === '';
+        if (!isWelcomePage) {
             return;
         }
 
