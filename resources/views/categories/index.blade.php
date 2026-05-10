@@ -16,9 +16,13 @@
         @forelse ($categories as $category)
             <div class="group bg-white rounded-2xl lg:rounded-3xl lg:rounded-2xl lg:rounded-3xl lg:rounded-[4rem] p-8 lg:p-6 lg:p-12 shadow-sm hover:shadow-2xl transition-all duration-500 border border-gray-100 overflow-hidden">
                 <div class="relative">
-                    <div class="w-20 h-20 lg:w-24 lg:h-24 bg-primary-50 rounded-2xl lg:rounded-3xl flex items-center justify-center mb-6 lg:mb-8 group-hover:bg-primary-100 transition-colors">
-                        <span class="text-3xl lg:text-4xl font-black text-primary-600">{{ substr($category->name, 0, 1) }}</span>
-                    </div>
+                    @if($category->image && (strpos($category->image, '/') !== false || strpos($category->image, 'http') !== false))
+                        <img src="{{ $category->image }}" alt="{{ $category->name }}" class="w-20 h-20 lg:w-24 lg:h-24 rounded-2xl lg:rounded-3xl object-cover mb-6 lg:mb-8 group-hover:scale-105 transition-transform duration-300">
+                    @else
+                        <div class="w-20 h-20 lg:w-24 lg:h-24 bg-primary-50 rounded-2xl lg:rounded-3xl flex items-center justify-center mb-6 lg:mb-8 group-hover:bg-primary-100 transition-colors">
+                            <span class="text-3xl lg:text-4xl font-black text-primary-600">{{ $category->image ?: substr($category->name, 0, 1) }}</span>
+                        </div>
+                    @endif
                     <h3 class="text-2xl lg:text-3xl font-black text-gray-900 mb-4">{{ $category->name }}</h3>
                     <p class="text-gray-500 font-medium mb-6 lg:mb-8 leading-relaxed">{{ $category->description }}</p>
 

@@ -560,7 +560,11 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
 
     // Categories routes (public)
     Route::get('/categories', function () {
-        $categories = \App\Models\Category::parents()->with('children')->orderBy('sort_order')->get();
+        $categories = \App\Models\Category::select(['id', 'name', 'slug', 'description', 'image', 'sort_order'])
+            ->parents()
+            ->with('children')
+            ->orderBy('sort_order')
+            ->get();
         return view('categories.index', compact('categories'));
     })->name('categories.index');
 
