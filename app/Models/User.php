@@ -118,7 +118,7 @@ class User extends Authenticatable
     public function setActiveMode(string $mode): void
     {
         if (!in_array($mode, ['buyer', 'seller'])) {
-            throw new \InvalidArgumentException("Invalid mode: {$mode}");
+            throw new \InvalidArgumentException("Mode tidak valid: {$mode}");
         }
 
         session(['active_mode' => $mode]);

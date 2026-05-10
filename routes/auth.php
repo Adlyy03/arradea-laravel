@@ -33,7 +33,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
 
     Route::get('/admin/sellers', function () {
         if (auth()->user()->role !== 'admin') {
-            return response()->json(['message' => 'Forbidden'], 403);
+            return response()->json(['message' => 'Terlarang'], 403);
         }
 
         return \App\Models\User::where('is_seller', true)->get();

@@ -40,23 +40,23 @@ class CleanupUnverifiedUsers extends Command
             ->get();
 
         if ($unverifiedUsers->isEmpty()) {
-            $this->info('No unverified users found to cleanup.');
+            $this->info('Tidak ada pengguna yang belum diverifikasi untuk dibersihkan.');
             return 0;
         }
 
         $count = $unverifiedUsers->count();
         
-        $this->info("Found {$count} unverified user(s) older than {$hours} hours.");
+        $this->info("Ditemukan {$count} pengguna yang belum terverifikasi sudah lebih dari {$hours} jam.");
         
-        if ($this->confirm('Do you want to delete these users?', true)) {
+        if ($this->confirm('Apakah Anda ingin menghapus pengguna ini?', true)) {
             foreach ($unverifiedUsers as $user) {
-                $this->line("Deleting user: {$user->name} ({$user->phone}) - Created: {$user->created_at}");
+                $this->line("Menghapus pengguna: {$user->name} ({$user->phone}) - Dibuat: {$user->created_at}");
                 $user->delete();
             }
             
-            $this->info("Successfully deleted {$count} unverified user(s).");
+            $this->info("Berhasil menghapus {$count} pengguna yang belum terverifikasi.");
         } else {
-            $this->info('Cleanup cancelled.');
+            $this->info('Proses Pembersihan dibatalkan.');
         }
 
         return 0;

@@ -40,7 +40,7 @@ class SyncSellerStoreStatusCommand extends Command
                 }
             });
 
-        $this->info("Synced seller statuses. Updated rows: {$updated}");
+        $this->info("Status toko berhasil disinkronkan. total data diperbarui: {$updated}");
 
         return self::SUCCESS;
     }

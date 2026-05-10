@@ -7,7 +7,7 @@ Route::get('/debug-mode', function () {
     $user = auth()->user();
     
     if (!$user) {
-        return response()->json(['error' => 'Not authenticated']);
+        return response()->json(['error' => 'Tidak terautentikasi']);
     }
     
     return response()->json([

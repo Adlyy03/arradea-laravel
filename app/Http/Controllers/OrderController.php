@@ -148,7 +148,7 @@ class OrderController extends Controller
         if ($request->expectsJson()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Order placed successfully.',
+                'message' => 'Pesanan berhasil dibuat.',
                 'data'    => $order,
             ], 201);
         }

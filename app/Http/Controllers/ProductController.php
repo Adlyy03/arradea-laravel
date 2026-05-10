@@ -190,7 +190,7 @@ class ProductController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Product created successfully.',
+            'message' => 'Produk berhasil dibuat.',
             'data'    => $product,
         ], 201);
     }
@@ -210,7 +210,7 @@ class ProductController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Product updated successfully.',
+            'message' => 'Produk berhasil diperbarui.',
             'data'    => $product,
         ]);
     }
@@ -231,7 +231,7 @@ class ProductController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Product deleted successfully.',
+            'message' => 'Produk berhasil dihapus.',
         ]);
     }
 

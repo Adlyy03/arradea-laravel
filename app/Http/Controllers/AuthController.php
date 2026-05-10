@@ -85,7 +85,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Login successful.',
+            'message' => 'Login berhasil.',
             'data'    => [
                 'user'  => $user,
                 'token' => $token,
@@ -123,7 +123,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Logged out successfully.',
+            'message' => 'Berhasil Logout.',
         ]);
     }
 
@@ -189,7 +189,7 @@ class AuthController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Seller mode activated successfully.',
+                'message' => 'Mode seller berhasil diaktifkan.',
                 'data' => $user->fresh()->load('store'),
             ]);
         }
@@ -201,7 +201,7 @@ class AuthController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Seller mode deactivated successfully.',
+            'message' => 'Mode seller berhasil dinonaktifkan.',
             'data' => $user->fresh()->load('store'),
         ]);
     }

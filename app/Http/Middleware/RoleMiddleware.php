@@ -56,7 +56,7 @@ class RoleMiddleware
             if ($request->expectsJson()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Forbidden. You do not have the required role or mode.',
+                    'message' => 'Anda tidak memiliki peran atau mode yang diperlukan.',
                 ], Response::HTTP_FORBIDDEN);
             }
             
