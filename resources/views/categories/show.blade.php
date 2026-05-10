@@ -46,8 +46,8 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-6 lg:gap-12 mb-12 lg:mb-20">
             @foreach ($products as $product)
                 <div class="group bg-white rounded-2xl lg:rounded-3xl lg:rounded-2xl lg:rounded-3xl lg:rounded-[4rem] p-6 lg:p-8 shadow-sm hover:shadow-2xl transition duration-500 border border-gray-100 flex flex-col h-full overflow-hidden">
-                    <div class="relative aspect-square overflow-hidden rounded-2xl lg:rounded-2xl lg:rounded-3xl lg:rounded-[3rem] mb-6 lg:mb-10 shrink-0 shadow-inner">
-                        <img src="{{ $product->image }}" class="w-full h-full object-cover group-hover:scale-125 transition duration-1000">
+                    <div class="relative w-full aspect-square overflow-hidden rounded-2xl lg:rounded-2xl lg:rounded-3xl lg:rounded-[3rem] mb-6 lg:mb-10 shrink-0 shadow-inner">
+                        <img src="{{ $product->image }}" class="w-full h-full object-cover object-center block group-hover:scale-125 transition duration-1000">
                     </div>
                     <div class="flex-1 space-y-4 lg:space-y-6">
                         <div class="space-y-1">

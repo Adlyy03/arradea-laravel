@@ -58,7 +58,7 @@ class AdminController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Seller updated successfully.',
+            'message' => 'Seller berhasil diperbarui.',
             'data'    => $user,
         ]);
     }
@@ -73,7 +73,7 @@ class AdminController extends Controller
         if (! $user->is_seller) {
             return response()->json([
                 'success' => false,
-                'message' => 'User is not a seller.',
+                'message' => 'Pengguna bukan seller.',
             ], 422);
         }
 
@@ -81,7 +81,7 @@ class AdminController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Seller deleted successfully.',
+            'message' => 'Seller berhasil dihapus.',
         ]);
     }
 }

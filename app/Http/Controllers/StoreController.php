@@ -19,7 +19,7 @@ class StoreController extends Controller
         if (! $store) {
             return response()->json([
                 'success' => false,
-                'message' => 'You do not have a store yet.',
+                'message' => 'Anda belum memiliki toko.',
             ], 404);
         }
 
@@ -48,7 +48,7 @@ class StoreController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Store created successfully.',
+            'message' => 'Toko berhasil dibuat.',
             'data'    => $store,
         ], 201);
     }
@@ -64,7 +64,7 @@ class StoreController extends Controller
         if (! $store) {
             return response()->json([
                 'success' => false,
-                'message' => 'You do not have a store to update.',
+                'message' => 'Anda tidak memiliki toko untuk diperbarui.',
             ], 404);
         }
 
@@ -72,7 +72,7 @@ class StoreController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Store updated successfully.',
+            'message' => 'Toko berhasil diperbarui.',
             'data'    => $store,
         ]);
     }

@@ -19,7 +19,7 @@
 
     {{-- Form --}}
     <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-        <form action="{{ route('admin.categories.store') }}" method="POST" class="space-y-6">
+        <form action="{{ route('admin.categories.store') }}" method="POST" enctype="multipart/form-data" class="space-y-6">
             @csrf
 
             {{-- Name --}}
@@ -94,20 +94,62 @@
 
             {{-- Image/Icon --}}
             <div>
-                <label for="image" class="block text-sm font-bold text-gray-700 mb-2">
-                    Icon/Emoji
+                <label class="block text-sm font-bold text-gray-700 mb-2">
+                    Icon/Gambar Kategori
                 </label>
-                <input type="text" 
-                       id="image" 
-                       name="image" 
-                       value="{{ old('image') }}"
-                       class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 transition @error('image') border-red-300 @enderror"
-                       placeholder="Contoh: 🍔 atau URL gambar"
-                       maxlength="255">
-                <p class="mt-1 text-xs text-gray-500">Masukkan emoji atau URL gambar untuk icon kategori</p>
-                @error('image')
-                    <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                @enderror
+                
+                {{-- Tabs for upload type --}}
+                <div class="flex gap-2 mb-4">
+                    <button type="button" id="tabFile" class="px-4 py-2 rounded-lg text-sm font-bold transition" style="background:#72bf77;color:white">
+                        📤 Upload Gambar
+                    </button>
+                    <button type="button" id="tabText" class="px-4 py-2 rounded-lg text-sm font-bold bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
+                        ✏️ Emoji/Teks
+                    </button>
+                </div>
+
+                {{-- File Upload Tab --}}
+                <div id="fileTab" class="space-y-3">
+                    <div class="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center cursor-pointer hover:border-green-400 transition" id="dropZone">
+                        <svg class="w-8 h-8 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <p class="text-sm font-bold text-gray-700">Drag gambar ke sini atau klik untuk browse</p>
+                        <p class="text-xs text-gray-500 mt-1">Format: JPG, PNG (Max: 2MB)</p>
+                        <input type="file" 
+                               id="image" 
+                               name="image"
+                               accept="image/jpeg,image/png,image/gif,image/webp"
+                               class="hidden"
+                               @error('image') aria-invalid="true" @enderror>
+                    </div>
+                    
+                    {{-- Image Preview --}}
+                    <div id="imagePreview" class="hidden">
+                        <img id="previewImage" src="" alt="Preview" class="w-32 h-32 object-cover rounded-lg mx-auto mb-3">
+                        <button type="button" id="removeImage" class="w-full px-3 py-2 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 transition">
+                            ❌ Hapus Gambar
+                        </button>
+                    </div>
+
+                    @error('image')
+                        <p class="text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                {{-- Text Input Tab --}}
+                <div id="textTab" class="hidden">
+                    <input type="text" 
+                           id="image_text" 
+                           name="image_text" 
+                           value="{{ old('image_text') }}"
+                           class="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 transition @error('image_text') border-red-300 @enderror"
+                           placeholder="Contoh: 🍔">
+                    <p class="mt-1 text-xs text-gray-500">Masukkan emoji atau teks untuk icon kategori</p>
+                    @error('image_text')
+                        <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
+                    @enderror
+                </div>
             </div>
 
             {{-- Sort Order --}}
@@ -161,6 +203,87 @@
 </div>
 
 <script>
+// Tab switching for file/text input
+const tabFile = document.getElementById('tabFile');
+const tabText = document.getElementById('tabText');
+const fileTab = document.getElementById('fileTab');
+const textTab = document.getElementById('textTab');
+
+tabFile.addEventListener('click', () => {
+    fileTab.classList.remove('hidden');
+    textTab.classList.add('hidden');
+    tabFile.style.background = '#72bf77';
+    tabFile.style.color = 'white';
+    tabText.style.background = '#f3f4f6';
+    tabText.style.color = '#4b5563';
+});
+
+tabText.addEventListener('click', () => {
+    fileTab.classList.add('hidden');
+    textTab.classList.remove('hidden');
+    tabText.style.background = '#72bf77';
+    tabText.style.color = 'white';
+    tabFile.style.background = '#f3f4f6';
+    tabFile.style.color = '#4b5563';
+});
+
+// File upload handling
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('image');
+const imagePreview = document.getElementById('imagePreview');
+const previewImage = document.getElementById('previewImage');
+const removeImage = document.getElementById('removeImage');
+
+// Click to browse
+dropZone.addEventListener('click', () => fileInput.click());
+
+// Drag and drop
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('border-green-400', 'bg-green-50');
+});
+
+dropZone.addEventListener('dragleave', () => {
+    dropZone.classList.remove('border-green-400', 'bg-green-50');
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('border-green-400', 'bg-green-50');
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+        fileInput.files = files;
+        handleFileSelect(files[0]);
+    }
+});
+
+// File input change
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        handleFileSelect(e.target.files[0]);
+    }
+});
+
+// Handle file selection and preview
+function handleFileSelect(file) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        previewImage.src = e.target.result;
+        imagePreview.classList.remove('hidden');
+        dropZone.classList.add('hidden');
+    };
+    reader.readAsDataURL(file);
+}
+
+// Remove image
+removeImage.addEventListener('click', (e) => {
+    e.preventDefault();
+    fileInput.value = '';
+    imagePreview.classList.add('hidden');
+    dropZone.classList.remove('hidden');
+});
+
 // Auto-generate slug from name
 document.getElementById('name').addEventListener('input', function(e) {
     const slugInput = document.getElementById('slug');

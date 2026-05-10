@@ -62,9 +62,13 @@
                     <tr class="hover:bg-gray-50 transition-colors">
                         <td class="px-5 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold" style="background:rgba(114,191,119,.12);color:#72bf77">
-                                    {{ $category->image ?: substr($category->name, 0, 1) }}
-                                </div>
+                                @if($category->image && (strpos($category->image, '/') !== false || strpos($category->image, 'http') !== false))
+                                    <img src="{{ $category->image }}" alt="{{ $category->name }}" class="w-10 h-10 rounded-xl object-cover">
+                                @else
+                                    <div class="w-10 h-10 rounded-xl flex items-center justify-center text-lg font-bold" style="background:rgba(114,191,119,.12);color:#72bf77">
+                                        {{ $category->image ?: substr($category->name, 0, 1) }}
+                                    </div>
+                                @endif
                                 <div>
                                     <p class="text-sm font-bold text-gray-900">{{ $category->name }}</p>
                                     <p class="text-xs text-gray-400 mt-0.5">{{ $category->slug }}</p>

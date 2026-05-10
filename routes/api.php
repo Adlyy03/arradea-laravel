@@ -45,7 +45,7 @@ Route::middleware(['auth:sanctum', 'arradea.access'])->group(function () {
     
     Route::post('/notifications/mark-read', function (\Illuminate\Http\Request $request) {
         $request->user()->unreadNotifications->markAsRead();
-        return response()->json(['success' => true, 'message' => 'All notifications marked as read']);
+        return response()->json(['success' => true, 'message' => 'Semua notifikasi telah ditandai sebagai telah dibaca']);
     });
 
     // ─── Seller Routes ────────────────────────────────────────────────────────

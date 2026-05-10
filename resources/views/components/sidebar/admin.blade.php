@@ -1,11 +1,11 @@
-@php
+<?php
     $pendingBuyerCount = \App\Models\User::whereNotNull('phone_verified_at')
         ->whereNull('access_code_id')->where('role','!=','admin')
         ->where(fn($q) => $q->whereNull('seller_status')->orWhere('seller_status','none'))->count();
     $pendingSellerCount = \App\Models\User::whereNotNull('phone_verified_at')
         ->whereNotNull('access_code_id')->where('seller_status','pending')->where('is_seller',false)->count();
     $pendingCount = $pendingBuyerCount + $pendingSellerCount;
-@endphp
+?>
 
 <a href="/admin/dashboard" class="sb-item {{ Request::is('admin/dashboard') ? 'sb-active' : '' }}">
     <span class="sb-icon">
@@ -52,6 +52,7 @@
     @endif
 </a>
 
+<<<<<<< HEAD
 <a href="{{ route('admin.users.verification') }}" class="sb-item {{ Request::is('admin/users-verification*') ? 'sb-active' : '' }}">
     <span class="sb-icon">
         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
@@ -59,6 +60,8 @@
     <span x-show="sideOpen" x-cloak class="sb-label">Verif. Pendaftar</span>
 </a>
 
+=======
+>>>>>>> 6a3c91470385ad3c2d6a30f696af018960f026f1
 <div x-show="sideOpen" x-cloak class="sb-section-label">
     <span>Analytics</span>
 </div>

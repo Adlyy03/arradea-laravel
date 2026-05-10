@@ -14,7 +14,7 @@ class CategoryController extends Controller
      */
     public function index()
     {
-        $categories = Category::select(['id', 'name', 'slug', 'parent_id', 'sort_order', 'is_featured'])
+        $categories = Category::select(['id', 'name', 'slug', 'parent_id', 'sort_order', 'is_featured', 'image'])
             ->withCount('products')
             ->with('parent:id,name')
             ->orderBy('sort_order')
@@ -69,10 +69,23 @@ class CategoryController extends Controller
             'slug' => ['nullable', 'string', 'max:255', 'unique:categories,slug'],
             'description' => ['nullable', 'string', 'max:1000'],
             'parent_id' => ['nullable', 'exists:categories,id'],
-            'image' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable'],
+            'image_text' => ['nullable', 'string', 'max:255'],
             'is_featured' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ]);
+
+        // Handle image upload or text input
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('categories', $filename, 'public');
+            $validated['image'] = '/storage/' . $path;
+        } elseif (!empty($validated['image_text'])) {
+            $validated['image'] = $validated['image_text'];
+        }
+        
+        unset($validated['image_text']);
 
         // Auto-generate slug if not provided
         if (empty($validated['slug'])) {
@@ -118,10 +131,23 @@ class CategoryController extends Controller
             'slug' => ['nullable', 'string', 'max:255', 'unique:categories,slug,' . $category->id],
             'description' => ['nullable', 'string', 'max:1000'],
             'parent_id' => ['nullable', 'exists:categories,id'],
-            'image' => ['nullable', 'string', 'max:255'],
+            'image' => ['nullable'],
+            'image_text' => ['nullable', 'string', 'max:255'],
             'is_featured' => ['boolean'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ]);
+
+        // Handle image upload or text input
+        if ($request->hasFile('image')) {
+            $file = $request->file('image');
+            $filename = time() . '_' . $file->getClientOriginalName();
+            $path = $file->storeAs('categories', $filename, 'public');
+            $validated['image'] = '/storage/' . $path;
+        } elseif (!empty($validated['image_text'])) {
+            $validated['image'] = $validated['image_text'];
+        }
+        
+        unset($validated['image_text']);
 
         // Auto-generate slug if not provided
         if (empty($validated['slug'])) {
