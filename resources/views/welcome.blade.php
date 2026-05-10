@@ -210,75 +210,74 @@
                 <div class="promo-track">
 
                     {{-- Slide 1: Diskon --}}
-                    @if($discountedProducts->count() > 0)
-                    <div class="promo-slide">
-                        <div class="bg-gradient-to-r from-red-50 to-orange-50 border border-red-100 rounded-xl p-3 sm:p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-base">🔥</span>
-                                    <p class="text-xs sm:text-sm font-black text-gray-900">Diskon Spesial — hemat hingga {{ $discountedProducts->max('discount_percent') }}%</p>
-                                </div>
-                                <a href="{{ route('buyer.products') }}" class="text-[10px] font-bold text-red-500 hover:text-red-600 transition whitespace-nowrap hidden sm:block">Lihat semua →</a>
-                            </div>
-                            {{-- Horizontal scroll list --}}
-                            <div class="grid grid-cols-4 gap-2 sm:gap-3">
-                                @foreach($discountedProducts->take(4) as $product)
-                                <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-red-200 hover:shadow-sm transition-all duration-200">
-                                    <div class="relative overflow-hidden bg-gray-50" style="height:70px">
-                                        <img src="{{ $product->image }}" alt="{{ $product->name }}"
-                                            class="w-full h-full object-cover object-center block group-hover:scale-105 transition-transform duration-300"
-                                            onerror="this.src='https://via.placeholder.com/200x200/fff5f5/ef4444?text=+'">
-                                        <span class="absolute top-1 left-1 px-1 py-0.5 rounded text-[8px] font-black text-white leading-none" style="background:#ef4444">-{{ $product->discount_percent }}%</span>
-                                    </div>
-                                    <div class="p-1.5">
-                                        <p class="text-[9px] sm:text-[10px] font-semibold text-gray-800 line-clamp-1 leading-tight">{{ $product->name }}</p>
-                                        @php $fp = $product->price * (1 - $product->discount_percent / 100); @endphp
-                                        <p class="text-[8px] text-gray-400 line-through leading-none mt-0.5">Rp {{ number_format($product->price,0,',','.') }}</p>
-                                        <p class="text-[9px] sm:text-[10px] font-black text-red-600 leading-tight">Rp {{ number_format($fp,0,',','.') }}</p>
-                                    </div>
-                                </a>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
-                    @endif
+@if($discountedProducts->count() > 0)
+<div class="promo-slide">
+    <div class="bg-gradient-to-r from-red-50 to-orange-50 border border-red-100 rounded-xl p-3 sm:p-4">
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+                <span class="text-base">🔥</span>
+                <p class="text-xs sm:text-sm font-black text-gray-900">Diskon Spesial — hemat hingga {{ $discountedProducts->max('discount_percent') }}%</p>
+            </div>
+            <a href="{{ route('buyer.products') }}" class="text-[10px] font-bold text-red-500 hover:text-red-600 transition whitespace-nowrap hidden sm:block">Lihat semua →</a>
+        </div>
+        <div class="grid gap-2 sm:gap-3" style="grid-template-columns: repeat(5, minmax(0, 120px))">
+            @foreach($discountedProducts->take(5) as $product)
+            <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-red-200 hover:shadow-sm transition-all duration-200">
+                <div class="relative overflow-hidden bg-gray-50" style="aspect-ratio:1/1;width:100%">
+                    <img src="{{ $product->image }}" alt="{{ $product->name }}"
+                        class="w-full h-full object-cover object-center block group-hover:scale-105 transition-transform duration-300"
+                        onerror="this.src='https://via.placeholder.com/200x200/fff5f5/ef4444?text=+'">
+                    <span class="absolute top-1 left-1 px-1 py-0.5 rounded text-[8px] font-black text-white leading-none" style="background:#ef4444">-{{ $product->discount_percent }}%</span>
+                </div>
+                <div class="p-1.5">
+                    <p class="text-[9px] sm:text-[10px] font-semibold text-gray-800 line-clamp-1 leading-tight">{{ $product->name }}</p>
+                    @php $fp = $product->price * (1 - $product->discount_percent / 100); @endphp
+                    <p class="text-[8px] text-gray-400 line-through leading-none mt-0.5">Rp {{ number_format($product->price,0,',','.') }}</p>
+                    <p class="text-[9px] sm:text-[10px] font-black text-red-600 leading-tight">Rp {{ number_format($fp,0,',','.') }}</p>
+                </div>
+            </a>
+            @endforeach
+        </div>
+    </div>
+</div>
+@endif
 
-                    {{-- Slide 2: Populer --}}
-                    @if($popularProducts->count() > 0)
-                    <div class="promo-slide">
-                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-3 sm:p-4">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-base">⭐</span>
-                                    <p class="text-xs sm:text-sm font-black text-gray-900">Paling Laris — favorit warga Arradea</p>
-                                </div>
-                                <a href="{{ route('buyer.products') }}" class="text-[10px] font-bold text-blue-500 hover:text-blue-600 transition whitespace-nowrap hidden sm:block">Lihat semua →</a>
-                            </div>
-                            <div class="grid grid-cols-4 gap-2 sm:gap-3">
-                                @foreach($popularProducts->take(4) as $product)
-                                <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all duration-200">
-                                    <div class="relative overflow-hidden bg-gray-50" style="height:70px">
-                                        <img src="{{ $product->image }}" alt="{{ $product->name }}"
-                                            class="w-full h-full object-cover object-center block group-hover:scale-105 transition-transform duration-300"
-                                            onerror="this.src='https://via.placeholder.com/200x200/eff6ff/3b82f6?text=+'">
-                                        <span class="absolute top-1 left-1 px-1 py-0.5 rounded text-[8px] font-black text-white leading-none" style="background:#3b82f6">🔥{{ $product->orders_count }}x</span>
-                                    </div>
-                                    <div class="p-1.5">
-                                        <p class="text-[9px] sm:text-[10px] font-semibold text-gray-800 line-clamp-1 leading-tight">{{ $product->name }}</p>
-                                        @if($product->discount_percent > 0)
-                                            @php $fp = $product->price * (1 - $product->discount_percent / 100); @endphp
-                                            <p class="text-[8px] text-gray-400 line-through leading-none mt-0.5">Rp {{ number_format($product->price,0,',','.') }}</p>
-                                            <p class="text-[9px] sm:text-[10px] font-black leading-tight" style="color:#72bf77">Rp {{ number_format($fp,0,',','.') }}</p>
-                                        @else
-                                            <p class="text-[9px] sm:text-[10px] font-black text-gray-900 leading-tight mt-0.5">Rp {{ number_format($product->price,0,',','.') }}</p>
-                                        @endif
-                                    </div>
-                                </a>
-                                @endforeach
-                            </div>
-                        </div>
-                    </div>
+{{-- Slide 2: Populer --}}
+@if($popularProducts->count() > 0)
+<div class="promo-slide">
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl p-3 sm:p-4">
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2">
+                <span class="text-base">⭐</span>
+                <p class="text-xs sm:text-sm font-black text-gray-900">Paling Laris — favorit warga Arradea</p>
+            </div>
+            <a href="{{ route('buyer.products') }}" class="text-[10px] font-bold text-blue-500 hover:text-blue-600 transition whitespace-nowrap hidden sm:block">Lihat semua →</a>
+        </div>
+        <div class="grid gap-2 sm:gap-3" style="grid-template-columns: repeat(5, 1fr)">
+            @foreach($popularProducts->take(5) as $product)
+            <a href="{{ route('buyer.products.show', $product->id) }}" class="group bg-white rounded-lg overflow-hidden border border-gray-100 hover:border-blue-200 hover:shadow-sm transition-all duration-200">
+                <div class="relative overflow-hidden bg-gray-50" style="aspect-ratio:1/1;width:100%">
+                    <img src="{{ $product->image }}" alt="{{ $product->name }}"
+                        class="w-full h-full object-cover object-center block group-hover:scale-105 transition-transform duration-300"
+                        onerror="this.src='https://via.placeholder.com/200x200/eff6ff/3b82f6?text=+'">
+                    <span class="absolute top-1 left-1 px-1 py-0.5 rounded text-[8px] font-black text-white leading-none" style="background:#3b82f6">🔥{{ $product->orders_count }}x</span>
+                </div>
+                <div class="p-1.5">
+                    <p class="text-[9px] sm:text-[10px] font-semibold text-gray-800 line-clamp-1 leading-tight">{{ $product->name }}</p>
+                    @if($product->discount_percent > 0)
+                        @php $fp = $product->price * (1 - $product->discount_percent / 100); @endphp
+                        <p class="text-[8px] text-gray-400 line-through leading-none mt-0.5">Rp {{ number_format($product->price,0,',','.') }}</p>
+                        <p class="text-[9px] sm:text-[10px] font-black leading-tight" style="color:#72bf77">Rp {{ number_format($fp,0,',','.') }}</p>
+                    @else
+                        <p class="text-[9px] sm:text-[10px] font-black text-gray-900 leading-tight mt-0.5">Rp {{ number_format($product->price,0,',','.') }}</p>
                     @endif
+                </div>
+            </a>
+            @endforeach
+        </div>
+    </div>
+</div>
+@endif
 
                 </div>
             </div>
