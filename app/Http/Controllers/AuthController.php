@@ -71,7 +71,13 @@ class AuthController extends Controller
             ]);
         }
 
-        if (! $this->isUserEligibleForAccess($user)) {
+        
+
+        if (! $this->isUserEligibleForAccess($user))     
+        {
+            if ($user->role === 'admin') {
+                return true;
+            }
             return response()->json([
                 'success' => false,
                 'message' => 'Akses ditolak. Akun Anda tidak memenuhi syarat wilayah Arradea.',
