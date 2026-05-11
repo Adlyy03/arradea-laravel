@@ -15,7 +15,7 @@ return new class extends Migration
                 $table->string('phone')->unique();
                 $table->timestamp('phone_verified_at')->nullable();
                 $table->string('wilayah')->nullable();
-                $table->foreignId('access_code_id')->nullable()->constrained();
+                $table->unsignedBigInteger('access_code_id')->nullable();
                 $table->string('password');
                 $table->boolean('is_seller')->default(false);
                 $table->string('seller_status')->default('none')->nullable();
