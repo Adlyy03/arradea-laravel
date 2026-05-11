@@ -77,9 +77,4 @@
     <span x-show="sideOpen" x-cloak class="sb-label">Live Map</span>
 </a>
 
-<a href="{{ route('admin.access-codes.index') }}" class="sb-item {{ Request::is('admin/access-codes*') ? 'sb-active' : '' }}">
-    <span class="sb-icon">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2h-1V9a5 5 0 00-10 0v2H6a2 2 0 00-2 2v6a2 2 0 002 2zm3-10V9a3 3 0 016 0v2H9z"/></svg>
-    </span>
-    <span x-show="sideOpen" x-cloak class="sb-label">Kode Akses</span>
-</a>
+

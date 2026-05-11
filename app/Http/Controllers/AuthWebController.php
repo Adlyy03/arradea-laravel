@@ -271,13 +271,19 @@ class AuthWebController extends Controller
             abort(403, 'Hanya seller yang dapat mengubah status toko.');
         }
 
-        $nextStatus = $user->store_status === 'open' ? 'closed' : 'open';
+        $store = $user->store;
 
-        $user->update([
+        if (! $store) {
+            abort(404, 'Toko tidak ditemukan.');
+        }
+
+        $nextStatus = $store->store_status === 'open' ? 'closed' : 'open';
+
+        $store->update([
             'store_status' => $nextStatus,
         ]);
 
-        return back()->with('success', $nextStatus === 'open' ? 'Toko berhasil dibuka.' : 'Toko berhasil ditutup.');
+        return redirect()->route('seller.dashboard')->with('success', $nextStatus === 'open' ? 'Toko berhasil dibuka.' : 'Toko berhasil ditutup.');
     }
 
     /**
@@ -291,6 +297,12 @@ class AuthWebController extends Controller
             abort(403, 'Hanya seller yang dapat mengatur jadwal toko.');
         }
 
+        $store = $user->store;
+
+        if (! $store) {
+            abort(404, 'Toko tidak ditemukan.');
+        }
+
         $validated = $request->validate([
             'open_time' => ['nullable', 'date_format:H:i'],
             'close_time' => ['nullable', 'date_format:H:i'],
@@ -299,12 +311,22 @@ class AuthWebController extends Controller
 
         $autoSchedule = $request->boolean('auto_schedule');
 
-        $user->update([
-            'open_time' => $validated['open_time'] ?? null,
-            'close_time' => $validated['close_time'] ?? null,
-            'auto_schedule' => $autoSchedule,
-        ]);
+        // Jika auto_schedule dinonaktifkan, set toko buka 24 jam (open_time dan close_time null)
+        if (!$autoSchedule) {
+            $store->update([
+                'open_time' => null,
+                'close_time' => null,
+                'auto_schedule' => false,
+                'store_status' => 'open', // Langsung buka 24 jam
+            ]);
+        } else {
+            $store->update([
+                'open_time' => $validated['open_time'] ?? '00:00',
+                'close_time' => $validated['close_time'] ?? '23:59',
+                'auto_schedule' => true,
+            ]);
+        }
 
-        return back()->with('success', 'Jadwal toko berhasil disimpan.');
+        return redirect()->route('seller.dashboard')->with('success', $autoSchedule ? 'Jadwal toko berhasil disimpan.' : 'Toko sekarang buka 24 jam.');
     }
 }

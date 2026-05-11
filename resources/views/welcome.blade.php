@@ -348,8 +348,8 @@
             <div data-aos="fade-left" data-aos-delay="200" class="relative hidden lg:block h-[450px]">
                 {{-- Main visual with pulse --}}
                 <div class="absolute inset-0 flex items-center justify-center">
-                    <div data-aos="zoom-in" data-aos-delay="400" class="pulse w-80 h-80 rounded-[4rem] flex items-center justify-center text-9xl shadow-2xl shadow-green-200/50" style="background:linear-gradient(135deg,#f0faf1,#d8f3da)">
-                        🏪
+                    <div data-aos="zoom-in" data-aos-delay="400" class="pulse w-80 h-80 rounded-[4rem] flex items-center justify-center shadow-2xl shadow-green-200/50 overflow-hidden" style="background:linear-gradient(135deg,#f0faf1,#d8f3da)">
+                        <img src="{{ asset('images/arradea.jpeg') }}" alt="Arradea" class="w-48 h-48 object-cover rounded-3xl shadow-xl">
                     </div>
                 </div>
 

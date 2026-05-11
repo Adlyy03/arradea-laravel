@@ -105,6 +105,12 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                         </svg>
                         <span class="text-[10px] lg:text-xs font-bold uppercase tracking-wider text-gray-500">{{ $product->store->name ?? 'Arradea' }}</span>
+                        @if($product->store)
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] lg:text-[10px] font-black {{ $product->store->store_status === 'open' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500' }}">
+                                <span class="w-1 lg:w-1.5 h-1 lg:h-1.5 rounded-full {{ $product->store->store_status === 'open' ? 'bg-green-500' : 'bg-gray-400' }} animate-pulse"></span>
+                                {{ $product->store->store_status === 'open' ? 'Buka' : 'Tutup' }}
+                            </span>
+                        @endif
                     </div>
                     <h1 class="product-detail-title text-2xl lg:text-3xl lg:text-4xl font-black text-gray-900 leading-tight">{{ $product->name }}</h1>
                 </div>
@@ -152,6 +158,19 @@
                                 <p class="text-amber-700 text-xs mt-1">Anda tidak bisa membeli produk milik toko sendiri.</p>
                             </div>
                         </div>
+                    @elseif($product->store && $product->store->store_status !== 'open')
+                        <div class="bg-red-50 border-2 border-red-200 rounded-2xl p-6 flex items-start gap-4">
+                            <svg class="w-6 h-6 text-red-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            <div>
+                                <p class="text-red-900 font-bold text-sm">Toko Sedang Tutup</p>
+                                <p class="text-red-700 text-xs mt-1">Toko ini sedang tidak beroperasi. Silakan coba lagi nanti saat toko sudah buka.</p>
+                                @if($product->store->open_time && $product->store->close_time)
+                                    <p class="text-red-600 text-xs mt-2 font-semibold">Jam operasional: {{ substr($product->store->open_time, 0, 5) }} - {{ substr($product->store->close_time, 0, 5) }}</p>
+                                @endif
+                            </div>
+                        </div>
                     @else
                         <form action="{{ route('buyer.cart.store') }}" method="POST" class="space-y-5 bg-white border-2 border-gray-200 rounded-2xl p-6">
                             @csrf
@@ -180,11 +199,11 @@
                             </div>
 
                             <div class="flex flex-col sm:flex-row gap-3 pt-2">
-                                <button type="submit" class="flex-1 px-6 py-4 bg-gradient-to-r from-primary-600 to-green-600 text-white rounded-xl font-black text-base hover:from-primary-700 hover:to-green-700 shadow-lg shadow-primary-200 transition-all active:scale-95 flex items-center justify-center gap-2">
+                                <button type="submit" class="flex-1 px-6 py-4 bg-gradient-to-r from-primary-600 to-green-600 text-white rounded-xl font-black text-base hover:from-primary-700 hover:to-green-700 shadow-lg shadow-primary-200 transition-all active:scale-95 flex items-center justify-center gap-2 {{ $product->stock === 0 ? 'opacity-50 cursor-not-allowed' : '' }}" {{ $product->stock === 0 ? 'disabled' : '' }}>
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
                                     </svg>
-                                    Tambah ke Keranjang
+                                    {{ $product->stock === 0 ? 'Stok Habis' : 'Tambah ke Keranjang' }}
                                 </button>
                                 <a href="{{ route('buyer.cart') }}" class="px-6 py-4 bg-white text-gray-700 border-2 border-gray-200 rounded-xl font-black text-base hover:bg-gray-50 hover:border-gray-300 transition-all text-center flex items-center justify-center gap-2">
                                     Lihat Keranjang

@@ -42,7 +42,7 @@
 @php
     $store        = Auth::user()->store;
     $seller       = Auth::user();
-    $storeStatus  = $seller->store_status ?? 'closed';
+    $storeStatus  = $store->store_status ?? 'closed';
     $pendingCount = $store ? $store->orders()->where('status','pending')->count() : 0;
     $acceptedCount= $store ? $store->orders()->where('status','accepted')->count() : 0;
     $doneCount    = $store ? $store->orders()->where('status','done')->count() : 0;
@@ -118,28 +118,55 @@
     {{-- Store Schedule --}}
     <div class="seller-schedule bg-white rounded-xl lg:rounded-2xl border border-gray-100 p-3 lg:p-5">
         <h2 class="text-xs lg:text-sm font-black text-gray-700 uppercase tracking-wider mb-3 lg:mb-4">⏰ Jadwal Toko</h2>
-        <form method="POST" action="{{ route('seller.store-schedule') }}" class="flex flex-wrap items-end gap-2 lg:gap-4">
+        <form method="POST" action="{{ route('seller.store-schedule') }}" class="space-y-3">
             @csrf
-            <div>
-                <label class="block text-[10px] lg:text-xs font-bold text-gray-500 mb-1 lg:mb-1.5 uppercase tracking-wider">Buka</label>
-                <input type="time" name="open_time" value="{{ old('open_time', $seller->open_time) }}"
-                    class="h-8 lg:h-10 bg-gray-50 border border-gray-200 rounded-lg lg:rounded-xl px-2 lg:px-3 text-xs lg:text-sm font-medium focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)">
-                @error('open_time')<p class="text-[9px] lg:text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
-            </div>
-            <div>
-                <label class="block text-[10px] lg:text-xs font-bold text-gray-500 mb-1 lg:mb-1.5 uppercase tracking-wider">Tutup</label>
-                <input type="time" name="close_time" value="{{ old('close_time', $seller->close_time) }}"
-                    class="h-8 lg:h-10 bg-gray-50 border border-gray-200 rounded-lg lg:rounded-xl px-2 lg:px-3 text-xs lg:text-sm font-medium focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)">
-                @error('close_time')<p class="text-[9px] lg:text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
-            </div>
-            <label class="flex items-center gap-1.5 lg:gap-2 text-xs lg:text-sm font-medium text-gray-700">
-                <input type="checkbox" name="auto_schedule" value="1" {{ old('auto_schedule', $seller->auto_schedule ?? true) ? 'checked' : '' }}
-                    class="w-3.5 lg:w-4 h-3.5 lg:h-4 rounded border-gray-300 text-[#72bf77]">
-                Auto
+            
+            <label class="flex items-center gap-2 lg:gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
+                <input type="checkbox" name="auto_schedule" value="1" {{ old('auto_schedule', $store->auto_schedule ?? false) ? 'checked' : '' }}
+                    class="w-4 lg:w-5 h-4 lg:h-5 rounded border-gray-300 text-[#72bf77]" id="auto-schedule-toggle">
+                <div>
+                    <span class="text-xs lg:text-sm font-bold text-gray-700 block">Jadwal Otomatis</span>
+                    <span class="text-[9px] lg:text-xs text-gray-500">Toko buka/tutup sesuai jam yang ditentukan</span>
+                </div>
             </label>
-            <button type="submit" class="h-8 lg:h-10 px-3 lg:px-5 rounded-lg lg:rounded-xl text-xs lg:text-sm font-bold text-white transition hover:opacity-90" style="background:#72bf77">Simpan</button>
+
+            <div id="schedule-inputs" class="flex flex-wrap items-end gap-2 lg:gap-4" style="display: {{ old('auto_schedule', $store->auto_schedule ?? false) ? 'flex' : 'none' }}">
+                <div>
+                    <label class="block text-[10px] lg:text-xs font-bold text-gray-500 mb-1 lg:mb-1.5 uppercase tracking-wider">Buka</label>
+                    <input type="time" name="open_time" value="{{ old('open_time', $store->open_time ?? '00:00') }}"
+                        class="h-8 lg:h-10 bg-gray-50 border border-gray-200 rounded-lg lg:rounded-xl px-2 lg:px-3 text-xs lg:text-sm font-medium focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)">
+                    @error('open_time')<p class="text-[9px] lg:text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                </div>
+                <div>
+                    <label class="block text-[10px] lg:text-xs font-bold text-gray-500 mb-1 lg:mb-1.5 uppercase tracking-wider">Tutup</label>
+                    <input type="time" name="close_time" value="{{ old('close_time', $store->close_time ?? '23:59') }}"
+                        class="h-8 lg:h-10 bg-gray-50 border border-gray-200 rounded-lg lg:rounded-xl px-2 lg:px-3 text-xs lg:text-sm font-medium focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)">
+                    @error('close_time')<p class="text-[9px] lg:text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                </div>
+            </div>
+
+            <div id="open-24h-notice" class="p-3 bg-green-50 border border-green-200 rounded-lg" style="display: {{ old('auto_schedule', $store->auto_schedule ?? false) ? 'none' : 'block' }}">
+                <p class="text-xs lg:text-sm font-bold text-green-700">🟢 Toko Buka 24 Jam</p>
+                <p class="text-[10px] lg:text-xs text-green-600 mt-1">Pembeli bisa belanja kapan saja</p>
+            </div>
+
+            <button type="submit" class="w-full lg:w-auto h-8 lg:h-10 px-4 lg:px-5 rounded-lg lg:rounded-xl text-xs lg:text-sm font-bold text-white transition hover:opacity-90" style="background:#72bf77">Simpan Jadwal</button>
         </form>
     </div>
+
+    <script>
+    document.getElementById('auto-schedule-toggle')?.addEventListener('change', function() {
+        const scheduleInputs = document.getElementById('schedule-inputs');
+        const open24hNotice = document.getElementById('open-24h-notice');
+        if (this.checked) {
+            scheduleInputs.style.display = 'flex';
+            open24hNotice.style.display = 'none';
+        } else {
+            scheduleInputs.style.display = 'none';
+            open24hNotice.style.display = 'block';
+        }
+    });
+    </script>
 
     {{-- Recent Orders --}}
     <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">

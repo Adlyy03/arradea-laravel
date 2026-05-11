@@ -468,9 +468,7 @@
     {{-- Logo area --}}
     <div class="flex items-center justify-between px-3 lg:px-4 h-[56px] lg:h-[60px] flex-shrink-0 border-b border-white/10">
         <div class="flex items-center gap-2 lg:gap-3">
-            <div class="w-9 lg:w-10 h-9 lg:h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm lg:text-base shadow-lg" style="background:white;color:#1e5128">
-                A
-            </div>
+            <img src="{{ asset('images/arradea.jpeg') }}" alt="Arradea" class="w-9 lg:w-10 h-9 lg:h-10 rounded-xl object-cover shadow-lg flex-shrink-0">
             <div x-show="sideOpen" x-cloak class="overflow-hidden">
                 <span class="text-white font-black text-base lg:text-base tracking-tight block">Arradea</span>
                 <span class="text-[10px] lg:text-[10px] uppercase tracking-wider font-semibold text-white/70">Marketplace</span>
@@ -508,9 +506,7 @@
         </div>
         {{-- Collapsed: just avatar --}}
         <div x-show="!sideOpen" class="flex justify-center">
-            <div class="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm bg-white shadow-md" style="color:#1e5128">
-                {{ strtoupper(substr(Auth::user()->name,0,1)) }}
-            </div>
+            <img src="{{ asset('images/arradea.jpeg') }}" alt="Arradea" class="w-11 h-11 rounded-xl object-cover shadow-md">
         </div>
     </div>
 
@@ -852,18 +848,32 @@ function handleComplaintSubmit(e) {
     const form = e.target;
     const formData = new FormData(form);
     
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    
     fetch(form.action, {
         method: 'POST',
         body: formData,
         headers: {
             'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json'
         }
     })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
+    .then(response => {
+        return response.json().then(data => ({
+            status: response.status,
+            ok: response.ok,
+            data: data
+        }));
+    })
+    .then(result => {
+        if (result.ok) {
             // Close modal
-            document.querySelector('dialog').close();
+            const modal = document.querySelector('dialog[x-ref="complaintModal"]');
+            if (modal) {
+                modal.close();
+            }
             
             // Show success popup
             if (typeof Swal !== 'undefined') {
@@ -871,7 +881,7 @@ function handleComplaintSubmit(e) {
                     icon: 'success',
                     iconColor: '#72bf77',
                     title: '✅ Keluhan Terkirim',
-                    text: 'Keluhan akan dilanjutkan oleh admin',
+                    text: result.data.message || 'Keluhan berhasil dikirim ke admin',
                     confirmButtonText: 'OK',
                     confirmButtonColor: '#72bf77',
                     background: '#fff',
@@ -888,6 +898,13 @@ function handleComplaintSubmit(e) {
             
             // Reset form
             form.reset();
+        } else {
+            // Handle validation errors
+            let errorMessage = result.data.message || 'Gagal mengirim keluhan';
+            if (result.data.errors) {
+                errorMessage = Object.values(result.data.errors)[0][0] || errorMessage;
+            }
+            throw new Error(errorMessage);
         }
     })
     .catch(error => {
@@ -895,9 +912,20 @@ function handleComplaintSubmit(e) {
         if (typeof Swal !== 'undefined') {
             Swal.fire({
                 icon: 'error',
-                title: 'Gagal',
-                text: 'Terjadi kesalahan, silakan coba lagi',
-                confirmButtonColor: '#dc2626'
+                iconColor: '#dc2626',
+                title: '❌ Gagal',
+                text: error.message || 'Terjadi kesalahan, silakan coba lagi',
+                confirmButtonText: 'OK',
+                confirmButtonColor: '#dc2626',
+                background: '#fff',
+                color: '#111827',
+                customClass: {
+                    popup: 'rounded-2xl shadow-2xl',
+                    title: 'text-lg font-black',
+                    htmlContainer: 'text-sm text-gray-500',
+                    confirmButton: 'rounded-xl px-5 py-2.5 font-bold text-sm'
+                },
+                buttonsStyling: false
             });
         }
     });

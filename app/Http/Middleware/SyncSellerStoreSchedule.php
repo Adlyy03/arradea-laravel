@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\User;
+use App\Models\Store;
 use Closure;
 use Illuminate\Http\Request;
 
@@ -19,13 +19,32 @@ class SyncSellerStoreSchedule
     {
         $user = $request->user();
 
-        if (! $user || $user->role !== 'seller' || ! $user->auto_schedule || ! $user->open_time || ! $user->close_time) {
+        if (! $user || $user->role !== 'seller') {
+            return;
+        }
+
+        $store = $user->store;
+
+        if (! $store) {
+            return;
+        }
+
+        // Jika auto_schedule false, toko buka 24 jam (skip sync)
+        if (! $store->auto_schedule) {
+            if ($store->store_status !== 'open') {
+                Store::whereKey($store->id)->update(['store_status' => 'open']);
+            }
+            return;
+        }
+
+        // Jika tidak ada jadwal, skip
+        if (! $store->open_time || ! $store->close_time) {
             return;
         }
 
         $now = now('Asia/Jakarta')->format('H:i:s');
-        $openTime = (string) $user->open_time;
-        $closeTime = (string) $user->close_time;
+        $openTime = (string) $store->open_time;
+        $closeTime = (string) $store->close_time;
 
         // Handle normal hours (e.g., 08:00 - 22:00) and overnight hours (e.g., 22:00 - 02:00)
         $isOpen = $openTime <= $closeTime
@@ -34,8 +53,8 @@ class SyncSellerStoreSchedule
 
         $nextStatus = $isOpen ? 'open' : 'closed';
 
-        if ($user->store_status !== $nextStatus) {
-            User::whereKey($user->id)->update(['store_status' => $nextStatus]);
+        if ($store->store_status !== $nextStatus) {
+            Store::whereKey($store->id)->update(['store_status' => $nextStatus]);
         }
     }
 }

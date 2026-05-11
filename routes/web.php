@@ -210,6 +210,9 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
     Route::middleware('role:seller')->prefix('seller')->group(function () {
         Route::get('/dashboard', fn() => view('seller.dashboard'))->name('seller.dashboard');
         Route::post('/store-status', [AuthWebController::class, 'toggleStoreStatus'])->name('seller.store-status');
+        Route::get('/store-status', function () {
+            return redirect()->route('seller.dashboard')->with('info', 'Gunakan tombol di dashboard untuk mengubah status toko.');
+        });
         Route::post('/store-schedule', [AuthWebController::class, 'updateStoreSchedule'])->name('seller.store-schedule');
         
         // Products CRUD List

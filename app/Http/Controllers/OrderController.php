@@ -84,8 +84,20 @@ class OrderController extends Controller
         }
 
         if ($request->filled('product_id')) {
-            $product = Product::findOrFail($request->product_id);
+            $product = Product::with('store')->findOrFail($request->product_id);
             $variantKey = $request->input('variant_key', 'default');
+
+            // Check if store is open
+            if ($product->store && $product->store->store_status !== 'open') {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Toko sedang tutup. Silakan coba lagi nanti.',
+                    ], 422);
+                }
+
+                return back()->withInput()->withErrors(['store' => 'Toko sedang tutup. Silakan coba lagi nanti.']);
+            }
 
             if ($product->store && (int) $product->store->user_id === (int) $user->id) {
                 if ($request->expectsJson()) {

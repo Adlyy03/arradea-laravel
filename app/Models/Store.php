@@ -15,7 +15,16 @@ class Store extends Model
         'description',
         'address',
         'status',
+        'store_status',
+        'open_time',
+        'close_time',
+        'auto_schedule',
         'approved_at',
+    ];
+
+    protected $casts = [
+        'auto_schedule' => 'boolean',
+        'approved_at' => 'datetime',
     ];
 
     // ─── Relations ──────────────────────────────────────────────────────────────
@@ -36,5 +45,23 @@ class Store extends Model
     public function orders()
     {
         return $this->hasMany(Order::class);
+    }
+
+    // ─── Helper Methods ─────────────────────────────────────────────────────────
+
+    /**
+     * Check if store is currently open
+     */
+    public function isOpen(): bool
+    {
+        return $this->store_status === 'open';
+    }
+
+    /**
+     * Check if store is currently closed
+     */
+    public function isClosed(): bool
+    {
+        return $this->store_status !== 'open';
     }
 }

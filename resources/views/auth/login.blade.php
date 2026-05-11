@@ -10,9 +10,7 @@
         {{-- Logo & Heading --}}
         <div class="text-center mb-8">
             <a href="{{ url('/') }}" class="inline-flex items-center gap-2 mb-6">
-                <div class="w-10 h-10 rounded-2xl bg-[#72bf77] flex items-center justify-center shadow-lg shadow-green-300/30">
-                    <span class="text-white font-black">A</span>
-                </div>
+                <img src="{{ asset('images/arradea.jpeg') }}" alt="Arradea" class="w-10 h-10 rounded-2xl object-cover shadow-lg shadow-green-300/30">
                 <span class="text-2xl font-black text-gray-900">Arradea<span class="text-[#72bf77]">.</span></span>
             </a>
             <h1 class="text-3xl font-black text-gray-900 tracking-tight">Selamat datang kembali</h1>

@@ -52,9 +52,7 @@
 
                 {{-- Logo --}}
                 <a href="{{ url('/') }}" class="flex items-center gap-2 group">
-                    <div class="w-8 h-8 rounded-xl bg-sage flex items-center justify-center shadow-md shadow-green-300/40 group-hover:scale-105 transition">
-                        <span class="text-white font-black text-sm">A</span>
-                    </div>
+                    <img src="{{ asset('images/arradea.jpeg') }}" alt="Arradea" class="w-8 h-8 rounded-xl object-cover shadow-md shadow-green-300/40 group-hover:scale-105 transition">
                     <span class="text-xl font-black text-gray-900 tracking-tight">Arradea<span class="text-sage">.</span></span>
                 </a>
 
@@ -192,7 +190,7 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
                 <div class="col-span-2 md:col-span-1">
                     <div class="flex items-center gap-2 mb-4">
-                        <div class="w-7 h-7 rounded-lg bg-sage flex items-center justify-center"><span class="text-white font-black text-xs">A</span></div>
+                        <img src="{{ asset('images/arradea.jpeg') }}" alt="Arradea" class="w-7 h-7 rounded-lg object-cover shadow-sm">
                         <span class="text-lg font-black text-gray-900">Arradea<span class="text-sage">.</span></span>
                     </div>
                     <p class="text-sm text-gray-500 leading-relaxed">Marketplace warga Arradea. Belanja dari tetangga, untuk tetangga.</p>

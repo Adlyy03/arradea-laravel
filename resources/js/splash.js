@@ -29,8 +29,8 @@ class SplashScreen {
             <div class="splash-content text-center relative">
                 <!-- Logo Container -->
                 <div class="splash-logo mb-4">
-                    <div class="w-20 h-20 mx-auto rounded-2xl bg-white shadow-2xl flex items-center justify-center transform scale-0">
-                        <span class="text-4xl font-black text-[#72bf77]">A</span>
+                    <div class="w-20 h-20 mx-auto rounded-2xl bg-white shadow-2xl flex items-center justify-center transform scale-0 overflow-hidden">
+                        <img src="/images/arradea.jpeg" alt="Arradea" class="w-full h-full object-cover">
                     </div>
                 </div>
                 

@@ -59,7 +59,17 @@
         <span x-show="sideOpen" x-cloak class="sb-label">Laporan</span>
     </a>
 
+    
+
     <div x-show="sideOpen" x-cloak class="sb-section-label"><span>Pengaturan</span></div>
+
+    <a href="{{ route('profile') }}" @click="if(isMobile) sideOpen=false" class="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10 transition-all group">
+            <div class="w-9 h-9 rounded-lg bg-white/10 group-hover:bg-white/20 flex items-center justify-center text-white transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            </div>
+            <span class="text-sm font-bold text-white/90">Profil & Akun</span>
+        </a>
+
 
     <a href="{{ route('seller.settings') }}" class="sb-item {{ Request::is('seller/settings*') ? 'sb-active' : '' }}">
         <span class="sb-icon">

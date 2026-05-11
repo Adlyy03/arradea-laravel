@@ -48,8 +48,13 @@ class CartController extends Controller
             'quantity'   => 'required|integer|min:1',
         ]);
 
-        $product = Product::findOrFail($request->product_id);
+        $product = Product::with('store')->findOrFail($request->product_id);
         $variantKey = $request->input('variant_key', 'default');
+
+        // Check if store is open
+        if ($product->store && $product->store->store_status !== 'open') {
+            return back()->withErrors(['store' => 'Toko sedang tutup. Silakan coba lagi nanti.']);
+        }
 
         if ($variantKey !== 'default' && ! $product->getVariant($variantKey)) {
             return back()->withErrors(['variant_key' => 'Varian produk tidak valid.']);
@@ -127,7 +132,7 @@ class CartController extends Controller
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $carts = auth()->user()->carts()->with('product')->get();
+        $carts = auth()->user()->carts()->with('product.store')->get();
 
         if ($carts->isEmpty()) {
             return back()->withErrors(['cart' => 'Keranjang kosong.']);
@@ -138,6 +143,11 @@ class CartController extends Controller
             if (!$cart->product || $cart->product->price <= 0 || $cart->product->price > 100000000) {
                 $productName = $cart->product?->name ?? 'produk';
                 return back()->withErrors(['price' => "Harga {$productName} tidak valid."]);
+            }
+
+            // Check if store is open
+            if ($cart->product->store && $cart->product->store->store_status !== 'open') {
+                return back()->withErrors(['store' => "Toko {$cart->product->store->name} sedang tutup. Silakan hapus produk dari keranjang atau coba lagi nanti."]);
             }
 
             if ($cart->product->store && (int) $cart->product->store->user_id === (int) auth()->id()) {

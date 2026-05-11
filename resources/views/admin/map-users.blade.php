@@ -30,11 +30,27 @@
 @if(!empty($mapUsers) && count($mapUsers) > 0)
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+.seller-marker {
+    background-color: #72bf77;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.buyer-marker {
+    background-color: #3b82f6;
+    border: 3px solid #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+</style>
 <script>
 document.addEventListener('DOMContentLoaded', function(){
     const users = @json($mapUsers);
     const mapEl = document.getElementById('admin-live-map');
     if(!mapEl || !window.L) return;
+
+    console.log('Total users:', users.length);
 
     const map = L.map('admin-live-map',{scrollWheelZoom:true}).setView([-2.5489,118.0149],5);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(map);
@@ -43,9 +59,22 @@ document.addEventListener('DOMContentLoaded', function(){
     users.forEach(u => {
         const lat = parseFloat(u.latitude), lng = parseFloat(u.longitude);
         if(isNaN(lat)||isNaN(lng)) return;
-        const isSeller = u.is_seller || u.role === 'seller';
+        
+        // Check if user is seller
+        const isSeller = u.is_seller === true || u.is_seller === 1 || u.role === 'seller';
         const color = isSeller ? '#72bf77' : '#3b82f6';
-        const marker = L.circleMarker([lat,lng],{radius:9,color,weight:3,fillColor:color,fillOpacity:0.9}).addTo(map);
+        
+        console.log('User:', u.name, 'is_seller:', u.is_seller, 'role:', u.role, 'isSeller:', isSeller, 'color:', color);
+        
+        const marker = L.circleMarker([lat,lng],{
+            radius: 12,
+            color: '#ffffff',
+            weight: 3,
+            fillColor: color,
+            fillOpacity: 1,
+            stroke: true,
+            className: isSeller ? 'seller-marker' : 'buyer-marker'
+        }).addTo(map);
         
         let popupContent = `
             <div style="min-width:200px;font-family:sans-serif">
