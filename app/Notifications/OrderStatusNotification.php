@@ -28,10 +28,10 @@ class OrderStatusNotification extends Notification implements ShouldQueue
     {
         $statusLabel = [
             'pending' => 'Menunggu Dikonfirmasi',
-            'accepted' => 'Diproses',
-            'rejected' => 'Ditolak',
-            'done' => 'Selesai',
-            'dibatalkan' => 'Dibatalkan',
+            'processing' => 'Diproses',
+            'shipped' => 'Dikirim',
+            'completed' => 'Selesai',
+            'cancelled' => 'Dibatalkan',
         ][$this->order->status] ?? $this->order->status;
 
         return [

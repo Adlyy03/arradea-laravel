@@ -5,21 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    {{-- PWA Meta Tags --}}
-    <meta name="theme-color" content="#72bf77">
+    <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Arradea">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Arradea">
-    
-    {{-- PWA Manifest --}}
     <link rel="manifest" href="/manifest.json">
-    
-    {{-- Apple Touch Icons --}}
-    <link rel="apple-touch-icon" sizes="180x180" href="/images/icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/images/icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/images/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/logo-arradea.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/logo-arradea.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/logo-arradea.png">
     <title>@yield('title', 'Arradea Dashboard')</title>
     
     {{-- Flash Messages for Toast System --}}
@@ -70,8 +65,14 @@
             /* Adjust main content for mobile without sidebar */
             .min-h-screen {
                 margin-left: 0 !important;
-                padding-bottom: 70px !important;
+                padding-bottom: calc(84px + env(safe-area-inset-bottom)) !important;
             }
+        }
+
+        .mobile-content-shell{
+            width:100%;
+            max-width:1200px;
+            margin-inline:auto;
         }
         
         /* Overlay for mobile sidebar */
@@ -387,8 +388,8 @@
             -webkit-backdrop-filter:blur(20px);
             border-top:1px solid rgba(114,191,119,0.15);
             box-shadow:0 -2px 12px rgba(0,0,0,0.08);
-            height:56px;
-            padding:6px 0;
+            min-height:60px;
+            padding:8px 0 calc(8px + env(safe-area-inset-bottom));
         }
         .bottom-nav-item{
             display:flex;flex-direction:column;align-items:center;gap:2px;
@@ -425,12 +426,17 @@
             .floating-chat{
                 width:44px !important;
                 height:44px !important;
-                bottom:70px !important;
-                right:12px !important;
+                bottom:calc(84px + env(safe-area-inset-bottom)) !important;
+                right:calc(14px + env(safe-area-inset-right)) !important;
             }
             .floating-chat svg{
                 width:20px !important;
                 height:20px !important;
+            }
+
+            .floating-support{
+                bottom:calc(146px + env(safe-area-inset-bottom)) !important;
+                right:calc(14px + env(safe-area-inset-right)) !important;
             }
         }
     </style>
@@ -468,9 +474,7 @@
     {{-- Logo area --}}
     <div class="flex items-center justify-between px-3 lg:px-4 h-[56px] lg:h-[60px] flex-shrink-0 border-b border-white/10">
         <div class="flex items-center gap-2 lg:gap-3">
-            <div class="w-9 lg:w-10 h-9 lg:h-10 rounded-xl flex-shrink-0 flex items-center justify-center font-black text-sm lg:text-base shadow-lg" style="background:white;color:#1e5128">
-                A
-            </div>
+            <img src="/icons/logo-arradea.png" alt="Arradea" class="w-9 lg:w-10 h-9 lg:h-10 rounded-xl flex-shrink-0 object-cover shadow-lg" style="background:white;">
             <div x-show="sideOpen" x-cloak class="overflow-hidden">
                 <span class="text-white font-black text-base lg:text-base tracking-tight block">Arradea</span>
                 <span class="text-[10px] lg:text-[10px] uppercase tracking-wider font-semibold text-white/70">Marketplace</span>
@@ -569,19 +573,17 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
-            <div class="hidden lg:flex relative">
-                <svg class="absolute left-2.5 top-1.5 w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-                <input type="text" placeholder="Cari..." class="h-7 w-40 bg-gray-100/80 border border-gray-200/60 rounded-lg pl-7 pr-2 text-xs focus:outline-none focus:ring-2 focus:ring-sage/30 focus:border-sage/50 transition">
-            </div>
-            
             <div class="w-8 h-8 lg:w-7 lg:h-7 rounded-lg flex items-center justify-center font-bold text-xs" style="background:rgba(114,191,119,.2);color:#3fa348">
                 {{ strtoupper(substr(Auth::user()->name,0,1)) }}
             </div>
+            {{-- PWA install button (explicit) --}}
+            <button id="pwa-install-btn" type="button" class="hidden lg:inline-flex items-center gap-2 px-3 py-2 rounded-full bg-black text-white text-sm font-semibold ml-3 transition" aria-hidden="true">Tambahkan ke Beranda</button>
         </div>
     </header>
 
     {{-- CONTENT --}}
-    <main class="flex-1 p-3 lg:p-4">
+    <main class="flex-1 px-4 sm:px-5 lg:p-4 pt-3 pb-4 lg:pb-4">
+        <div class="mobile-content-shell">
         @if(session('success'))
             <div class="mb-4 flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-2xl text-green-700 text-sm font-semibold fade-up">
                 <div class="w-6 h-6 rounded-full bg-green-500 flex items-center justify-center text-white flex-shrink-0">
@@ -597,12 +599,13 @@
             </div>
         @endif
         @yield('content')
+        </div>
     </main>
 </div>
 
 {{-- BOTTOM NAV mobile --}}
 <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-30 bottom-nav">
-    <div class="flex items-center justify-around px-1 py-2 max-w-md mx-auto">
+    <div class="flex items-center justify-around px-3 pt-1.5 pb-0.5 max-w-md sm:max-w-lg mx-auto">
         @if(Auth::user()->role !== 'admin')
             @php
                 $activeMode = Auth::user()->getActiveMode();
@@ -801,7 +804,7 @@
 {{-- Floating Customer Service Button (Non-Admin Only) --}}
 @if(Auth::check() && Auth::user()->role !== 'admin')
 <button @click="$refs.complaintModal.showModal()" 
-        class="fixed bottom-[136px] lg:bottom-6 right-4 lg:right-6 z-40 w-12 h-12 lg:w-14 lg:h-14 rounded-full shadow-xl flex items-center justify-center text-white transition-all duration-300 hover:scale-110 active:scale-95"
+    class="floating-support fixed bottom-[136px] lg:bottom-6 right-4 lg:right-6 z-40 w-12 h-12 lg:w-14 lg:h-14 rounded-full shadow-xl flex items-center justify-center text-white transition-all duration-300 hover:scale-110 active:scale-95"
         style="background:linear-gradient(135deg,#72bf77,#4db85a)">
     <svg class="w-5 h-5 lg:w-6 lg:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -909,26 +912,6 @@ function handleComplaintSubmit(e) {
 
 @stack('scripts')
 
-{{-- PWA Service Worker Registration --}}
-<script>
-    // Register Service Worker
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js')
-                .then(registration => {
-                    console.log('✅ Service Worker registered:', registration.scope);
-                })
-                .catch(error => {
-                    console.error('❌ Service Worker registration failed:', error);
-                });
-        });
-    }
-
-    // Detect if running as PWA
-    if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-        console.log('🚀 Running as PWA');
-        document.body.classList.add('pwa-mode');
-    }
-</script>
+<script defer src="/js/pwa.js"></script>
 </body>
 </html>

@@ -21,7 +21,7 @@
                         <a href="{{ route('seller.dashboard') }}" class="inline-flex mt-6 items-center justify-center rounded-2xl lg:rounded-3xl bg-primary-700 text-white px-6 py-4 font-black hover:bg-primary-800 transition">Buka Dashboard Seller</a>
                     </div>
                 @else
-                    <form action="{{ route('seller.apply.store') }}" method="POST" class="space-y-8">
+                    <form action="{{ route('seller.apply.store') }}" method="POST" enctype="multipart/form-data" class="space-y-8">
                         @csrf
 
                         <div class="rounded-2xl lg:rounded-3xl border border-gray-100 p-8 bg-gray-50">
@@ -30,11 +30,20 @@
                                 <div>
                                     <label class="block text-sm font-black uppercase tracking-widest text-gray-400 mb-3">Nama Toko</label>
                                     <input type="text" name="store_name" value="{{ old('store_name', $user->store->name ?? '') }}" required class="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 text-lg font-bold focus:border-primary-600 focus:outline-none" placeholder="Contoh: Toko Gadget Jakarta">
+                                    @error('store_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-black uppercase tracking-widest text-gray-400 mb-3">Logo Toko</label>
+                                    <input type="file" name="store_image" accept="image/*" class="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 text-sm font-bold focus:border-primary-600 focus:outline-none file:mr-4 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-primary-600 file:text-white file:font-bold">
+                                    <p class="text-xs text-gray-500 mt-2">Format: JPG, PNG, WebP. Maksimal 2MB.</p>
+                                    @error('store_image')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                                 </div>
 
                                 <div>
                                     <label class="block text-sm font-black uppercase tracking-widest text-gray-400 mb-3">Deskripsi Toko</label>
                                     <textarea name="store_description" rows="5" class="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 text-lg font-bold focus:border-primary-600 focus:outline-none" placeholder="Jelaskan singkat tentang toko dan produk Anda.">{{ old('store_description', $user->store->description ?? '') }}</textarea>
+                                    @error('store_description')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                                 </div>
 
                                 <div>
@@ -47,6 +56,7 @@
                                         class="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 text-lg font-bold focus:border-primary-600 focus:outline-none"
                                         placeholder="Contoh: Jalan Merdeka No. 22, Jakarta"
                                     >
+                                    @error('store_address')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                                     <input type="hidden" id="latitude" name="latitude" value="{{ old('latitude', $user->latitude) }}">
                                     <input type="hidden" id="longitude" name="longitude" value="{{ old('longitude', $user->longitude) }}">
 
@@ -70,6 +80,45 @@
                                             <div id="seller-location-map" class="h-64 w-full"></div>
                                         </div>
                                     </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="rounded-2xl lg:rounded-3xl border border-amber-200 p-8 bg-amber-50">
+                            <h2 class="text-xl font-black text-gray-900 mb-4">⚡ Pembayaran QRIS (Wajib)</h2>
+                            <p class="text-sm text-gray-600 mb-6">Upload QRIS untuk menerima pembayaran dari pembeli. Pastikan QRIS aktif dan sesuai dengan nama toko.</p>
+                            
+                            <div class="space-y-6">
+                                <div>
+                                    <label class="block text-sm font-black uppercase tracking-widest text-gray-400 mb-3">Nama Penerima</label>
+                                    <input type="text" name="payment_name" value="{{ old('payment_name', $user->payment_name ?? '') }}" required class="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 text-lg font-bold focus:border-primary-600 focus:outline-none" placeholder="Contoh: PT Toko Gadget">
+                                    @error('payment_name')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-black uppercase tracking-widest text-gray-400 mb-3">Jenis Pembayaran</label>
+                                    <select name="payment_type" required class="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 text-lg font-bold focus:border-primary-600 focus:outline-none">
+                                        <option value="">Pilih Jenis</option>
+                                        <option value="qris" {{ old('payment_type', $user->payment_type ?? '') === 'qris' ? 'selected' : '' }}>QRIS</option>
+                                        <option value="gopay" {{ old('payment_type', $user->payment_type ?? '') === 'gopay' ? 'selected' : '' }}>GoPay</option>
+                                        <option value="ovo" {{ old('payment_type', $user->payment_type ?? '') === 'ovo' ? 'selected' : '' }}>OVO</option>
+                                        <option value="dana" {{ old('payment_type', $user->payment_type ?? '') === 'dana' ? 'selected' : '' }}>DANA</option>
+                                        <option value="shopeepay" {{ old('payment_type', $user->payment_type ?? '') === 'shopeepay' ? 'selected' : '' }}>ShopeePay</option>
+                                    </select>
+                                    @error('payment_type')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-black uppercase tracking-widest text-gray-400 mb-3">Nomor/ID Pembayaran</label>
+                                    <input type="text" name="payment_number" value="{{ old('payment_number', $user->payment_number ?? '') }}" class="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 text-lg font-bold focus:border-primary-600 focus:outline-none" placeholder="Contoh: 081234567890">
+                                    @error('payment_number')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
+                                </div>
+
+                                <div>
+                                    <label class="block text-sm font-black uppercase tracking-widest text-gray-400 mb-3">Upload QRIS <span class="text-red-500">*</span></label>
+                                    <input type="file" name="qris_image" accept="image/*" required class="w-full rounded-2xl border border-gray-200 bg-white px-6 py-4 text-sm font-bold focus:border-primary-600 focus:outline-none file:mr-4 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-amber-600 file:text-white file:font-bold">
+                                    <p class="text-xs text-gray-500 mt-2">Format: JPG, PNG, WebP. Maksimal 4MB. QRIS harus jelas dan dapat di-scan.</p>
+                                    @error('qris_image')<p class="text-xs text-red-500 mt-1">{{ $message }}</p>@enderror
                                 </div>
                             </div>
                         </div>

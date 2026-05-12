@@ -60,6 +60,7 @@ Route::middleware(['auth:sanctum', 'arradea.access'])->group(function () {
         Route::post('/products',               [ProductController::class, 'store']);
         Route::put('/products/{product}',      [ProductController::class, 'update']);
         Route::delete('/products/{product}',   [ProductController::class, 'destroy']);
+        Route::patch('/products/{product}/toggle-active', [ProductController::class, 'toggleActive']);
 
         // Order management
         Route::put('/orders/{order}/status', [OrderController::class, 'updateStatus']);

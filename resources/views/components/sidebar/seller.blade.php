@@ -1,6 +1,7 @@
 {{-- Seller Sidebar Nav --}}
 @php
-    $sellerPendingOrders = Auth::user()->store ? Auth::user()->store->orders()->where('status','pending')->count() : 0;
+    $sellerPendingOrders = Auth::user()->store ? Auth::user()->store->orders()->whereIn('status', ['pending', 'processing'])->count() : 0;
+    $sellerWaitingPayments = Auth::user()->store ? Auth::user()->store->orders()->where('payment_method', 'qris')->where('payment_status', 'waiting_confirmation')->count() : 0;
     $sellerUnread = \App\Models\Message::whereHas('chat', fn($q) => $q->where('seller_id', Auth::id()))
                         ->where('sender_id','!=',Auth::id())->where('is_read',false)->count();
     $sellerStatus = Auth::user()->seller_status ?? 'none';
@@ -39,6 +40,17 @@
         @endif
     </a>
 
+    <a href="{{ route('seller.payments') }}" class="sb-item {{ Request::is('seller/payments*') ? 'sb-active' : '' }}">
+        <span class="sb-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M3 7h18M3 12h18M3 17h18M6 7v10m12-10v10"/></svg>
+        </span>
+        <span x-show="sideOpen" x-cloak class="sb-label flex-1">Konfirmasi Pembayaran</span>
+        @if($sellerWaitingPayments > 0)
+            <span x-show="sideOpen" x-cloak class="sb-badge sb-badge-green">{{ $sellerWaitingPayments }}</span>
+            <span x-show="!sideOpen" class="sb-dot sb-dot-green"></span>
+        @endif
+    </a>
+
     <a href="{{ route('seller.messages') }}" class="sb-item {{ Request::is('seller/messages*') ? 'sb-active' : '' }}">
         <span class="sb-icon">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
@@ -59,7 +71,14 @@
         <span x-show="sideOpen" x-cloak class="sb-label">Laporan</span>
     </a>
 
-    <div x-show="sideOpen" x-cloak class="sb-section-label"><span>Pengaturan</span></div>
+    <div x-show="sideOpen" x-cloak class="sb-section-label"><span>Akun</span></div>
+
+    <a href="{{ route('profile') }}" class="sb-item {{ Request::is('profile*') ? 'sb-active' : '' }}">
+        <span class="sb-icon">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7"/></svg>
+        </span>
+        <span x-show="sideOpen" x-cloak class="sb-label">Profil & Akun</span>
+    </a>
 
     <a href="{{ route('seller.settings') }}" class="sb-item {{ Request::is('seller/settings*') ? 'sb-active' : '' }}">
         <span class="sb-icon">
@@ -123,6 +142,13 @@
                 <span class="text-xl font-black text-white mb-1">{{ $sellerPendingOrders }}</span>
                 <span class="text-[9px] uppercase tracking-wider text-white/60 font-bold">Pesanan</span>
             </a>
+            <a href="{{ route('seller.payments') }}" @click="if(isMobile) sideOpen=false" class="flex flex-col items-center justify-center p-3 rounded-lg bg-black/20 hover:bg-black/30 border border-white/5 transition-all relative">
+                @if($sellerWaitingPayments > 0)
+                    <span class="absolute top-2.5 right-2.5 w-2 h-2 bg-green-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(74,222,128,0.8)]"></span>
+                @endif
+                <span class="text-xl font-black text-white mb-1">{{ $sellerWaitingPayments }}</span>
+                <span class="text-[9px] uppercase tracking-wider text-white/60 font-bold">Pembayaran</span>
+            </a>
             <a href="{{ route('seller.messages') }}" @click="if(isMobile) sideOpen=false" class="flex flex-col items-center justify-center p-3 rounded-lg bg-black/20 hover:bg-black/30 border border-white/5 transition-all relative">
                 @if($sellerUnread > 0)
                     <span class="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"></span>
@@ -154,6 +180,13 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.75" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
             </div>
             <span class="text-sm font-bold text-white/90">Pengaturan Toko</span>
+        </a>
+
+        <a href="{{ route('profile') }}" @click="if(isMobile) sideOpen=false" class="w-full flex items-center gap-3 p-3 rounded-xl bg-white/5 hover:bg-white/10 border border-transparent hover:border-white/10 transition-all group {{ Request::is('profile*') ? 'ring-1 ring-white/20' : '' }}">
+            <div class="w-9 h-9 rounded-lg bg-white/10 group-hover:bg-white/20 flex items-center justify-center text-white transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
+            </div>
+            <span class="text-sm font-bold text-white/90">Profil & Akun</span>
         </a>
     </div>
 </div>

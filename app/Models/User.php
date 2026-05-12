@@ -35,6 +35,10 @@ class User extends Authenticatable
         'close_time',
         'auto_schedule',
         'preferred_mode',
+        'qris_image',
+        'payment_name',
+        'payment_type',
+        'payment_number',
     ];
 
     protected $hidden = [
@@ -57,6 +61,10 @@ class User extends Authenticatable
             'seller_applied_at'  => 'datetime',
             'seller_rejected_at' => 'datetime',
             'seller_approved_at' => 'datetime',
+            'payment_name'       => 'string',
+            'payment_type'       => 'string',
+            'payment_number'     => 'string',
+            'qris_image'         => 'string',
             'password'           => 'hashed',
         ];
     }
@@ -139,5 +147,10 @@ class User extends Authenticatable
     public function canSwitchToSellerMode(): bool
     {
         return $this->is_seller && $this->seller_status === 'approved';
+    }
+
+    public function hasQrisPaymentSetup(): bool
+    {
+        return filled($this->qris_image) && filled($this->payment_name);
     }
 }

@@ -8,7 +8,7 @@
         <div class="text-center mb-8">
             <a href="{{ url('/') }}" class="inline-flex items-center gap-2 mb-6">
                 <div class="w-10 h-10 rounded-2xl bg-[#72bf77] flex items-center justify-center shadow-lg shadow-green-300/30">
-                    <span class="text-white font-black">A</span>
+                    <img src="/icons/logo-arradea.png" alt="Arradea" class="w-6 h-6 object-cover">
                 </div>
                 <span class="text-2xl font-black text-gray-900">Arradea<span class="text-[#72bf77]">.</span></span>
             </a>

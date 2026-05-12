@@ -11,11 +11,10 @@
     $isSellerView = $order->user_id !== auth()->id();
     $statusMap = [
         'pending'    => ['Menunggu',  'bg-amber-100 text-amber-700'],
-        'accepted'   => ['Diproses',  'bg-blue-100 text-blue-700'],
+        'processing' => ['Diproses',  'bg-blue-100 text-blue-700'],
         'shipped'    => ['Dikirim',   'bg-purple-100 text-purple-700'],
-        'done'       => ['Selesai',   'bg-green-100 text-green-700'],
-        'rejected'   => ['Ditolak',   'bg-red-100 text-red-700'],
-        'dibatalkan' => ['Dibatalkan','bg-gray-100 text-gray-500'],
+        'completed'  => ['Selesai',   'bg-green-100 text-green-700'],
+        'cancelled'  => ['Dibatalkan','bg-gray-100 text-gray-500'],
     ];
     [$statusLabel, $statusClass] = $statusMap[$order->status] ?? [$order->status, 'bg-gray-100 text-gray-500'];
     $backRoute = $order->user_id === auth()->id() ? route('buyer.orders') : route('seller.orders');
@@ -51,7 +50,7 @@
                 @if($isSellerView && $order->status === 'pending')
                 <form action="/web/order/{{ $order->id }}/status" method="POST" class="inline">
                     @csrf @method('PUT')
-                    <input type="hidden" name="status" value="accepted">
+                    <input type="hidden" name="status" value="processing">
                     <button type="submit" class="px-2 lg:px-3 py-1 lg:py-1.5 rounded-lg text-[9px] lg:text-[10px] font-black text-white transition hover:opacity-80" style="background:#72bf77">Proses</button>
                 </form>
                 @endif
@@ -76,7 +75,21 @@
              style="height:50vh;min-height:280px;max-height:520px;scroll-behavior:smooth;">
 
             @forelse($messages as $message)
-            @php $isOwn = $message->sender_id === auth()->id(); @endphp
+            @php 
+                $isOwn = $message->sender_id === auth()->id();
+                // Check if message contains payment proof
+                $hasPaymentProof = str_contains($message->message, '[BUKTI_PEMBAYARAN:');
+                $paymentProofPath = null;
+                $cleanMessage = $message->message;
+                
+                if ($hasPaymentProof) {
+                    preg_match('/\[BUKTI_PEMBAYARAN:(.*?)\]/', $message->message, $matches);
+                    if (!empty($matches[1])) {
+                        $paymentProofPath = $matches[1];
+                        $cleanMessage = str_replace($matches[0], '', $message->message);
+                    }
+                }
+            @endphp
             <div class="flex {{ $isOwn ? 'justify-end' : 'justify-start' }}" data-message-id="{{ $message->id }}">
                 @if(!$isOwn)
                 <div class="w-7 h-7 rounded-xl flex items-center justify-center text-[10px] font-black flex-shrink-0 mr-2 mt-auto mb-0.5"
@@ -90,7 +103,18 @@
                             ? 'text-white rounded-br-md'
                             : 'bg-white border border-gray-100 text-gray-900 shadow-sm rounded-bl-md' }}"
                          style="{{ $isOwn ? 'background:#3fa348' : '' }}">
-                        {{ $message->message }}
+                        {!! nl2br(e(trim($cleanMessage))) !!}
+                        
+                        @if($paymentProofPath)
+                        <div class="mt-2 rounded-xl overflow-hidden border-2 {{ $isOwn ? 'border-white/20' : 'border-gray-200' }}">
+                            <a href="{{ asset('storage/'.$paymentProofPath) }}" target="_blank" class="block">
+                                <img src="{{ asset('storage/'.$paymentProofPath) }}" alt="Bukti Pembayaran" class="w-full max-w-xs rounded-lg">
+                            </a>
+                            <div class="px-2 py-1.5 text-[10px] font-bold {{ $isOwn ? 'bg-white/10 text-white' : 'bg-gray-50 text-gray-600' }}">
+                                📸 Bukti Pembayaran - Klik untuk memperbesar
+                            </div>
+                        </div>
+                        @endif
                     </div>
                     <span class="text-[9px] font-bold text-gray-400 px-1">{{ $message->created_at->diffForHumans() }}</span>
                 </div>

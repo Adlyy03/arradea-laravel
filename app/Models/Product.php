@@ -22,6 +22,7 @@ class Product extends Model
         'stock',
         'image',
         'variants',
+        'is_active',
     ];
 
     protected $casts = [
@@ -31,6 +32,7 @@ class Product extends Model
         'discount_end_at' => 'datetime',
         'stock' => 'integer',
         'variants' => 'array',
+        'is_active' => 'boolean',
     ];
 
     protected $appends = [

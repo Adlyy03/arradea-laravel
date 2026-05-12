@@ -52,19 +52,17 @@
                                 @php
                                     $orderStatusColors = [
                                         'pending' => 'bg-amber-100 text-amber-700',
-                                        'accepted' => 'bg-blue-100 text-blue-700',
+                                        'processing' => 'bg-blue-100 text-blue-700',
                                         'shipped' => 'bg-purple-100 text-purple-700',
-                                        'done' => 'bg-green-100 text-green-700',
-                                        'rejected' => 'bg-red-100 text-red-700',
-                                        'dibatalkan' => 'bg-gray-200 text-gray-700',
+                                        'completed' => 'bg-green-100 text-green-700',
+                                        'cancelled' => 'bg-gray-200 text-gray-700',
                                     ];
                                     $orderStatusLabels = [
                                         'pending' => 'Menunggu',
-                                        'accepted' => 'Diproses',
+                                        'processing' => 'Diproses',
                                         'shipped' => 'Dikirim',
-                                        'done' => 'Selesai',
-                                        'rejected' => 'Ditolak',
-                                        'dibatalkan' => 'Dibatalkan',
+                                        'completed' => 'Selesai',
+                                        'cancelled' => 'Dibatalkan',
                                     ];
                                 @endphp
                                 <span class="{{ $orderStatusColors[$order->status] ?? 'bg-gray-100 text-gray-500' }} px-5 py-2.5 rounded-3xl text-[10px] font-black uppercase tracking-widest">{{ $orderStatusLabels[$order->status] ?? $order->status }}</span>

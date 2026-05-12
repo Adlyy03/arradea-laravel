@@ -5,6 +5,18 @@
 
 @section('content')
 <div class="space-y-6 lg:space-y-12">
+    @php
+        $seller = auth()->user();
+        $paymentOptions = [
+            'qris' => 'QRIS',
+            'dana' => 'DANA',
+            'gopay' => 'GoPay',
+            'ovo' => 'OVO',
+            'shopeepay' => 'ShopeePay',
+            'bank' => 'Transfer Bank',
+        ];
+    @endphp
+
     <!-- Header -->
     <div class="bg-gradient-to-r from-gray-600 to-slate-600 p-8 lg:p-10 lg:p-20 rounded-2xl lg:rounded-3xl lg:rounded-2xl lg:rounded-3xl lg:rounded-[4rem] text-white overflow-hidden relative shadow-2xl">
         <div class="absolute -top-32 -right-32 w-80 h-80 bg-white/10 rounded-full blur-3xl opacity-40"></div>
@@ -39,7 +51,7 @@
         </div>
         @endif
 
-        <form method="POST" action="{{ route('seller.settings.update') }}" class="space-y-8">
+        <form method="POST" action="{{ route('seller.settings.update') }}" enctype="multipart/form-data" class="space-y-8">
             @csrf
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div>
@@ -69,6 +81,91 @@
                               placeholder="Ceritakan tentang toko Anda..."
                               class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium resize-none">{{ old('store_description', auth()->user()->store->description ?? '') }}</textarea>
                 </div>
+
+                <div class="lg:col-span-2">
+                    <label class="block text-sm font-black text-gray-700 mb-2">Logo Toko</label>
+                    <input type="file"
+                           name="store_image"
+                           accept="image/*"
+                           class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium file:mr-4 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-primary-600 file:text-white file:font-black">
+                    <p class="text-xs text-gray-400 mt-2">Format: JPG, PNG, WebP. Maksimal 2MB.</p>
+                    @if(auth()->user()->store && auth()->user()->store->image)
+                        <div class="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 inline-block">
+                            <img src="{{ asset('storage/'.auth()->user()->store->image) }}" alt="Logo toko" class="w-32 h-32 object-cover rounded-xl">
+                            <p class="text-center text-xs text-gray-500 mt-2">Logo saat ini</p>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <div class="pt-8 border-t border-gray-100">
+                <div class="flex items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h3 class="text-lg font-black text-gray-900">Pengaturan Pembayaran QRIS</h3>
+                        <p class="text-sm text-gray-500 mt-1">Data ini akan ditampilkan ke buyer saat checkout QRIS manual.</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full text-[10px] lg:text-xs font-black uppercase tracking-wider {{ $seller->hasQrisPaymentSetup() ? 'bg-green-100 text-green-700' : 'bg-amber-100 text-amber-700' }}">
+                        {{ $seller->hasQrisPaymentSetup() ? 'QRIS Aktif' : 'Belum Diset' }}
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-black text-gray-700 mb-2">Nama Penerima <span class="text-red-400">*</span></label>
+                            <input type="text"
+                                   name="payment_name"
+                                   value="{{ old('payment_name', $seller->payment_name) }}"
+                                   placeholder="Contoh: Toko Arradea"
+                                   required
+                                   class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium">
+                            <p class="text-xs text-gray-400 mt-2">Nama ini akan ditampilkan ke buyer saat checkout QRIS.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-black text-gray-700 mb-2">Jenis Pembayaran</label>
+                            <select name="payment_type" class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium">
+                                <option value="">Pilih jenis pembayaran</option>
+                                @foreach($paymentOptions as $value => $label)
+                                    <option value="{{ $value }}" @selected(old('payment_type', $seller->payment_type) === $value)>{{ $label }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-black text-gray-700 mb-2">Nomor / Akun Pembayaran</label>
+                            <input type="text"
+                                   name="payment_number"
+                                   value="{{ old('payment_number', $seller->payment_number) }}"
+                                   placeholder="Nomor HP / rekening / ID akun"
+                                   class="w-full px-6 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium">
+                            <p class="text-xs text-gray-400 mt-2">Kosongkan jika hanya memakai QRIS image.</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-black text-gray-700 mb-2">Upload QRIS</label>
+                            <input type="file"
+                                   name="qris_image"
+                                   accept="image/*"
+                                   class="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent font-medium file:mr-4 file:px-4 file:py-2 file:rounded-xl file:border-0 file:bg-primary-600 file:text-white file:font-black">
+                        </div>
+
+                        <div class="rounded-3xl border border-dashed border-gray-300 bg-gray-50 p-4">
+                            @if($seller->qris_image)
+                                <img src="{{ asset('storage/'.$seller->qris_image) }}" alt="QRIS seller" class="w-full max-w-sm mx-auto rounded-2xl border border-gray-200 shadow-sm object-contain bg-white">
+                                <p class="text-center text-xs text-gray-500 mt-3">Gambar QRIS saat ini</p>
+                            @else
+                                <div class="text-center py-10 text-gray-400">
+                                    <div class="text-4xl mb-3">🧾</div>
+                                    <p class="text-sm font-bold">Belum ada gambar QRIS</p>
+                                    <p class="text-xs mt-1">Upload gambar QR untuk ditampilkan ke buyer.</p>
+                                </div>
+                            @endif
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class="pt-8 border-t border-gray-100 flex justify-end">
@@ -79,17 +176,6 @@
                 </button>
             </div>
         </form>
-
-        {{-- Pengaturan Mode --}}
-            <div class="bg-white rounded-xl lg:rounded-2xl border border-gray-100 overflow-hidden">
-                <div class="px-4 lg:px-5 py-3 lg:py-4 border-b border-gray-50">
-                    <h2 class="text-xs lg:text-sm font-black text-gray-700 uppercase tracking-widest">⚙️ Pengaturan Mode</h2>
-                    <p class="text-[10px] lg:text-xs text-gray-500 mt-1">Pilih mode untuk mengakses fitur yang berbeda</p>
-                </div>
-                <div class="p-4 lg:p-5">
-                    <x-bottom-sheet-switcher :user="Auth::user()" />
-                </div>
-            </div>
     </div>
 </div>
 @endsection

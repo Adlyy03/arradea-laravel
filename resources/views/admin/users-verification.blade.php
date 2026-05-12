@@ -3,8 +3,23 @@
 @section('title', 'Verifikasi Seller - Arradea Admin')
 @section('page_title', 'Verifikasi Seller')
 
+@push('scripts')
+<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+@endpush
+
 @section('content')
-<div class="space-y-6 lg:space-y-12" x-data="{ approveUser: null, openApproveModal: false, rejectUser: null, openRejectModal: false, selectedUser: null, openDetailModal: false, loading: false, reason: '' }">
+<div class="space-y-6 lg:space-y-12" 
+     x-data="{ 
+         approveUser: null, 
+         openApproveModal: false, 
+         rejectUser: null, 
+         openRejectModal: false, 
+         selectedUser: null, 
+         openDetailModal: false, 
+         loading: false, 
+         reason: '' 
+     }"
+     x-init="console.log('Alpine initialized')">
     <!-- Header -->
     <div class="flex flex-col lg:flex-row justify-between items-end gap-6 lg:gap-12 bg-white p-6 lg:p-12 lg:p-20 rounded-2xl lg:rounded-3xl lg:rounded-[4rem] shadow-sm border border-gray-100">
         <div class="max-w-2xl text-center md:text-left">
@@ -111,14 +126,15 @@
 
                 <!-- Action Buttons -->
                 @if($user->seller_status === 'pending')
-                    <div class="flex gap-2 pt-4 border-t border-gray-100">
+                    <div class="flex gap-2 pt-4 border-t border-gray-100" onclick="event.stopPropagation()">
+                        <form method="POST" action="{{ route('admin.users.approve', $user->id) }}" class="flex-1" onsubmit="return confirm('Setujui {{ $user->name }} sebagai seller?')">
+                            @csrf
+                            <button type="submit" class="w-full px-4 py-2 bg-green-50 text-green-700 rounded-xl font-bold text-xs hover:bg-green-100 transition-all">
+                                ✅ Approve
+                            </button>
+                        </form>
                         <button type="button" 
-                                @click="approveUser = {{ $user->id }}; openApproveModal = true; $event.stopPropagation()"
-                                class="flex-1 px-4 py-2 bg-green-50 text-green-700 rounded-xl font-bold text-xs hover:bg-green-100 transition-all">
-                            ✅ Approve
-                        </button>
-                        <button type="button" 
-                                @click="rejectUser = {{ $user->id }}; openRejectModal = true; $event.stopPropagation()"
+                                @click.stop="console.log('Reject clicked for user:', {{ $user->id }}); rejectUser = {{ $user->id }}; openRejectModal = true"
                                 class="flex-1 px-4 py-2 bg-red-50 text-red-700 rounded-xl font-bold text-xs hover:bg-red-100 transition-all">
                             ❌ Reject
                         </button>
@@ -202,11 +218,11 @@
 
                 <!-- Action Buttons -->
                 <div x-show="selectedUser.seller_status === 'pending'" class="flex gap-4 pt-4 border-t border-gray-200">
-                    <button @click="approveUser = selectedUser.id; openApproveModal = true"
+                    <button type="button" @click.stop="approveUser = selectedUser.id; openApproveModal = true"
                             class="flex-1 px-6 py-3 bg-green-600 text-white rounded-2xl font-black hover:bg-green-700 transition-all">
                         ✅ Setujui Seller
                     </button>
-                    <button @click="rejectUser = selectedUser.id; openRejectModal = true"
+                    <button type="button" @click.stop="rejectUser = selectedUser.id; openRejectModal = true"
                             class="flex-1 px-6 py-3 bg-red-600 text-white rounded-2xl font-black hover:bg-red-700 transition-all">
                         ❌ Tolak Seller
                     </button>
@@ -232,19 +248,28 @@
                 <p class="text-gray-500 font-bold">User ini akan menjadi seller dan dapat langsung mulai berjualan.</p>
             </div>
 
-            <form @submit.prevent="async () => {
+            <form @submit.prevent="async (e) => {
+                console.log('Form submitted, approveUser:', approveUser);
                 loading = true;
                 try {
                     const res = await fetch(`/admin/users/${approveUser}/approve`, {
                         method: 'POST',
-                        headers: { 'X-CSRF-TOKEN': document.querySelector('[name=csrf-token]').content },
+                        headers: { 
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
+                            'Accept': 'application/json',
+                            'Content-Type': 'application/json'
+                        },
                     });
                     const data = await res.json();
+                    console.log('Response:', data);
                     if (data.success) {
                         window.location.reload();
                     } else {
-                        window.arradeaPopup.error(data.message || 'Gagal menyetujui seller.');
+                        alert(data.message || 'Gagal menyetujui seller.');
                     }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan: ' + error.message);
                 } finally {
                     loading = false;
                 }
@@ -278,27 +303,33 @@
                 <h3 class="text-2xl font-black text-gray-900">Tolak Seller?</h3>
             </div>
 
-            <form @submit.prevent="async () => {
+            <form @submit.prevent="async (e) => {
                 if (!reason.trim()) {
-                    window.arradeaPopup.error('Silakan masukkan alasan penolakan');
+                    alert('Silakan masukkan alasan penolakan');
                     return;
                 }
+                console.log('Reject form submitted, rejectUser:', rejectUser);
                 loading = true;
                 try {
                     const res = await fetch(`/admin/users/${rejectUser}/reject`, {
                         method: 'POST',
                         headers: {
-                            'X-CSRF-TOKEN': document.querySelector('[name=csrf-token]').content,
+                            'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content,
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json'
                         },
                         body: JSON.stringify({ reason }),
                     });
                     const data = await res.json();
+                    console.log('Response:', data);
                     if (data.success) {
                         window.location.reload();
                     } else {
-                        window.arradeaPopup.error(data.message || 'Gagal menolak seller.');
+                        alert(data.message || 'Gagal menolak seller.');
                     }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Terjadi kesalahan: ' + error.message);
                 } finally {
                     loading = false;
                 }
@@ -355,6 +386,4 @@
         L.marker([lat, lng]).addTo(map).bindPopup('Lokasi Seller');
     }
 </script>
-
-<script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
 @endsection

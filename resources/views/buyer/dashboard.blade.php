@@ -132,7 +132,7 @@
 
         @forelse($recentOrders as $order)
         @php
-            $statusMap = ['pending'=>['Menunggu','bg-amber-100 text-amber-700'],'accepted'=>['Diproses','bg-blue-100 text-blue-700'],'shipped'=>['Dikirim','bg-purple-100 text-purple-700'],'done'=>['Selesai','bg-green-100 text-green-700'],'rejected'=>['Ditolak','bg-red-100 text-red-700'],'dibatalkan'=>['Dibatalkan','bg-gray-100 text-gray-600']];
+            $statusMap = ['pending'=>['Menunggu','bg-amber-100 text-amber-700'],'processing'=>['Diproses','bg-blue-100 text-blue-700'],'shipped'=>['Dikirim','bg-purple-100 text-purple-700'],'completed'=>['Selesai','bg-green-100 text-green-700'],'cancelled'=>['Dibatalkan','bg-gray-100 text-gray-600']];
             [$statusLabel, $statusClass] = $statusMap[$order->status] ?? [$order->status,'bg-gray-100 text-gray-600'];
         @endphp
         <div class="order-row flex items-center justify-between px-4 lg:px-6 py-3 lg:py-5 border-b border-gray-50/60">

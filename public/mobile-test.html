@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Test - Arradea</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #72bf77 0%, #4db85a 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        
+        h1 {
+            color: #72bf77;
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+        
+        .status {
+            background: #e8f5e9;
+            color: #2d7a34;
+            padding: 15px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+        
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        
+        .check-item:last-child {
+            border-bottom: none;
+        }
+        
+        .icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .icon.success {
+            background: #72bf77;
+            color: white;
+        }
+        
+        .icon.info {
+            background: #2196F3;
+            color: white;
+        }
+        
+        .btn {
+            display: block;
+            width: 100%;
+            background: #72bf77;
+            color: white;
+            text-align: center;
+            padding: 15px;
+            border-radius: 12px;
+            text-decoration: none;
+            font-weight: 600;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        
+        .btn:hover {
+            background: #5aaa60;
+            transform: translateY(-2px);
+        }
+        
+        .info-box {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 12px;
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .info-box strong {
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✅ Server Berjalan!</h1>
+        <p style="color: #666; margin-bottom: 20px;">Test koneksi mobile berhasil</p>
+        
+        <div class="status">
+            🎉 Selamat! HP Anda berhasil terhubung ke server Laravel.
+        </div>
+        
+        <div style="margin: 20px 0;">
+            <div class="check-item">
+                <div class="icon success">✓</div>
+                <div>
+                    <strong>Server Status</strong><br>
+                    <small style="color: #666;">Running on 192.168.100.32:8000</small>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <div class="icon success">✓</div>
+                <div>
+                    <strong>Network Connection</strong><br>
+                    <small style="color: #666;">HP dan laptop terhubung</small>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <div class="icon success">✓</div>
+                <div>
+                    <strong>Browser Rendering</strong><br>
+                    <small style="color: #666;">CSS dan HTML berfungsi normal</small>
+                </div>
+            </div>
+            
+            <div class="check-item">
+                <div class="icon info">i</div>
+                <div>
+                    <strong>Device Info</strong><br>
+                    <small style="color: #666;" id="device-info">Loading...</small>
+                </div>
+            </div>
+        </div>
+        
+        <a href="/" class="btn">🏠 Buka Halaman Utama</a>
+        
+        <div class="info-box">
+            <strong>Langkah Selanjutnya:</strong><br>
+            Jika halaman ini muncul dengan baik, klik tombol di atas untuk membuka aplikasi Arradea. Jika halaman utama masih blank, cek console browser untuk error.
+        </div>
+    </div>
+    
+    <script>
+        // Display device info
+        const deviceInfo = document.getElementById('device-info');
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const userAgent = navigator.userAgent;
+        
+        let device = 'Unknown';
+        if (/android/i.test(userAgent)) {
+            device = 'Android';
+        } else if (/iPad|iPhone|iPod/.test(userAgent)) {
+            device = 'iOS';
+        }
+        
+        deviceInfo.textContent = `${device} - ${width}x${height}px`;
+        
+        // Log to console for debugging
+        console.log('=== Mobile Test Page ===');
+        console.log('Device:', device);
+        console.log('Screen:', width, 'x', height);
+        console.log('User Agent:', userAgent);
+        console.log('========================');
+    </script>
+</body>
+</html>

@@ -5,21 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
-    {{-- PWA Meta Tags --}}
-    <meta name="theme-color" content="#72bf77">
+    <meta name="theme-color" content="#000000">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Arradea">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Arradea">
-    
-    {{-- PWA Manifest --}}
     <link rel="manifest" href="/manifest.json">
-    
-    {{-- Apple Touch Icons --}}
-    <link rel="apple-touch-icon" sizes="180x180" href="/images/icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/images/icons/icon-192x192.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/images/icons/icon-192x192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icons/logo-arradea.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="/icons/logo-arradea.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="/icons/logo-arradea.png">
     <title>@yield('title', 'Arradea Marketplace')</title>
     
     {{-- Flash Messages for Toast System --}}
@@ -41,9 +36,83 @@
     
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     
+    <style>
+        /* Mobile Menu Fixes */
+        [x-cloak] { 
+            display: none !important; 
+        }
+        
+        /* Ensure body is visible */
+        body {
+            min-height: 100vh;
+            background: #f7faf7 !important;
+        }
+        
+        /* Ensure main content is visible */
+        main {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* Ensure body scroll lock works */
+        body.overflow-hidden {
+            overflow: hidden !important;
+        }
+        
+        /* Mobile menu overlay */
+        .mobile-menu-overlay {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 40;
+        }
+        
+        /* Ensure hamburger button is always clickable */
+        nav button[aria-label="Toggle menu"] {
+            position: relative;
+            z-index: 60;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        
+        /* Mobile menu positioning */
+        nav > div:last-child {
+            position: relative;
+            z-index: 50;
+        }
+        
+        /* Prevent double-tap zoom on buttons */
+        button {
+            touch-action: manipulation;
+        }
+        
+        /* Smooth transitions */
+        .transition-all {
+            transition-property: all;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
+        }
+    </style>
+    
     @stack('styles')
 </head>
-<body class="bg-[#f7faf7] text-gray-900 font-sans antialiased" x-data="{ mobileOpen: false }">
+<body class="bg-[#f7faf7] text-gray-900 font-sans antialiased" 
+      x-data="{ mobileOpen: false }" 
+      :class="{ 'overflow-hidden': mobileOpen }"
+      @keydown.escape.window="mobileOpen = false">
+
+    {{-- Mobile Menu Overlay --}}
+    <div x-show="mobileOpen" 
+         x-cloak
+         @click="mobileOpen = false"
+         x-transition:enter="transition ease-out duration-200"
+         x-transition:enter-start="opacity-0"
+         x-transition:enter-end="opacity-100"
+         x-transition:leave="transition ease-in duration-150"
+         x-transition:leave-start="opacity-100"
+         x-transition:leave-end="opacity-0"
+         class="fixed inset-0 bg-black/50 z-40 md:hidden">
+    </div>
 
     {{-- NAVBAR --}}
     <nav class="sticky top-0 z-50 glass border-b border-green-100/60 shadow-sm shadow-green-100/30">
@@ -51,10 +120,8 @@
             <div class="flex items-center justify-between h-16">
 
                 {{-- Logo --}}
-                <a href="{{ url('/') }}" class="flex items-center gap-2 group">
-                    <div class="w-8 h-8 rounded-xl bg-sage flex items-center justify-center shadow-md shadow-green-300/40 group-hover:scale-105 transition">
-                        <span class="text-white font-black text-sm">A</span>
-                    </div>
+                    <a href="{{ url('/') }}" class="flex items-center gap-2 group">
+                    <img src="/icons/logo-arradea.png" alt="Arradea" class="w-8 h-8 rounded-xl object-cover shadow-md group-hover:scale-105 transition">
                     <span class="text-xl font-black text-gray-900 tracking-tight">Arradea<span class="text-sage">.</span></span>
                 </a>
 
@@ -136,23 +203,56 @@
                         <a href="{{ route('login') }}" class="text-sm font-medium text-gray-600 hover:text-gray-900 transition">Masuk</a>
                         <a href="{{ route('register') }}" class="btn-primary text-white text-sm font-semibold px-4 py-2 rounded-xl">Daftar Gratis</a>
                     @endauth
+
+                    {{-- PWA install button (explicit) --}}
+                    <button id="pwa-install-btn" type="button" class="hidden md:inline-flex items-center gap-2 px-3 py-2 rounded-full bg-black text-white text-sm font-semibold ml-2 transition" aria-hidden="true">Tambahkan ke Beranda</button>
                 </div>
 
                 {{-- Mobile hamburger --}}
-                <button @click="mobileOpen=!mobileOpen" class="md:hidden p-2 rounded-xl hover:bg-gray-100 transition text-gray-600">
-                    <svg x-show="!mobileOpen" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
-                    <svg x-show="mobileOpen" x-cloak class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                <button @click="mobileOpen = !mobileOpen" 
+                        type="button"
+                        class="md:hidden p-2 rounded-xl hover:bg-gray-100 transition text-gray-600 relative z-50"
+                        :aria-expanded="mobileOpen"
+                        aria-label="Toggle menu">
+                    <svg x-show="!mobileOpen" 
+                         class="w-5 h-5" 
+                         fill="none" 
+                         stroke="currentColor" 
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                    <svg x-show="mobileOpen" 
+                         x-cloak 
+                         class="w-5 h-5" 
+                         fill="none" 
+                         stroke="currentColor" 
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
                 </button>
             </div>
         </div>
 
         {{-- Mobile Menu --}}
-        <div x-show="mobileOpen" x-cloak x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0 -translate-y-3" x-transition:enter-end="opacity-100 translate-y-0" class="md:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-1">
+        <div x-show="mobileOpen" 
+             x-cloak
+             @click.away="mobileOpen = false"
+             x-transition:enter="transition ease-out duration-200"
+             x-transition:enter-start="opacity-0 -translate-y-3"
+             x-transition:enter-end="opacity-100 translate-y-0"
+             x-transition:leave="transition ease-in duration-150"
+             x-transition:leave-start="opacity-100 translate-y-0"
+             x-transition:leave-end="opacity-0 -translate-y-3"
+             class="md:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-1 relative z-50">
             <div class="relative mb-3">
                 <svg class="absolute left-3 top-2.5 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
                 <input type="text" placeholder="Cari produk..." class="w-full h-10 bg-gray-100 rounded-xl pl-10 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-sage/40">
             </div>
-            <a href="{{ route('categories.index') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">Kategori</a>
+            <a href="{{ route('categories.index') }}" 
+               @click="mobileOpen = false"
+               class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
+                Kategori
+            </a>
             @auth
                 <div class="flex items-center gap-3 px-3 py-3 bg-gray-50 rounded-xl mb-2">
                     <div class="w-9 h-9 rounded-xl bg-sage/15 flex items-center justify-center text-sage font-black">{{ strtoupper(substr(Auth::user()->name,0,1)) }}</div>
@@ -162,7 +262,9 @@
                     </div>
                 </div>
                 @if(Auth::user()->role !== 'admin')
-                    <a href="{{ route('buyer.cart') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    <a href="{{ route('buyer.cart') }}" 
+                       @click="mobileOpen = false"
+                       class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
                         <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 5h12"/></svg>
                         Keranjang
                         @if(Auth::user()->carts->count() > 0)
@@ -170,20 +272,37 @@
                         @endif
                     </a>
                 @endif
-                <a href="{{ route('profile') }}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">Profil Saya</a>
+                <a href="{{ route('profile') }}" 
+                   @click="mobileOpen = false"
+                   class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Profil Saya
+                </a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
-                    <button type="submit" class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50">Keluar</button>
+                    <button type="submit" 
+                            class="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50">
+                        Keluar
+                    </button>
                 </form>
             @else
-                <a href="{{ route('login') }}" class="block px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">Masuk</a>
-                <a href="{{ route('register') }}" class="block px-3 py-2.5 rounded-xl text-sm font-semibold text-white btn-primary text-center">Daftar Gratis</a>
+                <a href="{{ route('login') }}" 
+                   @click="mobileOpen = false"
+                   class="block px-3 py-2.5 rounded-xl text-sm font-medium text-gray-700 hover:bg-gray-50">
+                    Masuk
+                </a>
+                <a href="{{ route('register') }}" 
+                   @click="mobileOpen = false"
+                   class="block px-3 py-2.5 rounded-xl text-sm font-semibold text-white btn-primary text-center">
+                    Daftar Gratis
+                </a>
             @endauth
         </div>
     </nav>
 
-    <main class="min-h-[70vh]">
-        @yield('content')
+    <main class="min-h-[70vh] px-4 sm:px-5 lg:px-8 py-4 lg:py-6 overflow-x-hidden">
+        <div class="mx-auto w-full max-w-7xl">
+            @yield('content')
+        </div>
     </main>
 
     {{-- FOOTER --}}
@@ -192,7 +311,7 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8 lg:gap-12">
                 <div class="col-span-2 md:col-span-1">
                     <div class="flex items-center gap-2 mb-4">
-                        <div class="w-7 h-7 rounded-lg bg-sage flex items-center justify-center"><span class="text-white font-black text-xs">A</span></div>
+                        <img src="/icons/logo-arradea.png" alt="Arradea" class="w-7 h-7 rounded-lg object-cover">
                         <span class="text-lg font-black text-gray-900">Arradea<span class="text-sage">.</span></span>
                     </div>
                     <p class="text-sm text-gray-500 leading-relaxed">Marketplace warga Arradea. Belanja dari tetangga, untuk tetangga.</p>
@@ -235,6 +354,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
+    // SweetAlert2 wrapper
     (function(){
         const base={background:'#fff',color:'#111827',customClass:{popup:'rounded-2xl shadow-2xl',title:'text-lg font-black',htmlContainer:'text-sm text-gray-500',confirmButton:'rounded-xl px-5 py-2.5 font-bold text-sm',cancelButton:'rounded-xl px-5 py-2.5 font-bold text-sm'},buttonsStyling:false};
         window.arradeaPopup={
@@ -261,64 +381,6 @@
     </script>
     @stack('scripts')
 
-    {{-- PWA Service Worker Registration & Install Prompt --}}
-    <script>
-        // Register Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(registration => {
-                        console.log('✅ Service Worker registered:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.error('❌ Service Worker registration failed:', error);
-                    });
-            });
-        }
-
-        // PWA Install Prompt
-        let deferredPrompt;
-        const installButton = document.getElementById('pwa-install-btn');
-
-        window.addEventListener('beforeinstallprompt', (e) => {
-            // Prevent default mini-infobar
-            e.preventDefault();
-            deferredPrompt = e;
-            
-            // Show install button if exists
-            if (installButton) {
-                installButton.style.display = 'flex';
-            }
-        });
-
-        // Handle install button click
-        if (installButton) {
-            installButton.addEventListener('click', async () => {
-                if (!deferredPrompt) return;
-                
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                
-                console.log(`User response: ${outcome}`);
-                deferredPrompt = null;
-                installButton.style.display = 'none';
-            });
-        }
-
-        // Track if app is installed
-        window.addEventListener('appinstalled', () => {
-            console.log('✅ PWA installed successfully!');
-            deferredPrompt = null;
-            if (installButton) {
-                installButton.style.display = 'none';
-            }
-        });
-
-        // Detect if running as PWA
-        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
-            console.log('🚀 Running as PWA');
-            document.body.classList.add('pwa-mode');
-        }
-    </script>
+    <script defer src="/js/pwa.js"></script>
 </body>
 </html>

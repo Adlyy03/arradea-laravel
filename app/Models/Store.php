@@ -14,6 +14,7 @@ class Store extends Model
         'name',
         'description',
         'address',
+        'image',
         'status',
         'approved_at',
     ];

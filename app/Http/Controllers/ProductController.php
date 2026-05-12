@@ -35,6 +35,7 @@ class ProductController extends Controller
                 ->whereHas('store', function ($q) {
                     $q->where('status', 'active');
                 })
+                ->where('is_active', true)
                 ->latest()
                 ->paginate(15);
             }
@@ -81,6 +82,7 @@ class ProductController extends Controller
                 ->whereHas('store', function ($q) {
                     $q->where('status', 'active');
                 })
+                ->where('is_active', true)
                 ->latest()
                 ->paginate(15)
                 ->withQueryString();
@@ -135,6 +137,9 @@ class ProductController extends Controller
             'category_id',
             'name',
             'price',
+            'discount_percent',
+            'discount_start_at',
+            'discount_end_at',
             'stock',
             'image',
             'updated_at',
@@ -149,10 +154,14 @@ class ProductController extends Controller
         }
 
         $products = $query->get()->map(function (Product $product) {
+            $activeDiscount = $product->getActiveDiscountPercent();
             return [
                 'id' => $product->id,
                 'name' => $product->name,
                 'price' => (float) $product->price,
+                'discount_percent' => (float) $product->discount_percent,
+                'active_discount_percent' => (float) $activeDiscount,
+                'final_price' => (float) $product->final_price,
                 'stock' => (int) $product->stock,
                 'status' => $product->stock > 0 ? 'available' : 'out_of_stock',
                 'image' => $product->image,
@@ -232,6 +241,32 @@ class ProductController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Produk berhasil dihapus.',
+        ]);
+    }
+
+    /**
+     * PATCH /api/products/{product}/toggle-active
+     * Seller only: toggle product active status (activate/deactivate).
+     */
+    public function toggleActive(Request $request, Product $product)
+    {
+        $this->authorizeOwnership($request, $product);
+
+        $product->is_active = !$product->is_active;
+        $product->save();
+
+        // Clear cache
+        \App\Services\CacheService::clearProductCache($product->id);
+
+        $status = $product->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
+        return response()->json([
+            'success' => true,
+            'message' => "Produk berhasil {$status}.",
+            'data' => [
+                'id' => $product->id,
+                'is_active' => $product->is_active,
+            ],
         ]);
     }
 

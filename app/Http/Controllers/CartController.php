@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Cart;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CartController extends Controller
 {
@@ -125,12 +126,68 @@ class CartController extends Controller
 
         $validated = $request->validate([
             'notes' => ['nullable', 'string', 'max:1000'],
+            'payment_method' => ['required', 'in:cod,qris'],
+            'payment_proof_base64' => ['nullable', 'string'],
+        ], [
+            'payment_method.required' => 'Pilih metode pembayaran.',
+            'payment_method.in' => 'Metode pembayaran tidak valid.',
         ]);
 
         $carts = auth()->user()->carts()->with('product')->get();
 
         if ($carts->isEmpty()) {
             return back()->withErrors(['cart' => 'Keranjang kosong.']);
+        }
+
+        $paymentMethod = $validated['payment_method'];
+        $uniqueStoreIds = $carts->pluck('product.store_id')->unique()->values();
+
+        if ($paymentMethod === 'qris' && $uniqueStoreIds->count() !== 1) {
+            return back()->withErrors(['payment_method' => 'Pembayaran QRIS manual hanya bisa untuk keranjang dengan 1 seller.']);
+        }
+
+        $qrisSeller = null;
+        if ($paymentMethod === 'qris') {
+            $qrisSeller = $carts->first()?->product?->store?->user;
+
+            if (! $qrisSeller || ! $qrisSeller->hasQrisPaymentSetup()) {
+                return back()->withErrors(['payment_method' => 'Seller belum menambahkan QRIS. Silakan pilih COD atau checkout ke seller lain.']);
+            }
+
+            if (empty($validated['payment_proof_base64'])) {
+                return back()->withErrors(['payment_proof' => 'Bukti pembayaran QRIS wajib diunggah saat checkout.']);
+            }
+        }
+
+        $paymentProofPath = null;
+        if ($paymentMethod === 'qris' && !empty($validated['payment_proof_base64'])) {
+            // Decode base64 image
+            $base64Image = $validated['payment_proof_base64'];
+            
+            // Extract image data
+            if (preg_match('/^data:image\/(\w+);base64,/', $base64Image, $type)) {
+                $base64Image = substr($base64Image, strpos($base64Image, ',') + 1);
+                $type = strtolower($type[1]); // jpg, png, gif, etc.
+                
+                if (!in_array($type, ['jpg', 'jpeg', 'png', 'webp'])) {
+                    return back()->withErrors(['payment_proof' => 'Format gambar tidak valid. Gunakan JPG, PNG, atau WebP.']);
+                }
+                
+                $base64Image = str_replace(' ', '+', $base64Image);
+                $imageData = base64_decode($base64Image);
+                
+                if ($imageData === false) {
+                    return back()->withErrors(['payment_proof' => 'Gagal memproses gambar. Silakan coba lagi.']);
+                }
+                
+                // Save to storage
+                $fileName = 'payment_' . time() . '_' . uniqid() . '.' . $type;
+                $path = 'payments/' . $fileName;
+                Storage::disk('public')->put($path, $imageData);
+                $paymentProofPath = $path;
+            } else {
+                return back()->withErrors(['payment_proof' => 'Format gambar tidak valid.']);
+            }
         }
 
         foreach ($carts as $cart) {
@@ -158,6 +215,8 @@ class CartController extends Controller
             }
         }
 
+        $createdOrders = [];
+        
         foreach ($carts as $cart) {
             $pricing = $cart->product->calculatePricing($cart->variant_key, $cart->quantity);
             $totalPrice = $pricing['total_final'];
@@ -178,18 +237,59 @@ class CartController extends Controller
                 'total_price' => $totalPrice,
                 'notes'       => $validated['notes'] ?? null,
                 'status'      => 'pending',
+                'payment_method' => $paymentMethod,
+                'payment_status' => $paymentMethod === 'qris' ? 'waiting_confirmation' : 'paid',
+                'payment_proof'  => $paymentProofPath,
             ]);
+
+            $createdOrders[] = $order;
 
             // Notify seller
             $seller = $cart->product->store->user;
             if ($seller) {
                 $seller->notify(new \App\Notifications\NewOrderNotification($order));
+                if ($paymentMethod === 'qris') {
+                    $seller->notify(new \App\Notifications\OrderPaymentNotification($order, 'submitted'));
+                }
             }
 
             $cart->product->decrement('stock', $cart->quantity);
             $cart->delete();
         }
 
-        return redirect()->route('buyer.orders')->with('success', 'Checkout berhasil! Pesanan telah dibuat.');
+        // Auto-create chat for QRIS orders
+        if ($paymentMethod === 'qris' && $qrisSeller && !empty($createdOrders)) {
+            foreach ($createdOrders as $order) {
+                // Check if chat already exists
+                $chat = \App\Models\Chat::where('order_id', $order->id)->first();
+                
+                if (!$chat) {
+                    // Create new chat
+                    $chat = \App\Models\Chat::create([
+                        'order_id' => $order->id,
+                        'buyer_id' => auth()->id(),
+                        'seller_id' => $qrisSeller->id,
+                    ]);
+                }
+                
+                // Send payment proof as message
+                $message = "📸 Bukti pembayaran QRIS untuk pesanan #{$order->id}\n\n";
+                $message .= "Total: Rp " . number_format($order->total_price, 0, ',', '.') . "\n";
+                $message .= "Produk: {$order->product->name}\n\n";
+                $message .= "[BUKTI_PEMBAYARAN:{$paymentProofPath}]";
+                
+                $chatMessage = \App\Models\Message::create([
+                    'chat_id' => $chat->id,
+                    'sender_id' => auth()->id(),
+                    'message' => $message,
+                    'is_read' => false,
+                ]);
+                
+                // Notify seller about new message
+                $qrisSeller->notify(new \App\Notifications\ChatMessageNotification($chatMessage));
+            }
+        }
+
+        return redirect()->route('buyer.orders')->with('success', 'Checkout berhasil! Pesanan telah dibuat.' . ($paymentMethod === 'qris' ? ' Bukti pembayaran telah dikirim ke seller via chat.' : ''));
     }
 }

@@ -5,11 +5,14 @@ import { gsap } from 'gsap';
 import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
-// Import splash screen - PREMIUM & FAST!
+// Import splash screen
 import './splash';
 
 // Import performance optimizations
 import './performance';
+
+// Import mobile menu handler
+import './mobile-menu';
 
 // Import welcome page interactions (only loads on welcome page)
 if (document.querySelector('.welcome-section')) {
@@ -21,21 +24,30 @@ gsap.registerPlugin(ScrollToPlugin, ScrollTrigger);
 
 // Initialize Alpine.js
 window.Alpine = Alpine;
-Alpine.start();
 
-// Initialize AOS (Animate On Scroll)
+// Start Alpine only once
+if (!window.alpineStarted) {
+    Alpine.start();
+    window.alpineStarted = true;
+}
+
+// Initialize AOS (Animate On Scroll) - Disabled on mobile for performance
 document.addEventListener('DOMContentLoaded', () => {
+    const isMobile = window.innerWidth < 768;
+    
     AOS.init({
         duration: 800,
         easing: 'ease-in-out',
         once: true,
         offset: 100,
         delay: 100,
-        disable: 'mobile', // Disable on mobile for better performance
+        disable: isMobile, // Disable on mobile for better performance
     });
     
     // Refresh AOS on dynamic content
-    setTimeout(() => AOS.refresh(), 500);
+    if (!isMobile) {
+        setTimeout(() => AOS.refresh(), 500);
+    }
 });
 
 // Make GSAP available globally

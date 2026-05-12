@@ -11,17 +11,13 @@ export default defineConfig({
             refresh: true,
         }),
     ],
-    server: {
-        hmr: {
-            host: 'localhost',
-        },
-    },
+
     build: {
         rollupOptions: {
             output: {
                 manualChunks: {
-                    'alpine': ['alpinejs'],
-                    'aos': ['aos'],
+                    alpine: ['alpinejs'],
+                    aos: ['aos'],
                 },
             },
         },

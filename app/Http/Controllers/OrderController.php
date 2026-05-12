@@ -133,6 +133,8 @@ class OrderController extends Controller
                 'total_price' => $pricing['total_final'],
                 'notes'       => $request->notes,
                 'status'      => 'pending',
+                'payment_method' => $request->input('payment_method', 'cod'),
+                'payment_status' => $request->input('payment_method', 'cod') === 'qris' ? 'waiting_confirmation' : 'paid',
             ]);
 
             $product->decrement('stock', $request->quantity);
@@ -146,6 +148,8 @@ class OrderController extends Controller
                 'discount_percent_applied' => 0,
                 'notes'       => $request->notes,
                 'status'      => 'pending',
+                'payment_method' => $request->input('payment_method', 'cod'),
+                'payment_status' => $request->input('payment_method', 'cod') === 'qris' ? 'waiting_confirmation' : 'paid',
             ]);
         }
 
@@ -175,7 +179,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => ['required', 'string', 'in:accepted,shipped,rejected,done'],
+            'status' => ['required', 'string', 'in:processing,shipped,completed,cancelled'],
         ]);
 
         $store = $request->user()->store;

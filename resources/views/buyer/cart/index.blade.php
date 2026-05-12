@@ -4,6 +4,60 @@
 
 @section('content')
 <div class="max-w-3xl mx-auto space-y-4 fade-up">
+    @php
+        $singleStoreIds = $carts->pluck('product.store_id')->unique();
+        $singleStore = $singleStoreIds->count() === 1 ? $carts->first()?->product?->store : null;
+        $singleSeller = $singleStore?->user;
+        $hasQrisSeller = $singleSeller && $singleSeller->hasQrisPaymentSetup();
+        
+        // Debug info
+        $debugInfo = [
+            'has_cart' => $carts->isNotEmpty(),
+            'single_store' => $singleStoreIds->count() === 1,
+            'store_id' => $singleStore?->id,
+            'seller_id' => $singleSeller?->id,
+            'seller_name' => $singleSeller?->name,
+            'has_qris_image' => filled($singleSeller?->qris_image ?? null),
+            'has_payment_name' => filled($singleSeller?->payment_name ?? null),
+            'qris_image_path' => $singleSeller?->qris_image,
+            'payment_name' => $singleSeller?->payment_name,
+            'hasQrisSeller' => $hasQrisSeller,
+        ];
+    @endphp
+
+    {{-- Debug Info (hanya untuk development) --}}
+    @if(config('app.debug'))
+    <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+        <p class="font-black text-blue-900 text-xs mb-2">🔍 DEBUG INFO:</p>
+        <pre class="text-[10px] text-blue-700 overflow-auto">{{ json_encode($debugInfo, JSON_PRETTY_PRINT) }}</pre>
+    </div>
+    @endif
+
+    {{-- Error Messages --}}
+    @if($errors->any())
+    <div class="bg-red-50 border border-red-200 rounded-2xl p-4">
+        <div class="flex items-start gap-3">
+            <span class="text-xl">❌</span>
+            <div class="flex-1">
+                <p class="font-black text-red-900 text-sm mb-1">Terjadi Kesalahan</p>
+                <ul class="text-xs text-red-700 space-y-1">
+                    @foreach($errors->all() as $error)
+                        <li>• {{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
+        </div>
+    </div>
+    @endif
+
+    @if(session('success'))
+    <div class="bg-green-50 border border-green-200 rounded-2xl p-4">
+        <div class="flex items-center gap-3">
+            <span class="text-xl">✅</span>
+            <p class="font-bold text-green-900 text-sm">{{ session('success') }}</p>
+        </div>
+    </div>
+    @endif
 
     <div class="flex items-center justify-between">
         <h1 class="text-2xl font-black text-gray-900">🛒 Keranjang <span style="color:#72bf77">Belanja</span></h1>
@@ -87,8 +141,46 @@
                 <p class="text-3xl font-black text-gray-900">Rp {{ number_format($totalFinal ?? 0,0,',','.') }}</p>
             </div>
             <div class="w-full sm:w-auto space-y-3">
-                <form action="{{ route('buyer.cart.checkout') }}" method="POST">
+                <form action="{{ route('buyer.cart.checkout') }}" method="POST" id="checkout-form-desktop">
                     @csrf
+                    <input type="hidden" name="payment_method" id="payment-method-desktop" value="cod">
+                    <input type="hidden" name="payment_proof_base64" id="payment-proof-base64-desktop">
+                    
+                    <div class="grid grid-cols-2 gap-2 mb-3">
+                        <button type="button" onclick="selectPaymentMethod('desktop', 'cod')" id="btn-cod-desktop" class="rounded-xl border-2 border-primary-500 bg-primary-50 p-3 text-left transition">
+                            <span class="block text-xs font-black text-gray-900">COD</span>
+                            <span class="block text-[10px] text-gray-500 mt-1">Bayar di tempat</span>
+                        </button>
+                        <a href="{{ $hasQrisSeller ? route('buyer.cart.qris') : '#' }}" id="btn-qris-desktop" class="rounded-xl border-2 p-3 text-left transition {{ $hasQrisSeller ? 'border-gray-200 bg-white hover:border-primary-300' : 'border-gray-200 bg-gray-100 cursor-not-allowed' }}" {{ $hasQrisSeller ? '' : 'onclick="return false;"' }}>
+                            <span class="block text-xs font-black {{ $hasQrisSeller ? 'text-gray-900' : 'text-gray-400' }}">QRIS Manual</span>
+                            <span class="block text-[10px] {{ $hasQrisSeller ? 'text-gray-500' : 'text-gray-400' }} mt-1">
+                                @if($hasQrisSeller)
+                                    Scan & bayar
+                                @else
+                                    Seller belum setup
+                                @endif
+                            </span>
+                        </a>
+                    </div>
+                    
+                    @if(!$hasQrisSeller && $singleStore)
+                    <div class="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                        <p class="text-xs font-bold text-amber-900">⚠️ QRIS Belum Tersedia</p>
+                        <p class="text-[10px] text-amber-700 mt-1">
+                            Seller <strong>{{ $singleStore->name }}</strong> belum mengaktifkan pembayaran QRIS. 
+                            @if($singleSeller)
+                                @if(!$singleSeller->qris_image)
+                                    Seller perlu upload gambar QRIS
+                                @endif
+                                @if(!$singleSeller->payment_name)
+                                    {{ !$singleSeller->qris_image ? ' dan' : 'Seller perlu' }} mengisi nama penerima
+                                @endif
+                                di halaman pengaturan toko.
+                            @endif
+                        </p>
+                    </div>
+                    @endif
+                    
                     <textarea name="notes" rows="2" maxlength="1000"
                         class="w-full sm:w-72 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 transition mb-2 resize-none"
                         placeholder="Catatan untuk penjual (opsional)"
@@ -118,6 +210,45 @@
             </div>
             <form id="mobile-checkout-form-main" action="{{ route('buyer.cart.checkout') }}" method="POST">
                 @csrf
+                <input type="hidden" name="payment_method" id="payment-method-mobile" value="cod">
+                <input type="hidden" name="payment_proof_base64" id="payment-proof-base64-mobile">
+                
+                <div class="grid grid-cols-2 gap-2 mb-3">
+                    <button type="button" onclick="selectPaymentMethod('mobile', 'cod')" id="btn-cod-mobile" class="rounded-xl border border-primary-500 bg-primary-50 p-2.5 text-left transition">
+                        <span class="block text-[10px] font-black text-gray-900">COD</span>
+                        <span class="block text-[9px] text-gray-500 mt-0.5">Bayar di tempat</span>
+                    </button>
+                    <a href="{{ $hasQrisSeller ? route('buyer.cart.qris') : '#' }}" id="btn-qris-mobile" class="rounded-xl border p-2.5 text-left transition {{ $hasQrisSeller ? 'border-gray-200 bg-gray-50 hover:border-primary-300' : 'border-gray-200 bg-gray-100 cursor-not-allowed' }}" {{ $hasQrisSeller ? '' : 'onclick="return false;"' }}>
+                        <span class="block text-[10px] font-black {{ $hasQrisSeller ? 'text-gray-900' : 'text-gray-400' }}">QRIS</span>
+                        <span class="block text-[9px] {{ $hasQrisSeller ? 'text-gray-500' : 'text-gray-400' }} mt-0.5">
+                            @if($hasQrisSeller)
+                                Scan & bayar
+                            @else
+                                Belum tersedia
+                            @endif
+                        </span>
+                    </a>
+                </div>
+                
+                @if(!$hasQrisSeller && $singleStore)
+                <div class="mb-3 p-2.5 bg-amber-50 border border-amber-200 rounded-xl">
+                    <p class="text-[10px] font-bold text-amber-900">⚠️ QRIS belum tersedia</p>
+                    <p class="text-[9px] text-amber-700 mt-0.5">
+                        @if($singleSeller)
+                            @if(!$singleSeller->qris_image && !$singleSeller->payment_name)
+                                Seller belum upload QRIS & nama penerima.
+                            @elseif(!$singleSeller->qris_image)
+                                Seller belum upload gambar QRIS.
+                            @elseif(!$singleSeller->payment_name)
+                                Seller belum isi nama penerima.
+                            @endif
+                        @else
+                            Seller belum setup QRIS.
+                        @endif
+                    </p>
+                </div>
+                @endif
+                
                 <div id="mobile-checkout-form" class="hidden mb-3">
                     <textarea name="notes" rows="2" maxlength="1000"
                         class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 transition resize-none"
@@ -137,6 +268,15 @@
 
 @push('scripts')
 <script>
+function selectPaymentMethod(scope, method) {
+    const methodInput = document.getElementById('payment-method-' + scope);
+    const codBtn = document.getElementById('btn-cod-' + scope);
+    
+    if (methodInput) {
+        methodInput.value = method;
+    }
+}
+
 function changeQty(cartId, delta){
     const input = document.getElementById('qty-'+cartId);
     if(!input) return;

@@ -118,10 +118,27 @@ class AdminUserController extends Controller
 
             // Update user seller status
             $user->update([
+                'is_seller' => true,
                 'seller_status' => 'approved',
                 'seller_approved_at' => now(),
                 'seller_rejection_reason' => null,
             ]);
+
+            // Create or activate store
+            if ($user->store) {
+                $user->store->update([
+                    'status' => 'active',
+                    'approved_at' => now(),
+                ]);
+            } else {
+                // Auto-create store if not exists
+                $user->store()->create([
+                    'name' => 'Toko ' . $user->name,
+                    'description' => 'Selamat datang di toko kami!',
+                    'status' => 'active',
+                    'approved_at' => now(),
+                ]);
+            }
 
             // Create or activate access code
             if ($user->accessCode) {
@@ -138,17 +155,34 @@ class AdminUserController extends Controller
 
             DB::commit();
 
-            return response()->json([
-                'success' => true,
-                'message' => 'User berhasil disetujui sebagai seller',
-                'access_code' => $code,
-            ]);
+            // Send notification to user
+            $user->notify(new \App\Notifications\SellerApplicationNotification('approved'));
+
+            // Check if AJAX request
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'User berhasil disetujui sebagai seller',
+                    'access_code' => $code,
+                ]);
+            }
+
+            // Regular form submission
+            return redirect()->route('admin.users.verification')
+                ->with('success', "✅ {$user->name} berhasil disetujui sebagai seller! Kode akses: {$code}");
+
         } catch (\Exception $e) {
             DB::rollBack();
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal menyetujui user: ' . $e->getMessage(),
-            ], 500);
+            
+            if ($request->wantsJson() || $request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Gagal menyetujui user: ' . $e->getMessage(),
+                ], 500);
+            }
+
+            return redirect()->back()
+                ->with('error', 'Gagal menyetujui user: ' . $e->getMessage());
         }
     }
 
