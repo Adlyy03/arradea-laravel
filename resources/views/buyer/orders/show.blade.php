@@ -76,6 +76,16 @@
 
         <!-- Sidebar Info -->
         <div class="space-y-4 lg:space-y-6">
+            <!-- Payment Method -->
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl lg:rounded-3xl p-5 lg:p-8 shadow-sm border border-green-200">
+                <h3 class="text-sm lg:text-lg font-black text-gray-900 mb-3 lg:mb-4 flex items-center gap-2">
+                    <span class="text-xl">💳</span>
+                    Metode Pembayaran
+                </h3>
+                <p class="text-xs lg:text-sm font-bold text-green-700 leading-relaxed">Pesanan ini menggunakan metode <span class="text-green-900">COD (Cash on Delivery)</span>.</p>
+                <p class="text-xs lg:text-sm font-medium text-green-600 mt-2 leading-relaxed">Pembayaran dilakukan saat barang diterima.</p>
+            </div>
+
             <!-- Status Timeline -->
             <div class="bg-white rounded-xl lg:rounded-3xl p-5 lg:p-8 shadow-sm border border-gray-100">
                 <h3 class="text-sm lg:text-lg font-black text-gray-900 mb-4 lg:mb-6">Status Pesanan</h3>

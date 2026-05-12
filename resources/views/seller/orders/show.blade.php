@@ -100,6 +100,16 @@
         </div>
     </div>
 
+    {{-- Payment Method --}}
+    <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-2xl border border-green-200 p-5">
+        <h2 class="text-xs font-black text-gray-500 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <span>💳</span>
+            Metode Pembayaran
+        </h2>
+        <p class="text-sm font-bold text-green-700">Pesanan ini menggunakan metode <span class="text-green-900">COD (Cash on Delivery)</span>.</p>
+        <p class="text-sm font-medium text-green-600 mt-2">Pembeli akan melakukan pembayaran saat barang diterima.</p>
+    </div>
+
     {{-- Notes --}}
     @if($order->notes)
     <div class="bg-amber-50 border border-amber-200 rounded-2xl p-5">

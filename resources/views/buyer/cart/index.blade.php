@@ -87,13 +87,16 @@
                 <p class="text-3xl font-black text-gray-900">Rp {{ number_format($totalFinal ?? 0,0,',','.') }}</p>
             </div>
             <div class="w-full sm:w-auto space-y-3">
-                <form action="{{ route('buyer.cart.checkout') }}" method="POST">
+                <form action="{{ route('buyer.cart.checkout') }}" method="POST" id="desktop-checkout-form">
                     @csrf
                     <textarea name="notes" rows="2" maxlength="1000"
                         class="w-full sm:w-72 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-medium text-gray-700 focus:outline-none focus:ring-2 transition mb-2 resize-none"
                         placeholder="Catatan untuk penjual (opsional)"
                         style="--tw-ring-color:rgba(114,191,119,.4)">{{ old('notes') }}</textarea>
-                    <button type="submit" class="w-full sm:w-72 py-3.5 rounded-xl font-black text-base text-white transition hover:opacity-90 hover:-translate-y-0.5" style="background:#72bf77;box-shadow:0 4px 20px rgba(114,191,119,.4)">
+                    <div class="mb-3 p-3 rounded-xl border" style="background:rgba(114,191,119,.08);border-color:rgba(114,191,119,.3)">
+                        <p class="text-xs font-semibold text-gray-700" style="color:#3fa348">💳 Pembayaran dilakukan saat barang diterima (COD / Cash on Delivery)</p>
+                    </div>
+                    <button type="button" onclick="openCODModal('desktop-checkout-form')" class="w-full sm:w-72 py-3.5 rounded-xl font-black text-base text-white transition hover:opacity-90 hover:-translate-y-0.5" style="background:#72bf77;box-shadow:0 4px 20px rgba(114,191,119,.4)">
                         Pesan Sekarang →
                     </button>
                 </form>
@@ -120,11 +123,14 @@
                 @csrf
                 <div id="mobile-checkout-form" class="hidden mb-3">
                     <textarea name="notes" rows="2" maxlength="1000"
-                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 transition resize-none"
+                        class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-medium text-gray-700 focus:outline-none focus:ring-2 transition resize-none mb-2"
                         placeholder="Catatan untuk penjual (opsional)"
                         style="--tw-ring-color:rgba(114,191,119,.4)">{{ old('notes') }}</textarea>
                 </div>
-                <button type="submit" class="w-full py-3.5 rounded-xl font-black text-base text-white transition active:scale-95" style="background:#72bf77;box-shadow:0 4px 20px rgba(114,191,119,.4)">
+                <div class="mb-2 p-2.5 rounded-lg border text-[11px] font-semibold" style="background:rgba(114,191,119,.08);border-color:rgba(114,191,119,.3);color:#3fa348">
+                    💳 COD (Cash on Delivery) - Bayar saat barang diterima
+                </div>
+                <button type="button" onclick="openCODModal('mobile-checkout-form-main')" class="w-full py-3.5 rounded-xl font-black text-base text-white transition active:scale-95" style="background:#72bf77;box-shadow:0 4px 20px rgba(114,191,119,.4)">
                     Pesan Sekarang →
                 </button>
             </form>
@@ -135,8 +141,58 @@
     @endif
 </div>
 
+{{-- COD Confirmation Modal --}}
+<div id="codModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl lg:rounded-3xl max-w-md w-full shadow-2xl animate-in fade-in scale-in">
+        {{-- Header --}}
+        <div class="px-6 lg:px-8 py-6 border-b border-gray-100">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center text-xl" style="background:rgba(114,191,119,.15)">
+                    💳
+                </div>
+                <div>
+                    <h3 class="text-lg lg:text-xl font-black text-gray-900">Konfirmasi Pembayaran</h3>
+                    <p class="text-xs lg:text-sm text-gray-500 mt-0.5">Cash on Delivery (COD)</p>
+                </div>
+            </div>
+        </div>
+
+        {{-- Body --}}
+        <div class="px-6 lg:px-8 py-5 lg:py-6">
+            <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-4 mb-4 border border-green-200">
+                <p class="text-sm lg:text-base font-black text-gray-900 mb-2">Metode Pembayaran</p>
+                <p class="text-sm lg:text-base font-semibold text-gray-700 leading-relaxed">
+                    Pesanan ini menggunakan metode pembayaran <span style="color:#3fa348">COD (Cash on Delivery)</span>.
+                </p>
+                <p class="text-xs lg:text-sm text-gray-600 mt-3 leading-relaxed">
+                    ✓ Pembayaran dilakukan saat barang diterima
+                </p>
+                <p class="text-xs lg:text-sm text-gray-600 leading-relaxed">
+                    ✓ Anda bisa mengecek barang sebelum membayar
+                </p>
+            </div>
+
+            <p class="text-xs lg:text-sm text-gray-600 text-center">
+                Apakah Anda ingin melanjutkan pesanan dengan metode COD ini?
+            </p>
+        </div>
+
+        {{-- Footer --}}
+        <div class="px-6 lg:px-8 py-4 lg:py-5 border-t border-gray-100 flex gap-3">
+            <button type="button" onclick="closeCODModal()" class="flex-1 px-4 py-3 rounded-xl font-black text-sm lg:text-base text-gray-700 bg-gray-100 hover:bg-gray-200 transition active:scale-95">
+                Batal
+            </button>
+            <button type="button" onclick="confirmCODOrder()" class="flex-1 px-4 py-3 rounded-xl font-black text-sm lg:text-base text-white transition hover:opacity-90 active:scale-95 shadow-lg" style="background:#72bf77;box-shadow:0 4px 12px rgba(114,191,119,.4)">
+                Lanjutkan Pesan
+            </button>
+        </div>
+    </div>
+</div>
+
 @push('scripts')
 <script>
+let pendingFormId = null;
+
 function changeQty(cartId, delta){
     const input = document.getElementById('qty-'+cartId);
     if(!input) return;
@@ -146,6 +202,33 @@ function changeQty(cartId, delta){
     input.value = newVal;
     document.getElementById('cart-qty-'+cartId).submit();
 }
+
+function openCODModal(formId){
+    pendingFormId = formId;
+    document.getElementById('codModal').classList.remove('hidden');
+    document.getElementById('codModal').classList.add('flex');
+}
+
+function closeCODModal(){
+    document.getElementById('codModal').classList.add('hidden');
+    document.getElementById('codModal').classList.remove('flex');
+    pendingFormId = null;
+}
+
+function confirmCODOrder(){
+    if(pendingFormId){
+        document.getElementById(pendingFormId).submit();
+    }
+}
+
+// Close modal when clicking outside
+document.addEventListener('click', function(event){
+    const modal = document.getElementById('codModal');
+    if(event.target === modal){
+        closeCODModal();
+    }
+});
 </script>
 @endpush
+
 @endsection

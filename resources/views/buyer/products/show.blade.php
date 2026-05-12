@@ -198,6 +198,10 @@
                                 <input type="number" name="quantity" value="1" min="1" max="{{ $product->stock }}" class="w-32 border-2 border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 font-bold text-gray-900 transition" required>
                             </div>
 
+                            <div class="p-3 rounded-xl border" style="background:rgba(114,191,119,.08);border-color:rgba(114,191,119,.3)">
+                                <p class="text-xs font-semibold text-gray-700" style="color:#3fa348">💳 Pembayaran dilakukan saat barang diterima (COD / Cash on Delivery)</p>
+                            </div>
+
                             <div class="flex flex-col sm:flex-row gap-3 pt-2">
                                 <button type="submit" class="flex-1 px-6 py-4 bg-gradient-to-r from-primary-600 to-green-600 text-white rounded-xl font-black text-base hover:from-primary-700 hover:to-green-700 shadow-lg shadow-primary-200 transition-all active:scale-95 flex items-center justify-center gap-2 {{ $product->stock === 0 ? 'opacity-50 cursor-not-allowed' : '' }}" {{ $product->stock === 0 ? 'disabled' : '' }}>
                                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
