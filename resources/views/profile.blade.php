@@ -45,6 +45,13 @@
 @endpush
 
 @section('content')
+@php
+    $activeMode = auth()->user()->getActiveMode();
+    $modeLabel = $activeMode === 'seller' ? 'Mode Aktif: Seller' : 'Mode Aktif: Buyer';
+    $modeBadgeClass = $activeMode === 'seller'
+        ? 'background:rgba(251,191,36,.15);color:#b45309;border:1px solid rgba(251,191,36,.3)'
+        : 'background:rgba(59,130,246,.12);color:#1d4ed8;border:1px solid rgba(59,130,246,.25)';
+@endphp
 <div class="max-w-5xl mx-auto space-y-6 fade-up">
 
     {{-- Header --}}
@@ -53,6 +60,9 @@
             <h1 class="text-2xl lg:text-3xl font-black text-gray-900">Profil <span class="bg-gradient-to-r from-[#72bf77] to-[#4db85a] bg-clip-text text-transparent">Saya</span></h1>
             <p class="text-xs lg:text-sm text-gray-500 mt-1 font-medium">Kelola informasi akun Anda</p>
         </div>
+        <span class="hidden sm:inline-flex items-center px-3 py-1.5 rounded-xl text-[10px] lg:text-xs font-black uppercase tracking-widest" style="{{ $modeBadgeClass }}">
+            {{ $modeLabel }}
+        </span>
     </div>
 
     @if(session('success'))
@@ -63,6 +73,8 @@
         {{ session('success') }}
     </div>
     @endif
+
+    {{-- moved account settings to Pengaturan Akun below --}}
 
     {{-- Profile Card --}}
     <div class="profile-card rounded-2xl lg:rounded-3xl overflow-hidden shadow-lg">
@@ -219,6 +231,78 @@
         </div>
     </div>
     @endif
+    
+    {{-- Pengaturan Akun (Edit & Hapus) - moved here for clarity --}}
+    <div class="mt-4">
+        <div class="profile-card rounded-2xl lg:rounded-3xl p-5 lg:p-6 shadow-lg">
+            <h3 class="text-sm font-black text-gray-900 mb-3">Pengaturan Akun</h3>
+            <p class="text-xs text-gray-500 mb-4">Atur data akun, ganti password, atau hapus akun Anda.</p>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {{-- Edit Akun Form (left) --}}
+                <div class="bg-white rounded-xl border border-gray-100 p-4">
+                    <form method="POST" action="{{ route('profile.update') }}" class="space-y-3">
+                        @csrf
+                        @method('PATCH')
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Nama</label>
+                            <input name="name" type="text" required value="{{ old('name', auth()->user()->name) }}" class="w-full rounded-lg border px-3 py-2 text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Nomor HP</label>
+                            <input name="phone" type="text" required value="{{ old('phone', auth()->user()->phone) }}" class="w-full rounded-lg border px-3 py-2 text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Password Baru (opsional)</label>
+                            <input name="password" type="password" class="w-full rounded-lg border px-3 py-2 text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Konfirmasi Password</label>
+                            <input name="password_confirmation" type="password" class="w-full rounded-lg border px-3 py-2 text-sm">
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-emerald-600 text-white font-bold text-sm">Simpan</button>
+                        </div>
+                    </form>
+                </div>
+
+                {{-- Hapus Akun (right) --}}
+                <div class="bg-white rounded-xl border border-red-100 p-4">
+                    <p class="text-sm font-black text-red-600 mb-2">Hapus Akun</p>
+                    <p class="text-xs text-gray-500 mb-3">Tindakan ini permanen. Pastikan Anda yakin sebelum melanjutkan.</p>
+
+                    <form method="POST" action="{{ route('profile.destroy') }}" class="space-y-3" onsubmit="return confirm('Yakin hapus akun?');">
+                        @csrf
+                        @method('DELETE')
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Password Saat Ini</label>
+                            <input name="delete_password" type="password" required class="w-full rounded-lg border px-3 py-2 text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 mb-1">Ketik HAPUS AKUN untuk konfirmasi</label>
+                            <input name="delete_confirmation" type="text" required class="w-full rounded-lg border px-3 py-2 text-sm" placeholder="HAPUS AKUN">
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <input id="del_ack_mobile" type="checkbox" class="rounded border-gray-200" required>
+                            <label for="del_ack_mobile" class="text-xs text-gray-600">Saya mengerti tindakan ini permanen</label>
+                        </div>
+
+                        <div class="flex justify-end">
+                            <button type="submit" class="px-4 py-2 rounded-lg bg-red-600 text-white font-bold text-sm">Hapus Akun</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
     {{-- ═══════════════════════════════════════
          MOBILE NAVIGATION MENU (lg:hidden)
          Replaces sidebar for mobile users
@@ -267,6 +351,22 @@
                             <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 12 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/></svg>
                         </div>
                         <span class="text-sm font-semibold text-gray-800">Pesan Masuk</span>
+                        <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                    <a href="{{ route('seller.analytics') }}"
+                       class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-amber-50 transition {{ request()->routeIs('seller.analytics*') ? 'bg-amber-50' : '' }}">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fffbeb;">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17a1 1 0 001-1v-4h2l-3-4-3 4h2v4a1 1 0 001 1zM21 12v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6"/></svg>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-800">Analitik</span>
+                        <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </a>
+                    <a href="{{ route('seller.settings') }}"
+                       class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-amber-50 transition {{ request()->routeIs('seller.settings*') ? 'bg-amber-50' : '' }}">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0" style="background:#fffbeb;">
+                            <svg class="w-5 h-5 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                        </div>
+                        <span class="text-sm font-semibold text-gray-800">Pengaturan Toko</span>
                         <svg class="w-4 h-4 text-gray-300 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </a>
 

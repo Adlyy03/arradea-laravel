@@ -106,9 +106,9 @@ class MarketplaceFeatureTest extends TestCase
 
         // 6. Seller receives order and accepts
         $this->actingAs($buyer1->fresh())->put('/web/order/' . $order->id . '/status', [
-            'status' => 'accepted'
+            'status' => 'processing'
         ]);
-        $this->assertEquals('accepted', $order->fresh()->status);
+        $this->assertEquals('processing', $order->fresh()->status);
 
         Notification::assertSentTo($buyer2, OrderStatusNotification::class);
 

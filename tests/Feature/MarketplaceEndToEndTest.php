@@ -43,8 +43,8 @@ class MarketplaceEndToEndTest extends TestCase
         $okRegister = $this->postJson('/api/register', [
             'name' => 'Buyer One',
             'phone' => '+628333330001',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'Password123',
+            'password_confirmation' => 'Password123',
             'access_code' => $this->activeCode->code,
             'latitude' => -6.200000,
             'longitude' => 106.816666,
@@ -61,8 +61,8 @@ class MarketplaceEndToEndTest extends TestCase
         $badRegister = $this->postJson('/api/register', [
             'name' => 'Buyer Two',
             'phone' => '+628333330002',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'Password123',
+            'password_confirmation' => 'Password123',
             'access_code' => 'KODE-SALAH',
             'latitude' => -6.200000,
             'longitude' => 106.816666,
@@ -74,8 +74,8 @@ class MarketplaceEndToEndTest extends TestCase
         $withoutCode = $this->postJson('/api/register', [
             'name' => 'Buyer Three',
             'phone' => '+628333330003',
-            'password' => 'password',
-            'password_confirmation' => 'password',
+            'password' => 'Password123',
+            'password_confirmation' => 'Password123',
             'latitude' => -6.200000,
             'longitude' => 106.816666,
         ]);
@@ -85,7 +85,7 @@ class MarketplaceEndToEndTest extends TestCase
 
         $okLogin = $this->postJson('/api/login', [
             'phone' => '+628333330001',
-            'password' => 'password',
+            'password' => 'Password123',
         ]);
 
         $okLogin->assertOk()
@@ -218,7 +218,7 @@ class MarketplaceEndToEndTest extends TestCase
         $this->assertNotNull($chat);
 
         $send = $this->actingAs($seller)->postJson('/chat/' . $chat->id, [
-            'message' => 'Pesanan diproses sekarang',
+            'message' => 'Pesanan sedang diproses sekarang',
         ]);
 
         $send->assertCreated()->assertJsonPath('success', true);
@@ -226,13 +226,13 @@ class MarketplaceEndToEndTest extends TestCase
         $this->assertDatabaseHas('messages', [
             'chat_id' => $chat->id,
             'sender_id' => $seller->id,
-            'message' => 'Pesanan diproses sekarang',
+            'message' => 'Pesanan sedang diproses sekarang',
         ]);
 
         $count = Message::query()
             ->where('chat_id', $chat->id)
             ->where('sender_id', $seller->id)
-            ->where('message', 'Pesanan diproses sekarang')
+            ->where('message', 'Pesanan sedang diproses sekarang')
             ->count();
 
         $this->assertSame(1, $count);
@@ -269,6 +269,7 @@ class MarketplaceEndToEndTest extends TestCase
 
         $this->actingAs($buyer)->post('/buyer/cart/checkout', [
             'notes' => 'Checkout diskon',
+            'payment_method' => 'cod',
         ])->assertRedirect(route('buyer.orders'));
 
         $order = Order::query()->where('user_id', $buyer->id)->latest()->first();
@@ -304,7 +305,7 @@ class MarketplaceEndToEndTest extends TestCase
             ->put('/web/order/' . $pendingOrder->id . '/cancel')
             ->assertSessionHas('success');
 
-        $this->assertEquals('dibatalkan', $pendingOrder->fresh()->status);
+        $this->assertEquals('cancelled', $pendingOrder->fresh()->status);
 
         $processedOrder = Order::create([
             'user_id' => $buyer->id,
@@ -316,14 +317,14 @@ class MarketplaceEndToEndTest extends TestCase
             'unit_price_final' => 30000,
             'discount_percent_applied' => 0,
             'total_price' => 30000,
-            'status' => 'accepted',
+            'status' => 'processing',
         ]);
 
         $this->actingAs($buyer)
             ->put('/web/order/' . $processedOrder->id . '/cancel')
             ->assertSessionHasErrors();
 
-        $this->assertEquals('accepted', $processedOrder->fresh()->status);
+        $this->assertEquals('processing', $processedOrder->fresh()->status);
     }
 
     public function test_search_and_filter_products(): void
@@ -435,7 +436,7 @@ class MarketplaceEndToEndTest extends TestCase
         ]);
 
         $response = $this->actingAs($sellerB)->put('/web/order/' . $order->id . '/status', [
-            'status' => 'accepted',
+            'status' => 'processing',
         ]);
 
         $response->assertStatus(403);
@@ -444,7 +445,10 @@ class MarketplaceEndToEndTest extends TestCase
 
     public function test_payment_feature_gap_is_detected_in_schema(): void
     {
-        $this->assertFalse(Schema::hasColumn('orders', 'payment_method'));
-        $this->assertFalse(Schema::hasColumn('orders', 'payment_status'));
+        $this->assertTrue(Schema::hasColumn('orders', 'payment_method'));
+        $this->assertTrue(Schema::hasColumn('orders', 'payment_status'));
+        $this->assertTrue(Schema::hasColumn('orders', 'payment_proof'));
+        $this->assertTrue(Schema::hasColumn('orders', 'paid_at'));
+        $this->assertTrue(Schema::hasColumn('orders', 'rejected_reason'));
     }
 }

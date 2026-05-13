@@ -1,0 +1,254 @@
+<?php $__env->startSection('title', 'Dashboard Seller — Arradea'); ?>
+<?php $__env->startSection('page_title', 'Dashboard Seller'); ?>
+
+<?php $__env->startPush('styles'); ?>
+<style>
+    /* Mobile optimizations - Ultra Compact */
+    @media(max-width:1023px){
+        .seller-hero { padding:10px !important; border-radius:12px !important; }
+        .seller-hero h1 { font-size:16px !important; line-height:1.3 !important; }
+        .seller-hero p { font-size:10px !important; }
+        .seller-hero .quick-stat { font-size:18px !important; }
+        .seller-hero .quick-stat-label { font-size:9px !important; }
+        .seller-hero button, .seller-hero a { padding:6px 10px !important; font-size:11px !important; border-radius:8px !important; }
+        .seller-schedule { padding:10px !important; border-radius:12px !important; }
+        .seller-schedule h2 { font-size:11px !important; margin-bottom:8px !important; }
+        .seller-schedule input { height:32px !important; font-size:12px !important; padding:0 8px !important; }
+        .seller-schedule button { height:32px !important; padding:0 12px !important; font-size:11px !important; }
+        .seller-schedule label { font-size:10px !important; }
+        .order-list { border-radius:12px !important; }
+        .order-list h2 { font-size:11px !important; }
+        .order-item { padding:8px 10px !important; }
+        .order-item .avatar { width:28px !important; height:28px !important; font-size:11px !important; }
+        .order-item .order-name { font-size:12px !important; }
+        .order-item .order-meta { font-size:10px !important; }
+        .order-item .order-price { font-size:11px !important; }
+        .order-item .order-status { font-size:9px !important; padding:3px 6px !important; }
+        .order-item button { font-size:10px !important; padding:4px 8px !important; }
+        .quick-link { padding:8px !important; border-radius:10px !important; }
+        .quick-link span:first-child { font-size:20px !important; }
+        .quick-link span:nth-child(2) { font-size:11px !important; }
+        .quick-link span:last-child { font-size:9px !important; }
+        .alert-pending { padding:10px !important; border-radius:12px !important; }
+        .alert-pending p:first-of-type { font-size:11px !important; }
+        .alert-pending p:last-of-type { font-size:10px !important; }
+        .alert-pending a { padding:6px 10px !important; font-size:10px !important; }
+    }
+</style>
+<?php $__env->stopPush(); ?>
+
+<?php $__env->startSection('content'); ?>
+<?php
+    $store        = Auth::user()->store;
+    $seller       = Auth::user();
+    $storeStatus  = $store->store_status ?? 'closed';
+    $pendingCount = $store ? $store->orders()->where('status','pending')->count() : 0;
+    $acceptedCount= $store ? $store->orders()->where('status','accepted')->count() : 0;
+    $doneCount    = $store ? $store->orders()->where('status','done')->count() : 0;
+    $productCount = $store ? $store->products()->count() : 0;
+    $recentOrders = $store ? $store->orders()->with(['user','product'])->latest()->take(5)->get() : collect();
+?>
+
+<div class="space-y-4 lg:space-y-5 fade-up">
+
+    
+    <div class="seller-hero relative overflow-hidden rounded-xl lg:rounded-3xl p-3 lg:p-6 xl:p-8" style="background:linear-gradient(135deg,#0f1a11 0%,#1e3a22 50%,#0f1a11 100%)">
+        <div class="absolute -top-20 -right-20 w-64 h-64 rounded-full opacity-10" style="background:#72bf77;filter:blur(60px)"></div>
+        <div class="absolute -bottom-20 -left-10 w-48 h-48 rounded-full opacity-10" style="background:#4db85a;filter:blur(40px)"></div>
+        <div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-3 lg:gap-6">
+            <div class="text-white">
+                <p class="text-[8px] lg:text-[10px] font-black uppercase tracking-wider mb-0.5 lg:mb-2" style="color:#72bf77">Seller Center</p>
+                <h1 class="text-base lg:text-2xl xl:text-3xl font-black tracking-tight">
+                    <?php echo e($store->name ?? 'Toko '.$seller->name); ?>
+
+                    <span class="inline-flex items-center gap-1 ml-1.5 lg:ml-2 px-1.5 lg:px-3 py-0.5 lg:py-1 rounded-full text-[9px] lg:text-xs font-black <?php echo e($storeStatus==='open' ? '' : ''); ?>" style="<?php echo e($storeStatus==='open' ? 'background:rgba(34,197,94,.2);color:#4ade80' : 'background:rgba(255,255,255,.1);color:#9ca3af'); ?>">
+                        <span class="w-1 lg:w-1.5 h-1 lg:h-1.5 rounded-full <?php echo e($storeStatus==='open' ? 'bg-green-400' : 'bg-gray-500'); ?> animate-pulse"></span>
+                        <?php echo e($storeStatus==='open' ? 'Buka' : 'Tutup'); ?>
+
+                    </span>
+                </h1>
+                <p class="text-white/50 text-[10px] lg:text-sm mt-0.5 lg:mt-1"><?php echo e(now()->locale('id')->isoFormat('dddd, D MMMM Y')); ?></p>
+            </div>
+            <div class="flex flex-wrap gap-1.5 lg:gap-2">
+                <form method="POST" action="<?php echo e(route('seller.store-status')); ?>" class="inline">
+                    <?php echo csrf_field(); ?>
+                    <button type="submit" class="px-2.5 lg:px-4 py-1 lg:py-2 rounded-lg lg:rounded-xl text-[10px] lg:text-sm font-bold transition hover:opacity-90"
+                        style="<?php echo e($storeStatus==='open' ? 'background:rgba(220,38,38,.2);color:#f87171;border:1px solid rgba(220,38,38,.3)' : 'background:rgba(114,191,119,.2);color:#72bf77;border:1px solid rgba(114,191,119,.3)'); ?>">
+                        <?php echo e($storeStatus==='open' ? '🔴 Tutup' : '🟢 Buka'); ?>
+
+                    </button>
+                </form>
+                <a href="<?php echo e(route('seller.products.create')); ?>" class="px-2.5 lg:px-4 py-1 lg:py-2 rounded-lg lg:rounded-xl text-[10px] lg:text-sm font-bold text-white transition hover:opacity-90" style="background:#72bf77">+ Produk</a>
+            </div>
+        </div>
+
+        
+        <div class="relative z-10 grid grid-cols-2 sm:grid-cols-4 gap-2 lg:gap-3 mt-3 lg:mt-6 pt-3 lg:pt-6" style="border-top:1px solid rgba(255,255,255,.08)">
+            <div class="text-center text-white">
+                <p class="quick-stat text-lg lg:text-2xl font-black"><?php echo e($productCount); ?></p>
+                <p class="quick-stat-label text-[8px] lg:text-[10px] uppercase tracking-wider font-bold mt-0.5" style="color:#72bf77">Produk</p>
+            </div>
+            <div class="text-center text-white">
+                <p class="quick-stat text-lg lg:text-2xl font-black text-amber-400"><?php echo e($pendingCount); ?></p>
+                <p class="quick-stat-label text-[8px] lg:text-[10px] uppercase tracking-wider font-bold mt-0.5" style="color:#72bf77">Menunggu</p>
+            </div>
+            <div class="text-center text-white">
+                <p class="quick-stat text-lg lg:text-2xl font-black text-blue-400"><?php echo e($acceptedCount); ?></p>
+                <p class="quick-stat-label text-[8px] lg:text-[10px] uppercase tracking-wider font-bold mt-0.5" style="color:#72bf77">Diproses</p>
+            </div>
+            <div class="text-center text-white">
+                <p class="quick-stat text-lg lg:text-2xl font-black text-green-400"><?php echo e($doneCount); ?></p>
+                <p class="quick-stat-label text-[8px] lg:text-[10px] uppercase tracking-wider font-bold mt-0.5" style="color:#72bf77">Selesai</p>
+            </div>
+        </div>
+    </div>
+
+    
+    <?php if($pendingCount > 0): ?>
+    <div class="alert-pending flex items-center justify-between p-3 lg:p-4 bg-amber-50 border border-amber-200 rounded-xl lg:rounded-2xl">
+        <div class="flex items-center gap-2 lg:gap-3">
+            <span class="text-base lg:text-xl">⚡</span>
+            <div>
+                <p class="text-xs lg:text-sm font-black text-amber-800"><?php echo e($pendingCount); ?> Pesanan Menunggu</p>
+                <p class="text-[10px] lg:text-xs text-amber-600">Segera proses pesanan.</p>
+            </div>
+        </div>
+        <a href="<?php echo e(route('seller.orders')); ?>" class="px-3 lg:px-4 py-1.5 lg:py-2 rounded-lg lg:rounded-xl text-[10px] lg:text-xs font-bold text-white flex-shrink-0" style="background:#72bf77">Proses</a>
+    </div>
+    <?php endif; ?>
+
+    
+    <div class="seller-schedule bg-white rounded-xl lg:rounded-2xl border border-gray-100 p-3 lg:p-5">
+        <h2 class="text-xs lg:text-sm font-black text-gray-700 uppercase tracking-wider mb-3 lg:mb-4">⏰ Jadwal Toko</h2>
+        <form method="POST" action="<?php echo e(route('seller.store-schedule')); ?>" class="space-y-3">
+            <?php echo csrf_field(); ?>
+            
+            <label class="flex items-center gap-2 lg:gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition">
+                <input type="checkbox" name="auto_schedule" value="1" <?php echo e(old('auto_schedule', $store->auto_schedule ?? false) ? 'checked' : ''); ?>
+
+                    class="w-4 lg:w-5 h-4 lg:h-5 rounded border-gray-300 text-[#72bf77]" id="auto-schedule-toggle">
+                <div>
+                    <span class="text-xs lg:text-sm font-bold text-gray-700 block">Jadwal Otomatis</span>
+                    <span class="text-[9px] lg:text-xs text-gray-500">Toko buka/tutup sesuai jam yang ditentukan</span>
+                </div>
+            </label>
+
+            <div id="schedule-inputs" class="flex flex-wrap items-end gap-2 lg:gap-4" style="display: <?php echo e(old('auto_schedule', $store->auto_schedule ?? false) ? 'flex' : 'none'); ?>">
+                <div>
+                    <label class="block text-[10px] lg:text-xs font-bold text-gray-500 mb-1 lg:mb-1.5 uppercase tracking-wider">Buka</label>
+                    <input type="time" name="open_time" value="<?php echo e(old('open_time', $store->open_time ?? '00:00')); ?>"
+                        class="h-8 lg:h-10 bg-gray-50 border border-gray-200 rounded-lg lg:rounded-xl px-2 lg:px-3 text-xs lg:text-sm font-medium focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)">
+                    <?php $__errorArgs = ['open_time'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?><p class="text-[9px] lg:text-xs text-red-500 mt-1"><?php echo e($message); ?></p><?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                </div>
+                <div>
+                    <label class="block text-[10px] lg:text-xs font-bold text-gray-500 mb-1 lg:mb-1.5 uppercase tracking-wider">Tutup</label>
+                    <input type="time" name="close_time" value="<?php echo e(old('close_time', $store->close_time ?? '23:59')); ?>"
+                        class="h-8 lg:h-10 bg-gray-50 border border-gray-200 rounded-lg lg:rounded-xl px-2 lg:px-3 text-xs lg:text-sm font-medium focus:outline-none focus:ring-2 transition" style="--tw-ring-color:rgba(114,191,119,.4)">
+                    <?php $__errorArgs = ['close_time'];
+$__bag = $errors->getBag($__errorArgs[1] ?? 'default');
+if ($__bag->has($__errorArgs[0])) :
+if (isset($message)) { $__messageOriginal = $message; }
+$message = $__bag->first($__errorArgs[0]); ?><p class="text-[9px] lg:text-xs text-red-500 mt-1"><?php echo e($message); ?></p><?php unset($message);
+if (isset($__messageOriginal)) { $message = $__messageOriginal; }
+endif;
+unset($__errorArgs, $__bag); ?>
+                </div>
+            </div>
+
+            <div id="open-24h-notice" class="p-3 bg-green-50 border border-green-200 rounded-lg" style="display: <?php echo e(old('auto_schedule', $store->auto_schedule ?? false) ? 'none' : 'block'); ?>">
+                <p class="text-xs lg:text-sm font-bold text-green-700">🟢 Toko Buka 24 Jam</p>
+                <p class="text-[10px] lg:text-xs text-green-600 mt-1">Pembeli bisa belanja kapan saja</p>
+            </div>
+
+            <button type="submit" class="w-full lg:w-auto h-8 lg:h-10 px-4 lg:px-5 rounded-lg lg:rounded-xl text-xs lg:text-sm font-bold text-white transition hover:opacity-90" style="background:#72bf77">Simpan Jadwal</button>
+        </form>
+    </div>
+
+    <script>
+    document.getElementById('auto-schedule-toggle')?.addEventListener('change', function() {
+        const scheduleInputs = document.getElementById('schedule-inputs');
+        const open24hNotice = document.getElementById('open-24h-notice');
+        if (this.checked) {
+            scheduleInputs.style.display = 'flex';
+            open24hNotice.style.display = 'none';
+        } else {
+            scheduleInputs.style.display = 'none';
+            open24hNotice.style.display = 'block';
+        }
+    });
+    </script>
+
+    
+    <div class="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-50">
+            <h2 class="text-sm font-black text-gray-700 uppercase tracking-widest">Pesanan Terbaru</h2>
+            <a href="<?php echo e(route('seller.orders')); ?>" class="text-xs font-bold" style="color:#72bf77">Lihat Semua →</a>
+        </div>
+        <?php
+            $statusMap = ['pending'=>['Menunggu','bg-amber-100 text-amber-700'],'accepted'=>['Diproses','bg-blue-100 text-blue-700'],'shipped'=>['Dikirim','bg-purple-100 text-purple-700'],'done'=>['Selesai','bg-green-100 text-green-700'],'rejected'=>['Ditolak','bg-red-100 text-red-700'],'dibatalkan'=>['Dibatalkan','bg-gray-100 text-gray-500']];
+        ?>
+        <?php $__empty_1 = true; $__currentLoopData = $recentOrders; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $order): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); $__empty_1 = false; ?>
+        <?php [$statusLabel,$statusClass] = $statusMap[$order->status] ?? [$order->status,'bg-gray-100 text-gray-600']; ?>
+        <div class="flex items-center justify-between px-5 py-4 border-b border-gray-50/60 hover:bg-gray-50/40 transition">
+            <div class="flex items-center gap-3 flex-1 min-w-0">
+                <div class="w-8 h-8 rounded-xl flex items-center justify-center text-xs font-black flex-shrink-0" style="background:rgba(114,191,119,.1);color:#3fa348"><?php echo e(strtoupper(substr($order->user->name??'?',0,1))); ?></div>
+                <div class="min-w-0">
+                    <p class="text-sm font-bold text-gray-900 truncate"><?php echo e($order->user->name ?? 'Pembeli'); ?></p>
+                    <p class="text-xs text-gray-400 truncate"><?php echo e($order->product->name ?? 'Produk'); ?> · <?php echo e($order->created_at->diffForHumans()); ?></p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3 ml-3 flex-shrink-0">
+                <p class="text-sm font-black text-gray-900 hidden sm:block">Rp <?php echo e(number_format($order->total_price,0,',','.')); ?></p>
+                <span class="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase <?php echo e($statusClass); ?>"><?php echo e($statusLabel); ?></span>
+                <?php if($order->status === 'pending'): ?>
+                <form method="POST" action="/web/order/<?php echo e($order->id); ?>/status" class="inline">
+                    <?php echo csrf_field(); ?> <?php echo method_field('PUT'); ?>
+                    <input type="hidden" name="status" value="accepted">
+                    <button type="submit" class="px-3 py-1.5 rounded-lg text-[10px] font-black text-white transition hover:opacity-80" style="background:#72bf77">Proses</button>
+                </form>
+                <?php endif; ?>
+            </div>
+        </div>
+        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); if ($__empty_1): ?>
+        <div class="flex flex-col items-center justify-center py-16 text-center">
+            <span class="text-4xl mb-3">📭</span>
+            <p class="font-bold text-gray-700">Belum ada pesanan</p>
+            <p class="text-sm text-gray-400 mt-1">Pesanan dari pembeli akan muncul di sini.</p>
+        </div>
+        <?php endif; ?>
+    </div>
+
+    
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 lg:gap-3">
+        <a href="<?php echo e(route('seller.products')); ?>" class="quick-link flex flex-col items-center gap-1.5 lg:gap-2 p-3 lg:p-4 rounded-xl lg:rounded-2xl text-center bg-white border border-gray-100 hover:border-green-200 hover:shadow-md transition group">
+            <span class="text-xl lg:text-2xl group-hover:scale-110 transition">📦</span>
+            <span class="text-[11px] lg:text-xs font-black text-gray-700">Produk</span>
+            <span class="text-[9px] lg:text-[10px] font-bold" style="color:#72bf77"><?php echo e($productCount); ?> item</span>
+        </a>
+        <a href="<?php echo e(route('seller.orders')); ?>" class="quick-link flex flex-col items-center gap-1.5 lg:gap-2 p-3 lg:p-4 rounded-xl lg:rounded-2xl text-center bg-white border border-gray-100 hover:border-green-200 hover:shadow-md transition group">
+            <span class="text-xl lg:text-2xl group-hover:scale-110 transition">🛒</span>
+            <span class="text-[11px] lg:text-xs font-black text-gray-700">Pesanan</span>
+            <?php if($pendingCount > 0): ?><span class="text-[9px] lg:text-[10px] font-black text-amber-500"><?php echo e($pendingCount); ?> pending</span><?php endif; ?>
+        </a>
+        <a href="<?php echo e(route('seller.messages')); ?>" class="quick-link flex flex-col items-center gap-1.5 lg:gap-2 p-3 lg:p-4 rounded-xl lg:rounded-2xl text-center bg-white border border-gray-100 hover:border-green-200 hover:shadow-md transition group">
+            <span class="text-xl lg:text-2xl group-hover:scale-110 transition">💬</span>
+            <span class="text-[11px] lg:text-xs font-black text-gray-700">Pesan</span>
+        </a>
+        <a href="<?php echo e(route('seller.analytics')); ?>" class="quick-link flex flex-col items-center gap-1.5 lg:gap-2 p-3 lg:p-4 rounded-xl lg:rounded-2xl text-center bg-white border border-gray-100 hover:border-green-200 hover:shadow-md transition group">
+            <span class="text-xl lg:text-2xl group-hover:scale-110 transition">📊</span>
+            <span class="text-[11px] lg:text-xs font-black text-gray-700">Analitik</span>
+        </a>
+    </div>
+
+    
+</div>
+<?php $__env->stopSection(); ?>
+
+<?php echo $__env->make('layouts.dashboard', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\arradea-laravel\resources\views/seller/dashboard.blade.php ENDPATH**/ ?>

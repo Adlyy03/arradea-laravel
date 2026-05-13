@@ -29,8 +29,13 @@ class SplashScreen {
             <div class="splash-content text-center relative">
                 <!-- Logo Container -->
                 <div class="splash-logo mb-4">
+<<<<<<< HEAD
                     <div class="w-20 h-20 mx-auto rounded-2xl bg-white shadow-2xl flex items-center justify-center transform scale-0 overflow-hidden">
                         <img src="/images/arradea.jpeg" alt="Arradea" class="w-full h-full object-cover">
+=======
+                    <div class="w-20 h-20 mx-auto rounded-2xl bg-white shadow-2xl flex items-center justify-center transform scale-0">
+                        <img src="/icons/logo-arradea.png" alt="Arradea" class="w-full h-full rounded-2xl object-cover">
+>>>>>>> 1688c02551a4c3a5c36573e09b0fed8b8d385f24
                     </div>
                 </div>
                 
@@ -122,6 +127,14 @@ class SplashScreen {
     }
 
     init() {
+        // Hanya tampilkan splash screen di halaman welcome (root path)
+        const isWelcomePage = window.location.pathname === '/' || window.location.pathname === '';
+        if (!isWelcomePage) {
+            // Langsung trigger event tanpa splash
+            window.dispatchEvent(new CustomEvent('splashComplete'));
+            return;
+        }
+        
         // Scroll ke atas dulu sebelum splash muncul!
         window.scrollTo(0, 0);
         

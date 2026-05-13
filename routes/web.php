@@ -10,6 +10,8 @@ use App\Http\Controllers\ProductWebController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PaymentWebController;
+use App\Http\Controllers\ProfileController;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\User;
@@ -19,6 +21,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 
 // Load debug routes
 if (file_exists(__DIR__ . '/debug.php')) {
@@ -234,7 +237,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
                 ? $store->orders()->with(['user', 'product'])->latest()->paginate(15)
                 : collect()->paginate(0);
             $pendingCount = $store ? $store->orders()->where('status', 'pending')->count() : 0;
-            $doneCount    = $store ? $store->orders()->where('status', 'done')->count() : 0;
+            $doneCount    = $store ? $store->orders()->where('status', 'completed')->count() : 0;
             return view('seller.orders.index', compact('orders', 'pendingCount', 'doneCount'));
         })->name('seller.orders');
 
@@ -273,15 +276,15 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
             $totalProducts = $store ? $store->products()->count() : 0;
             $totalOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->count() : 0;
             $pendingOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'pending')->count() : 0;
-            $acceptedOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'accepted')->count() : 0;
-            $completedOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'done')->count() : 0;
-            $rejectedOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'rejected')->count() : 0;
-            $cancelledOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'dibatalkan')->count() : 0;
-            $totalRevenue = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'done')->sum('total_price') : 0;
+            $acceptedOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'processing')->count() : 0;
+            $completedOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'completed')->count() : 0;
+            $rejectedOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'cancelled')->count() : 0;
+            $cancelledOrders = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'cancelled')->count() : 0;
+            $totalRevenue = $filteredOrdersQuery ? (clone $filteredOrdersQuery)->where('status', 'completed')->sum('total_price') : 0;
             $ordersInPeriod = $totalOrders;
 
             $thisPeriodRevenue = $filteredOrdersQuery
-                ? (clone $filteredOrdersQuery)->where('status', 'done')->sum('total_price')
+                ? (clone $filteredOrdersQuery)->where('status', 'completed')->sum('total_price')
                 : 0;
 
             $periodDays = (int) $startDate->copy()->startOfDay()->diffInDays($endDate->copy()->startOfDay()) + 1;
@@ -290,7 +293,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
 
             $previousPeriodRevenue = $baseOrdersQuery
                 ? (clone $baseOrdersQuery)
-                    ->where('status', 'done')
+                    ->where('status', 'completed')
                     ->whereBetween('created_at', [$previousPeriodStart, $previousPeriodEnd])
                     ->sum('total_price')
                 : 0;
@@ -303,7 +306,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
 
             $completedOrdersInRange = $baseOrdersQuery
                 ? (clone $baseOrdersQuery)
-                    ->where('status', 'done')
+                    ->where('status', 'completed')
                     ->whereBetween('created_at', [$startDate, $endDate])
                     ->get(['created_at', 'total_price'])
                 : collect();
@@ -328,7 +331,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
                 ? (clone $baseOrdersQuery)
                     ->with('product:id,name')
                     ->whereBetween('created_at', [$startDate, $endDate])
-                    ->where('status', 'done')
+                    ->where('status', 'completed')
                     ->select('product_id')
                     ->selectRaw('SUM(quantity) as total_qty')
                     ->selectRaw('SUM(total_price) as total_revenue')
@@ -403,34 +406,77 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
         Route::post('/settings', function (Request $request) {
             $request->validate([
                 'store_name'        => ['required', 'string', 'max:255'],
+                'store_image'       => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
                 'store_description' => ['nullable', 'string', 'max:1000'],
                 'store_address'     => ['nullable', 'string', 'max:500'],
+                'payment_name'      => ['required_with:qris_image', 'nullable', 'string', 'max:255'],
+                'payment_type'      => ['nullable', 'string', 'max:50'],
+                'payment_number'    => ['nullable', 'string', 'max:100'],
+                'qris_image'        => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
             ], [
-                'store_name.required' => 'Nama toko tidak boleh kosong.',
-                'store_name.max'      => 'Nama toko maksimal 255 karakter.',
+                'store_name.required'         => 'Nama toko tidak boleh kosong.',
+                'store_name.max'              => 'Nama toko maksimal 255 karakter.',
+                'store_image.image'           => 'File logo harus berupa gambar.',
+                'qris_image.image'            => 'File QRIS harus berupa gambar.',
+                'payment_name.required_with'  => 'Nama penerima wajib diisi jika upload QRIS.',
             ]);
 
             $user  = auth()->user();
             $store = $user->store;
 
-            if ($store) {
-                $store->update([
-                    'name'        => $request->store_name,
-                    'description' => $request->store_description,
-                    'address'     => $request->store_address,
-                ]);
-            } else {
-                // Auto-create toko jika belum ada
-                $user->store()->create([
-                    'name'        => $request->store_name,
-                    'description' => $request->store_description,
-                    'address'     => $request->store_address,
-                    'status'      => 'active',
-                ]);
+            $storeData = [
+                'name'        => $request->store_name,
+                'description' => $request->store_description,
+                'address'     => $request->store_address,
+            ];
+
+            // Upload store image
+            if ($request->hasFile('store_image')) {
+                if ($store && $store->image && Storage::disk('public')->exists($store->image)) {
+                    Storage::disk('public')->delete($store->image);
+                }
+                $storeData['image'] = $request->file('store_image')->store('stores', 'public');
             }
 
-            return back()->with('success', 'Informasi toko berhasil diperbarui!');
+            if ($store) {
+                $store->update($storeData);
+            } else {
+                // Auto-create toko jika belum ada
+                $user->store()->create(array_merge($storeData, ['status' => 'active']));
+            }
+
+            $paymentData = [];
+
+            // Update payment info fields
+            if ($request->filled('payment_name')) {
+                $paymentData['payment_name'] = $request->payment_name;
+            }
+            if ($request->filled('payment_type')) {
+                $paymentData['payment_type'] = $request->payment_type;
+            }
+            if ($request->filled('payment_number')) {
+                $paymentData['payment_number'] = $request->payment_number;
+            }
+
+            // Upload QRIS image
+            if ($request->hasFile('qris_image')) {
+                if ($user->qris_image && Storage::disk('public')->exists($user->qris_image)) {
+                    Storage::disk('public')->delete($user->qris_image);
+                }
+                $paymentData['qris_image'] = $request->file('qris_image')->store('seller-qris', 'public');
+            }
+
+            // Update user dengan payment data
+            if (!empty($paymentData)) {
+                $user->update($paymentData);
+            }
+
+            return back()->with('success', 'Informasi toko dan QRIS berhasil diperbarui!');
         })->name('seller.settings.update');
+
+        Route::get('/payments', [PaymentWebController::class, 'index'])->name('seller.payments');
+        Route::post('/payments/{order}/approve', [PaymentWebController::class, 'approve'])->name('seller.payments.approve');
+        Route::post('/payments/{order}/reject', [PaymentWebController::class, 'reject'])->name('seller.payments.reject');
     });
 
     Route::get('/seller/apply', function () {
@@ -442,10 +488,15 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
     Route::post('/seller/apply', function (Request $request) {
         $request->validate([
             'store_name'        => ['required', 'string', 'max:255'],
+            'store_image'       => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'store_description' => ['nullable', 'string', 'max:2000'],
             'store_address'     => ['nullable', 'string', 'max:500'],
             'latitude'          => ['nullable', 'numeric', 'between:-90,90', 'required_with:longitude'],
             'longitude'         => ['nullable', 'numeric', 'between:-180,180', 'required_with:latitude'],
+            'payment_name'      => ['required', 'string', 'max:255'],
+            'payment_type'      => ['required', 'string', 'max:50'],
+            'payment_number'    => ['nullable', 'string', 'max:100'],
+            'qris_image'        => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:4096'],
         ]);
 
         $user = $request->user();
@@ -458,6 +509,14 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
             'status'      => 'pending',
         ];
 
+        // Upload store image
+        if ($request->hasFile('store_image')) {
+            if ($user->store && $user->store->image && Storage::disk('public')->exists($user->store->image)) {
+                Storage::disk('public')->delete($user->store->image);
+            }
+            $storeData['image'] = $request->file('store_image')->store('stores', 'public');
+        }
+
         if ($user->store) {
             $user->store->update($storeData);
         } else {
@@ -469,6 +528,22 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
             $userLocationData['latitude'] = (float) $request->latitude;
             $userLocationData['longitude'] = (float) $request->longitude;
         }
+
+        // Upload QRIS image
+        $paymentData = [
+            'payment_name'   => $request->payment_name,
+            'payment_type'   => $request->payment_type,
+            'payment_number' => $request->payment_number,
+        ];
+
+        if ($request->hasFile('qris_image')) {
+            if ($user->qris_image && Storage::disk('public')->exists($user->qris_image)) {
+                Storage::disk('public')->delete($user->qris_image);
+            }
+            $paymentData['qris_image'] = $request->file('qris_image')->store('seller-qris', 'public');
+        }
+
+        $userLocationData = array_merge($userLocationData, $paymentData);
 
         if (!empty($userLocationData)) {
             $user->update($userLocationData);
@@ -498,14 +573,15 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
     Route::prefix('buyer')->group(function () {
         Route::get('/dashboard', function () {
             $totalOrders = auth()->user()->orders()->count();
-            $pendingOrders = auth()->user()->orders()->whereIn('status', ['pending', 'accepted'])->count();
-            $completedOrders = auth()->user()->orders()->where('status', 'done')->count();
+            $pendingOrders = auth()->user()->orders()->whereIn('status', ['pending', 'processing'])->count();
+            $completedOrders = auth()->user()->orders()->where('status', 'completed')->count();
             $cartCount = auth()->user()->carts->count();
             return view('buyer.dashboard', compact('totalOrders', 'pendingOrders', 'completedOrders', 'cartCount'));
         })->name('buyer.dashboard');
 
         // Cart routes
         Route::get('/cart', [CartController::class, 'index'])->name('buyer.cart');
+        Route::get('/cart/qris', fn() => view('buyer.cart.qris'))->name('buyer.cart.qris');
         Route::post('/cart', [CartController::class, 'store'])->name('buyer.cart.store');
         Route::put('/cart/{cart}', [CartController::class, 'update'])->name('buyer.cart.update');
         Route::delete('/cart/{cart}', [CartController::class, 'destroy'])->name('buyer.cart.destroy');
@@ -515,8 +591,13 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
         Route::get('/orders', fn() => view('buyer.orders'))->name('buyer.orders');
         Route::get('/orders/{order}', function (Order $order) {
             abort_if($order->user_id !== auth()->id(), 403);
-            return view('buyer.orders.show', ['order' => $order->load(['product', 'store', 'chat'])]);
+            return view('buyer.orders.show', ['order' => $order->load(['product', 'store.user', 'chat'])]);
         })->name('buyer.orders.show');
+        Route::post('/orders/{order}/payment-proof', [PaymentWebController::class, 'uploadProof'])->name('buyer.orders.payment-proof');
+        
+        // Payments routes
+        Route::get('/payments', fn() => view('buyer.payments.index'))->name('buyer.payments');
+        Route::put('/payments/{order}/reupload', [PaymentWebController::class, 'reuploadProof'])->name('buyer.payments.reupload');
     });
 
     // Public product routes (anyone can view products)
@@ -590,9 +671,9 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
         return view('categories.show', compact('category', 'products'));
     })->name('categories.show');
 
-    Route::get('/profile', function () {
-        return view('profile');
-    })->name('profile');
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Mode Switcher Demo (for testing)
     Route::get('/mode-switcher-demo', function () {
@@ -864,11 +945,12 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
     Route::post('/web/product/store',        [ProductWebController::class, 'store'])->middleware('role:seller');
     Route::put('/web/product/{id}/update',   [ProductWebController::class, 'update'])->middleware('role:seller');
     Route::delete('/web/product/{id}',       [ProductWebController::class, 'destroy'])->middleware('role:seller');
+    Route::patch('/web/product/{id}/toggle-active', [ProductWebController::class, 'toggleActive'])->middleware('role:seller');
 
     // Update status order (seller action)
     Route::put('/web/order/{id}/status', function (\Illuminate\Http\Request $request, $id) {
         $order = Order::findOrFail($id);
-        $request->validate(['status' => 'required|in:accepted,shipped,rejected,done']);
+        $request->validate(['status' => 'required|in:processing,shipped,completed,cancelled']);
 
         $sellerStore = auth()->user()->store;
         if (! $sellerStore || (int) $order->store_id !== (int) $sellerStore->id) {
@@ -895,7 +977,11 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
             return back()->withErrors(['message' => 'Pesanan tidak bisa dibatalkan karena sudah diproses.']);
         }
 
-        $order->update(['status' => 'dibatalkan']);
+        if ($order->product) {
+            $order->product->increment('stock', $order->quantity);
+        }
+
+        $order->update(['status' => 'cancelled']);
 
         return back()->with('success', 'Pesanan berhasil dibatalkan.');
     })->name('buyer.orders.cancel');

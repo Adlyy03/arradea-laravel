@@ -741,7 +741,7 @@
                 </div>
                 <p class="testimonial-text text-gray-700 mb-6 leading-relaxed">"Platform-nya user friendly, mudah dipakai. Chat sama seller juga responsif. Pokoknya top deh!"</p>
                 <div class="testimonial-author flex items-center gap-3">
-                    <div class="testimonial-avatar w-12 h-12 rounded-xl flex items-center justify-center text-white font-black text-lg shadow-lg" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">A</div>
+                    <img src="/icons/logo-arradea.png" alt="Arradea" class="testimonial-avatar w-12 h-12 rounded-xl object-cover shadow-lg" style="background:linear-gradient(135deg,#3b82f6,#2563eb)">
                     <div>
                         <p class="testimonial-name font-black text-gray-900">Andi</p>
                         <p class="testimonial-role text-sm text-gray-500">Pembeli Setia</p>

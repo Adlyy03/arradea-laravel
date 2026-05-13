@@ -44,8 +44,8 @@
     $seller       = Auth::user();
     $storeStatus  = $store->store_status ?? 'closed';
     $pendingCount = $store ? $store->orders()->where('status','pending')->count() : 0;
-    $acceptedCount= $store ? $store->orders()->where('status','accepted')->count() : 0;
-    $doneCount    = $store ? $store->orders()->where('status','done')->count() : 0;
+    $processingCount= $store ? $store->orders()->where('status','processing')->count() : 0;
+    $completedCount    = $store ? $store->orders()->where('status','completed')->count() : 0;
     $productCount = $store ? $store->products()->count() : 0;
     $recentOrders = $store ? $store->orders()->with(['user','product'])->latest()->take(5)->get() : collect();
 @endphp
@@ -91,11 +91,11 @@
                 <p class="quick-stat-label text-[8px] lg:text-[10px] uppercase tracking-wider font-bold mt-0.5" style="color:#72bf77">Menunggu</p>
             </div>
             <div class="text-center text-white">
-                <p class="quick-stat text-lg lg:text-2xl font-black text-blue-400">{{ $acceptedCount }}</p>
+                <p class="quick-stat text-lg lg:text-2xl font-black text-blue-400">{{ $processingCount }}</p>
                 <p class="quick-stat-label text-[8px] lg:text-[10px] uppercase tracking-wider font-bold mt-0.5" style="color:#72bf77">Diproses</p>
             </div>
             <div class="text-center text-white">
-                <p class="quick-stat text-lg lg:text-2xl font-black text-green-400">{{ $doneCount }}</p>
+                <p class="quick-stat text-lg lg:text-2xl font-black text-green-400">{{ $completedCount }}</p>
                 <p class="quick-stat-label text-[8px] lg:text-[10px] uppercase tracking-wider font-bold mt-0.5" style="color:#72bf77">Selesai</p>
             </div>
         </div>
@@ -175,7 +175,7 @@
             <a href="{{ route('seller.orders') }}" class="text-xs font-bold" style="color:#72bf77">Lihat Semua →</a>
         </div>
         @php
-            $statusMap = ['pending'=>['Menunggu','bg-amber-100 text-amber-700'],'accepted'=>['Diproses','bg-blue-100 text-blue-700'],'shipped'=>['Dikirim','bg-purple-100 text-purple-700'],'done'=>['Selesai','bg-green-100 text-green-700'],'rejected'=>['Ditolak','bg-red-100 text-red-700'],'dibatalkan'=>['Dibatalkan','bg-gray-100 text-gray-500']];
+            $statusMap = ['pending'=>['Menunggu','bg-amber-100 text-amber-700'],'processing'=>['Diproses','bg-blue-100 text-blue-700'],'shipped'=>['Dikirim','bg-purple-100 text-purple-700'],'completed'=>['Selesai','bg-green-100 text-green-700'],'cancelled'=>['Dibatalkan','bg-gray-100 text-gray-500']];
         @endphp
         @forelse($recentOrders as $order)
         @php [$statusLabel,$statusClass] = $statusMap[$order->status] ?? [$order->status,'bg-gray-100 text-gray-600']; @endphp
@@ -193,7 +193,7 @@
                 @if($order->status === 'pending')
                 <form method="POST" action="/web/order/{{ $order->id }}/status" class="inline">
                     @csrf @method('PUT')
-                    <input type="hidden" name="status" value="accepted">
+                    <input type="hidden" name="status" value="processing">
                     <button type="submit" class="px-3 py-1.5 rounded-lg text-[10px] font-black text-white transition hover:opacity-80" style="background:#72bf77">Proses</button>
                 </form>
                 @endif

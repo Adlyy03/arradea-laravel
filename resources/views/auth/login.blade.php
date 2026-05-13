@@ -10,7 +10,11 @@
         {{-- Logo & Heading --}}
         <div class="text-center mb-8">
             <a href="{{ url('/') }}" class="inline-flex items-center gap-2 mb-6">
+<<<<<<< HEAD
                 <img src="{{ asset('images/arradea.jpeg') }}" alt="Arradea" class="w-10 h-10 rounded-2xl object-cover shadow-lg shadow-green-300/30">
+=======
+                <img src="/icons/logo-arradea.png" alt="Arradea" class="w-10 h-10 rounded-2xl object-cover shadow-lg shadow-green-300/30">
+>>>>>>> 1688c02551a4c3a5c36573e09b0fed8b8d385f24
                 <span class="text-2xl font-black text-gray-900">Arradea<span class="text-[#72bf77]">.</span></span>
             </a>
             <h1 class="text-3xl font-black text-gray-900 tracking-tight">Selamat datang kembali</h1>

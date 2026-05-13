@@ -13,7 +13,11 @@
             <!-- Logo Container -->
             <div class="splash-logo">
                 <div class="logo-box">
+<<<<<<< HEAD
                     <img src="/images/arradea.jpeg" alt="Arradea" style="width: 100%; height: 100%; object-fit: cover; border-radius: 16px;">
+=======
+                    <img src="/icons/logo-arradea.png" alt="Arradea" class="logo-image">
+>>>>>>> 1688c02551a4c3a5c36573e09b0fed8b8d385f24
                 </div>
             </div>
             
@@ -53,6 +57,7 @@
             const splash = document.getElementById('arradea-splash');
             const mainContent = document.getElementById('main-content');
             const logoBox = document.querySelector('.logo-box');
+            const logoImage = document.querySelector('.logo-image');
             const brand = document.querySelector('.splash-brand');
             const loader = document.querySelector('.splash-loader');
             const loadingBar = document.querySelector('.loading-bar');
@@ -61,6 +66,7 @@
             setTimeout(() => {
                 // Logo scale in
                 logoBox.style.transform = 'scale(1)';
+                logoImage.style.opacity = '1';
             }, 100);
 
             setTimeout(() => {

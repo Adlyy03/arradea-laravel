@@ -5,11 +5,38 @@
 
 @section('content')
 <div class="space-y-4 lg:space-y-12">
+    @php
+        $statusLabels = [
+            'pending' => 'Menunggu Konfirmasi',
+            'processing' => 'Diproses',
+            'shipped' => 'Sedang Dikirim',
+            'completed' => 'Selesai',
+            'cancelled' => 'Dibatalkan',
+        ];
+        $statusClasses = [
+            'pending' => 'amber',
+            'processing' => 'blue',
+            'shipped' => 'purple',
+            'completed' => 'green',
+            'cancelled' => 'gray',
+        ];
+        $paymentLabels = [
+            'cod' => 'COD',
+            'qris' => 'QRIS Manual',
+        ];
+        $paymentStatusLabels = [
+            'pending' => 'Menunggu Bukti',
+            'waiting_confirmation' => 'Menunggu Konfirmasi Seller',
+            'paid' => 'Sudah Dibayar',
+            'rejected' => 'Ditolak',
+        ];
+    @endphp
     <!-- Header -->
     <div class="flex flex-col lg:flex-row justify-between items-center lg:items-end gap-3 lg:gap-10 bg-white p-5 lg:p-10 lg:p-20 rounded-xl lg:rounded-3xl lg:rounded-2xl lg:rounded-3xl lg:rounded-[4rem] shadow-sm border border-gray-100">
         <div class="max-w-2xl text-center lg:text-left">
             <h1 class="text-xl lg:text-6xl font-black text-gray-900 tracking-tighter leading-tight mb-2 lg:mb-4">Pesanan <span class="text-primary-600 underline underline-offset-2 lg:underline-offset-8 decoration-2 lg:decoration-8">#{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}</span></h1>
-            <p class="text-gray-500 text-xs lg:text-lg font-medium leading-relaxed">Status: <span class="font-black text-{{ $order->status === 'done' ? 'green' : ($order->status === 'rejected' ? 'red' : ($order->status === 'accepted' ? 'blue' : ($order->status === 'shipped' ? 'purple' : ($order->status === 'dibatalkan' ? 'gray' : 'amber')))) }}-600">{{ strtoupper($order->status) }}</span></p>
+            <p class="text-gray-500 text-xs lg:text-lg font-medium leading-relaxed">Status: <span class="font-black text-{{ $statusClasses[$order->status] ?? 'amber' }}-600">{{ $statusLabels[$order->status] ?? strtoupper($order->status) }}</span></p>
+            <p class="text-gray-500 text-xs lg:text-lg font-medium leading-relaxed mt-1">Pembayaran: <span class="font-black text-gray-900">{{ $paymentLabels[$order->payment_method ?? 'cod'] ?? strtoupper($order->payment_method ?? 'cod') }}</span> <span class="ml-1 font-black text-{{ ($order->payment_method === 'qris' && $order->payment_status === 'waiting_confirmation') ? 'amber' : (($order->payment_status === 'paid') ? 'green' : (($order->payment_status === 'rejected') ? 'red' : 'gray')) }}-600">{{ $paymentStatusLabels[$order->payment_status ?? 'pending'] ?? strtoupper($order->payment_status ?? 'pending') }}</span></p>
         </div>
         <div class="flex gap-2 lg:gap-4 w-full lg:w-auto">
             <a href="{{ route('buyer.orders') }}" class="flex-1 lg:flex-none px-4 lg:px-5 lg:px-10 py-2.5 lg:py-5 bg-black text-white rounded-xl lg:rounded-2xl lg:rounded-3xl font-black text-sm lg:text-lg shadow-xl hover:scale-105 active:scale-95 transition-all text-center">← Kembali</a>
@@ -94,40 +121,41 @@
                     @php
                         $statuses = [
                             'pending'    => 'Menunggu Konfirmasi',
-                            'accepted'   => 'Diterima Penjual',
+                            'processing' => 'Diproses Penjual',
                             'shipped'    => 'Sedang Dikirim',
-                            'rejected'   => 'Ditolak',
-                            'done'       => 'Selesai',
-                            'dibatalkan' => 'Dibatalkan Pembeli',
+                            'completed'  => 'Selesai',
+                            'cancelled'  => 'Dibatalkan',
                         ];
                         $statusColors = [
                             'pending'    => 'amber',
-                            'accepted'   => 'blue',
+                            'processing' => 'blue',
                             'shipped'    => 'purple',
-                            'rejected'   => 'red',
-                            'done'       => 'green',
-                            'dibatalkan' => 'gray',
+                            'completed'  => 'green',
+                            'cancelled'  => 'gray',
                         ];
+                        $timelineStatuses = ['pending', 'processing', 'shipped', 'completed', 'cancelled'];
                     @endphp
 
-                    @foreach(['pending', 'accepted', 'shipped', 'done', 'rejected', 'dibatalkan'] as $status)
+                    @foreach($timelineStatuses as $status)
                         <div class="flex items-start gap-2 lg:gap-3">
                             <div class="w-5 lg:w-6 h-5 lg:h-6 rounded-full {{$order->status === $status || 
-                                ($status === 'done' && $order->status === 'done') || 
-                                ($status === 'shipped' && in_array($order->status, ['shipped', 'done'])) ||
-                                ($status === 'accepted' && in_array($order->status, ['accepted', 'shipped', 'done'])) 
+                                ($status === 'completed' && $order->status === 'completed') || 
+                                ($status === 'shipped' && in_array($order->status, ['shipped', 'completed'])) ||
+                                ($status === 'processing' && in_array($order->status, ['processing', 'shipped', 'completed'])) 
                                 ? 'bg-' . $statusColors[$status] . '-600' 
                                 : 'bg-gray-200'}} flex-shrink-0 mt-0.5 lg:mt-1"></div>
                             <div>
                                 <p class="font-black text-xs lg:text-sm text-gray-900">{{ $statuses[$status] }}</p>
                                 @if($status === 'pending' && $order->status === 'pending')
                                     <p class="text-[9px] lg:text-[10px] text-gray-400 mt-0.5 lg:mt-1">Sedang menunggu respons penjual...</p>
-                                @elseif($status === 'accepted' && in_array($order->status, ['accepted', 'shipped', 'done']))
+                                @elseif($status === 'processing' && in_array($order->status, ['processing', 'shipped', 'completed']))
                                     <p class="text-[9px] lg:text-[10px] text-gray-400 mt-0.5 lg:mt-1">Penjual menerima pesanan ini.</p>
-                                @elseif($status === 'shipped' && in_array($order->status, ['shipped', 'done']))
+                                @elseif($status === 'shipped' && in_array($order->status, ['shipped', 'completed']))
                                     <p class="text-[9px] lg:text-[10px] text-gray-400 mt-0.5 lg:mt-1">Pesanan sedang dalam pengiriman.</p>
-                                @elseif($status === 'dibatalkan' && $order->status === 'dibatalkan')
-                                    <p class="text-[9px] lg:text-[10px] text-gray-400 mt-0.5 lg:mt-1">Pesanan dibatalkan oleh pembeli.</p>
+                                @elseif($status === 'completed' && $order->status === 'completed')
+                                    <p class="text-[9px] lg:text-[10px] text-gray-400 mt-0.5 lg:mt-1">Pesanan sudah selesai.</p>
+                                @elseif($status === 'cancelled' && $order->status === 'cancelled')
+                                    <p class="text-[9px] lg:text-[10px] text-gray-400 mt-0.5 lg:mt-1">Pesanan dibatalkan.</p>
                                 @endif
                             </div>
                         </div>
@@ -155,6 +183,53 @@
                     <p class="text-xl lg:text-3xl font-black text-primary-600">Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
                 </div>
             </div>
+
+            @if($order->payment_method === 'qris')
+                <div class="bg-white rounded-xl lg:rounded-3xl p-5 lg:p-8 shadow-sm border border-gray-100 space-y-4">
+                    <div class="flex items-center justify-between gap-3">
+                        <h3 class="text-sm lg:text-lg font-black text-gray-900">Pembayaran QRIS</h3>
+                        <span class="px-3 py-1.5 rounded-full text-[10px] lg:text-xs font-black uppercase tracking-wider {{ $order->payment_status === 'paid' ? 'bg-green-100 text-green-700' : ($order->payment_status === 'rejected' ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700') }}">{{ $paymentStatusLabels[$order->payment_status ?? 'pending'] ?? strtoupper($order->payment_status ?? 'pending') }}</span>
+                    </div>
+
+                    @if($order->store?->user?->qris_image)
+                        <div class="rounded-2xl border border-gray-200 overflow-hidden bg-gray-50">
+                            <img src="{{ asset('storage/'.$order->store->user->qris_image) }}" alt="QRIS seller" class="w-full max-w-sm mx-auto object-contain">
+                        </div>
+                    @endif
+
+                    <div class="rounded-2xl bg-gray-50 border border-gray-100 p-4 space-y-2 text-sm text-gray-700">
+                        <p><span class="font-black text-gray-900">Penerima:</span> {{ $order->store?->user?->payment_name ?? '-' }}</p>
+                        <p><span class="font-black text-gray-900">Jenis:</span> {{ strtoupper($order->store?->user?->payment_type ?? 'qris') }}</p>
+                        <p><span class="font-black text-gray-900">Nominal:</span> Rp {{ number_format($order->total_price, 0, ',', '.') }}</p>
+                    </div>
+
+                    @if($order->payment_proof)
+                        <div class="rounded-2xl border border-gray-200 overflow-hidden bg-white">
+                            <img src="{{ asset('storage/'.$order->payment_proof) }}" alt="Bukti pembayaran" class="w-full h-auto object-cover">
+                        </div>
+                    @endif
+
+                    @if(in_array($order->payment_status, ['pending', 'waiting_confirmation', 'rejected']))
+                        <form action="{{ route('buyer.orders.payment-proof', $order) }}" method="POST" enctype="multipart/form-data" class="space-y-3">
+                            @csrf
+                            <div>
+                                <label class="block text-xs lg:text-sm font-black text-gray-700 mb-2">Upload Bukti Transfer</label>
+                                <input type="file" name="payment_proof" accept="image/*" required class="w-full px-4 py-3 rounded-xl border border-gray-200 bg-white text-sm file:mr-3 file:px-4 file:py-2 file:rounded-lg file:border-0 file:bg-primary-600 file:text-white file:font-black">
+                            </div>
+                            <button type="submit" class="w-full px-4 py-3 rounded-2xl bg-primary-600 text-white font-black text-sm lg:text-base hover:bg-primary-700 transition-all active:scale-95">Upload Bukti Pembayaran</button>
+                        </form>
+                    @else
+                        <p class="text-xs lg:text-sm text-gray-500">Pembayaran sudah diproses seller.</p>
+                    @endif
+
+                    @if($order->rejected_reason)
+                        <div class="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+                            <p class="font-black mb-1">Alasan penolakan</p>
+                            <p>{{ $order->rejected_reason }}</p>
+                        </div>
+                    @endif
+                </div>
+            @endif
 
             <!-- Order Info -->
             <div class="bg-white rounded-xl lg:rounded-3xl p-5 lg:p-8 shadow-sm border border-gray-100 space-y-2 lg:space-y-3 text-xs lg:text-sm">

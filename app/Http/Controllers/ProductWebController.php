@@ -123,6 +123,46 @@ class ProductWebController extends Controller
     }
 
     /**
+     * Toggle product active status (activate/deactivate).
+     */
+    public function toggleActive(Request $request, $id)
+    {
+        $product = Product::findOrFail($id);
+
+        $store = auth()->user()->store;
+        if (! $store || (int) $product->store_id !== (int) $store->id) {
+            if ($request->wantsJson()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Akses ditolak. Produk bukan milik toko Anda.'
+                ], 403);
+            }
+            abort(403, 'Akses ditolak. Produk bukan milik toko Anda.');
+        }
+
+        $product->is_active = !$product->is_active;
+        $product->save();
+
+        $status = $product->is_active ? 'diaktifkan' : 'dinonaktifkan';
+
+        // Clear cache
+        \App\Services\CacheService::clearProductCache($product->id);
+
+        if ($request->wantsJson()) {
+            return response()->json([
+                'success' => true,
+                'message' => "Produk berhasil {$status}!",
+                'data' => [
+                    'id' => $product->id,
+                    'is_active' => $product->is_active,
+                ],
+            ]);
+        }
+
+        return redirect('/seller/products')->with('success', "Produk berhasil {$status}!");
+    }
+
+    /**
      * Normalize variants payload from textarea JSON into a safe array.
      */
     protected function normalizeVariantsFromJson(?string $rawVariants): array

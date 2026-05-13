@@ -58,10 +58,10 @@ class OrdersExport implements FromCollection, WithHeadings, WithMapping, ShouldA
     {
         $statusLabel = [
             'pending' => 'Menunggu',
-            'accepted' => 'Diproses',
-            'done' => 'Selesai',
-            'rejected' => 'Ditolak',
-            'dibatalkan' => 'Dibatalkan',
+            'processing' => 'Diproses',
+            'shipped' => 'Dikirim',
+            'completed' => 'Selesai',
+            'cancelled' => 'Dibatalkan',
         ][$order->status] ?? $order->status;
 
         $qty = (int) ($order->quantity ?? 1);

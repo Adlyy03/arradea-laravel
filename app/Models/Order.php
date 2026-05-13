@@ -18,6 +18,11 @@ class Order extends Model
         'total_price',
         'notes',
         'status',
+        'payment_method',
+        'payment_status',
+        'payment_proof',
+        'paid_at',
+        'rejected_reason',
     ];
 
     protected function casts(): array
@@ -27,6 +32,7 @@ class Order extends Model
             'unit_price_original' => 'float',
             'unit_price_final' => 'float',
             'discount_percent_applied' => 'float',
+            'paid_at' => 'datetime',
         ];
     }
 
@@ -54,5 +60,10 @@ class Order extends Model
     public function chat()
     {
         return $this->hasOne(Chat::class);
+    }
+
+    public function isQrisPayment(): bool
+    {
+        return $this->payment_method === 'qris';
     }
 }

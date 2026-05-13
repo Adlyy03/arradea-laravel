@@ -7,11 +7,10 @@
 @php
     $statusMap = [
         'pending'    => ['Menunggu Konfirmasi', 'bg-amber-100 text-amber-700',  'border-amber-200'],
-        'accepted'   => ['Sedang Diproses',     'bg-blue-100 text-blue-700',    'border-blue-200'],
+        'processing' => ['Sedang Diproses',     'bg-blue-100 text-blue-700',    'border-blue-200'],
         'shipped'    => ['Dikirim',             'bg-purple-100 text-purple-700','border-purple-200'],
-        'done'       => ['Selesai',             'bg-green-100 text-green-700',  'border-green-200'],
-        'rejected'   => ['Ditolak',             'bg-red-100 text-red-700',      'border-red-200'],
-        'dibatalkan' => ['Dibatalkan',           'bg-gray-100 text-gray-500',    'border-gray-200'],
+        'completed'  => ['Selesai',             'bg-green-100 text-green-700',  'border-green-200'],
+        'cancelled'  => ['Dibatalkan',           'bg-gray-100 text-gray-500',    'border-gray-200'],
     ];
     [$statusLabel, $statusClass, $statusBorder] = $statusMap[$order->status] ?? [$order->status, 'bg-gray-100 text-gray-500', 'border-gray-200'];
 @endphp
@@ -119,7 +118,7 @@
     @endif
 
     {{-- Actions --}}
-    @if(in_array($order->status, ['pending','accepted','shipped']))
+    @if(in_array($order->status, ['pending','processing','shipped']))
     <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-3">
         <h2 class="text-xs font-black text-gray-500 uppercase tracking-widest">⚙️ Tindakan</h2>
 
@@ -127,7 +126,7 @@
         <div class="flex gap-3">
             <form action="/web/order/{{ $order->id }}/status" method="POST" class="flex-1">
                 @csrf @method('PUT')
-                <input type="hidden" name="status" value="accepted">
+                <input type="hidden" name="status" value="processing">
                 <button type="submit"
                         class="w-full h-12 rounded-2xl font-black text-sm text-white transition hover:opacity-90 active:scale-95 flex items-center justify-center gap-2 shadow-lg"
                         style="background:#72bf77;box-shadow:0 8px 24px rgba(114,191,119,.3)">
@@ -137,13 +136,13 @@
             </form>
             <form action="/web/order/{{ $order->id }}/status" method="POST">
                 @csrf @method('PUT')
-                <input type="hidden" name="status" value="rejected">
+                <input type="hidden" name="status" value="cancelled">
                 <button type="submit" class="h-12 px-5 rounded-2xl font-black text-sm text-red-600 bg-red-100 hover:bg-red-200 transition active:scale-95">
                     Tolak
                 </button>
             </form>
         </div>
-        @elseif($order->status === 'accepted')
+        @elseif($order->status === 'processing')
         <form action="/web/order/{{ $order->id }}/status" method="POST">
             @csrf @method('PUT')
             <input type="hidden" name="status" value="shipped">
@@ -156,7 +155,7 @@
         @elseif($order->status === 'shipped')
         <form action="/web/order/{{ $order->id }}/status" method="POST">
             @csrf @method('PUT')
-            <input type="hidden" name="status" value="done">
+            <input type="hidden" name="status" value="completed">
             <button type="submit"
                     class="w-full h-12 rounded-2xl font-black text-sm text-white bg-green-600 hover:bg-green-700 transition active:scale-95 flex items-center justify-center gap-2 shadow-lg shadow-green-100">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
