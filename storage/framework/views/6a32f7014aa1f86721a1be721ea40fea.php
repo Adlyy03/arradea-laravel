@@ -12,6 +12,8 @@
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="application-name" content="Arradea">
     <link rel="manifest" href="/manifest.json">
+    <link rel="shortcut icon" href="/favicon.ico?v=arradea" type="image/x-icon">
+    <link rel="icon" href="/favicon.ico?v=arradea" sizes="any">
     <link rel="apple-touch-icon" sizes="180x180" href="/icons/logo-arradea.png">
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/logo-arradea.png">
     <link rel="icon" type="image/png" sizes="512x512" href="/icons/logo-arradea.png">
