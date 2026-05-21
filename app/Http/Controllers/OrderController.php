@@ -5,10 +5,17 @@ namespace App\Http\Controllers;
 use App\Http\Requests\OrderRequest;
 use App\Models\Order;
 use App\Models\Product;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
 {
+    protected $pushNotification;
+
+    public function __construct(PushNotificationService $pushNotification)
+    {
+        $this->pushNotification = $pushNotification;
+    }
     /**
      * GET /api/orders
      * Buyer → own orders. Seller → incoming orders for own store.
@@ -166,10 +173,23 @@ class OrderController extends Controller
 
         $order->load('store:id,name', 'product:id,name');
 
-        // Notify Seller
+        // Notify Seller via Email/Database
         $seller = $order->store->user ?? null;
         if ($seller) {
             $seller->notify(new \App\Notifications\NewOrderNotification($order));
+            
+            // Send Push Notification to Seller
+            $this->pushNotification->sendToUser(
+                $seller,
+                '🛒 Pesanan Baru!',
+                "Pesanan baru dari {$user->name} senilai Rp " . number_format($order->total_price, 0, ',', '.'),
+                [
+                    'type' => 'new_order',
+                    'order_id' => $order->id,
+                ],
+                asset('images/order-icon.png'),
+                url('/seller/orders')
+            );
         }
 
         if ($request->expectsJson()) {
@@ -204,9 +224,30 @@ class OrderController extends Controller
 
         $order->update(['status' => $request->status]);
 
-        // Notify buyer
+        // Notify buyer via Email/Database
         if ($order->user) {
             $order->user->notify(new \App\Notifications\OrderStatusNotification($order));
+            
+            // Send Push Notification to Buyer
+            $statusText = [
+                'processing' => 'sedang diproses',
+                'shipped' => 'sedang dikirim',
+                'completed' => 'telah selesai',
+                'cancelled' => 'dibatalkan',
+            ][$request->status] ?? 'diperbarui';
+            
+            $this->pushNotification->sendToUser(
+                $order->user,
+                '📦 Status Pesanan Diperbarui',
+                "Pesanan #{$order->id} Anda {$statusText}",
+                [
+                    'type' => 'order_status',
+                    'order_id' => $order->id,
+                    'status' => $request->status,
+                ],
+                asset('images/order-icon.png'),
+                url('/buyer/orders/' . $order->id)
+            );
         }
 
         return response()->json([

@@ -14,6 +14,19 @@ import './performance';
 // Import mobile menu handler
 import './mobile-menu';
 
+// Import push notifications (only for authenticated users)
+if (document.querySelector('meta[name="user-authenticated"]')) {
+    import('./notification-ui').then(module => {
+        const notificationUI = module.default;
+        // Auto-initialize notifications after page load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                notificationUI.initialize();
+            }, 2000); // Delay 2 seconds after page load
+        });
+    });
+}
+
 // Import welcome page interactions (only loads on welcome page)
 if (document.querySelector('.welcome-section')) {
     import('./welcome-interactions');
