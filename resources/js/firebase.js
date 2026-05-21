@@ -3,12 +3,13 @@ import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 
 // Firebase configuration
 const firebaseConfig = {
-    apiKey: "AIzaSyDr3GsRZJgSjw6dVSF_dqUXi1osHxIRmQo",
-    authDomain: "arradea-marketplace.firebaseapp.com",
-    projectId: "arradea-marketplace",
-    storageBucket: "arradea-marketplace.firebasestorage.app",
-    messagingSenderId: "574490534147",
-    appId: "1:574490534147:web:175e9ba85a2e4100b70936"
+  apiKey: "AIzaSyDr3GsRZJgSjw6dVSF_dqUXi1osHxIRmQo",
+  authDomain: "arradea-marketplace.firebaseapp.com",
+  projectId: "arradea-marketplace",
+  storageBucket: "arradea-marketplace.firebasestorage.app",
+  messagingSenderId: "574490534147",
+  appId: "1:574490534147:web:175e9ba85a2e4100b70936",
+  measurementId: "G-GFC3C17THY"
 };
 
 // Initialize Firebase
