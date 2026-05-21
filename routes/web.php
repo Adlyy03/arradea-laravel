@@ -600,6 +600,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
     // Public product routes (anyone can view products)
     Route::get('/products', function (\Illuminate\Http\Request $request) {
         $query = Product::with('store', 'category')
+            ->where('is_active', true)
             ->whereHas('store.user', function ($userQuery) {
                 $userQuery->where('is_seller', true);
             })
@@ -632,6 +633,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
 
     Route::get('/products/{id}', function ($id) {
         $product = Product::with('store')
+            ->where('is_active', true)
             ->whereHas('store.user', function ($userQuery) {
                 $userQuery->where('is_seller', true);
             })
@@ -657,6 +659,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
 
     Route::get('/categories/{category}', function (\App\Models\Category $category) {
         $products = $category->products()
+            ->where('is_active', true)
             ->with('store')
             ->whereHas('store.user', function ($userQuery) {
                 $userQuery->where('is_seller', true);
@@ -1001,3 +1004,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/mode/info', [\App\Http\Controllers\ModeController::class, 'info'])->name('mode.info');
 });
 
+
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FIREBASE CLOUD MESSAGING (FCM) - Push Notifications
+// ─────────────────────────────────────────────────────────────────────────────
+Route::middleware('auth')->post('/save-fcm-token', [\App\Http\Controllers\NotificationController::class, 'saveFCMToken'])->name('fcm.save-token');

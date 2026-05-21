@@ -87,6 +87,17 @@ class OrderController extends Controller
             $product = Product::findOrFail($request->product_id);
             $variantKey = $request->input('variant_key', 'default');
 
+            if (!$product->is_active) {
+                if ($request->expectsJson()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Produk tidak tersedia.',
+                    ], 422);
+                }
+
+                return back()->withInput()->withErrors(['product_id' => 'Produk tidak tersedia.']);
+            }
+
             if ($product->store && (int) $product->store->user_id === (int) $user->id) {
                 if ($request->expectsJson()) {
                     return response()->json([

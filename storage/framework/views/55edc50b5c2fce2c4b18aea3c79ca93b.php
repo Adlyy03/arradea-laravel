@@ -32,4 +32,4 @@
         display: none !important;
     }
 </style>
-<?php /**PATH C:\laragon\www\arradeaaaa\resources\views/components/pwa-install-button.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\laragon\www\arradea-laravel\resources\views/components/pwa-install-button.blade.php ENDPATH**/ ?>

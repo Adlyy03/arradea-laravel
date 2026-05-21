@@ -52,6 +52,10 @@ class CartController extends Controller
         $product = Product::findOrFail($request->product_id);
         $variantKey = $request->input('variant_key', 'default');
 
+        if (!$product->is_active) {
+            return back()->withErrors(['product_id' => 'Produk tidak tersedia.']);
+        }
+
         if ($variantKey !== 'default' && ! $product->getVariant($variantKey)) {
             return back()->withErrors(['variant_key' => 'Varian produk tidak valid.']);
         }

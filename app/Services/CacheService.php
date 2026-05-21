@@ -19,6 +19,7 @@ class CacheService
     {
         return Cache::remember("products:page:{$page}", self::TTL_PRODUCTS, function () {
             return \App\Models\Product::with(['store:id,name,address', 'category:id,name'])
+                ->where('is_active', true)
                 ->whereHas('store.user', function ($q) {
                     $q->where('is_seller', true);
                 })
@@ -63,6 +64,7 @@ class CacheService
     {
         return Cache::remember("product:{$id}", self::TTL_PRODUCTS, function () use ($id) {
             return \App\Models\Product::with(['store', 'category'])
+                ->where('is_active', true)
                 ->find($id);
         });
     }
@@ -74,12 +76,19 @@ class CacheService
     {
         if ($productId) {
             Cache::forget("product:{$productId}");
+            Cache::forget("api:product:{$productId}");
         }
         
         // Clear paginated product lists
         for ($page = 1; $page <= 10; $page++) {
             Cache::forget("products:page:{$page}");
+            Cache::forget("api:products:page:{$page}");
         }
+        
+        // Clear homepage caches
+        Cache::forget('home:products:latest:ids');
+        Cache::forget('home:products:discounted:ids');
+        Cache::forget('home:products:popular:ids');
         
         Cache::forget('products:featured');
         Cache::forget('products:discounted');

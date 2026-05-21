@@ -406,4 +406,4 @@
     <script defer src="/js/pwa.js"></script>
 </body>
 </html>
-<?php /**PATH C:\laragon\www\arradeaaaa\resources\views/layouts/app.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\laragon\www\arradea-laravel\resources\views/layouts/app.blade.php ENDPATH**/ ?>

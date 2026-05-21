@@ -186,4 +186,4 @@
         </a>
     </div>
 </div>
-<?php /**PATH C:\laragon\www\arradeaaaa\resources\views/components/sidebar/seller.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\laragon\www\arradea-laravel\resources\views/components/sidebar/seller.blade.php ENDPATH**/ ?>

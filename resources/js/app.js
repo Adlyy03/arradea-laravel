@@ -255,4 +255,133 @@ if (document.readyState === 'loading') {
     createScrollTopButton();
 }
 
+// ============================================================================
+// FIREBASE CLOUD MESSAGING (FCM) - Safe Initialization
+// ============================================================================
+
+/**
+ * Initialize Firebase Cloud Messaging safely
+ * This runs after DOM is loaded and won't break the page if it fails
+ */
+async function initializeFirebaseMessaging() {
+    try {
+        console.log('🔔 Initializing Firebase Cloud Messaging...');
+        
+        // Check if user is authenticated
+        const isAuthenticated = document.querySelector('meta[name="user-authenticated"]')?.content === 'true';
+        
+        if (!isAuthenticated) {
+            console.log('ℹ️ User not authenticated, skipping FCM initialization');
+            return;
+        }
+
+        // Check browser support first (before importing)
+        if (!('serviceWorker' in navigator)) {
+            console.warn('⚠️ Service Worker not supported in this browser');
+            return;
+        }
+
+        if (!('Notification' in window)) {
+            console.warn('⚠️ Notifications not supported in this browser');
+            return;
+        }
+
+        // Dynamically import Firebase module (code splitting)
+        const firebaseModule = await import('./firebase.js');
+        
+        const { 
+            requestPermission, 
+            setupForegroundMessageHandler, 
+            isNotificationSupported 
+        } = firebaseModule;
+
+        // Check if notifications are supported
+        if (!isNotificationSupported()) {
+            console.warn('⚠️ Push notifications are not fully supported in this browser');
+            return;
+        }
+
+        // Setup foreground message handler
+        setupForegroundMessageHandler();
+
+        // Make FCM functions available globally
+        window.Arradea.notification = {
+            request: requestPermission,
+            isSupported: isNotificationSupported
+        };
+
+        console.log('✅ Firebase Cloud Messaging initialized successfully');
+
+        // Auto-request permission after a delay (optional, only if not already set)
+        const currentPermission = Notification.permission;
+        
+        if (currentPermission === 'default') {
+            // Only auto-request if user hasn't made a choice yet
+            setTimeout(() => {
+                console.log('⏰ Auto-requesting notification permission...');
+                
+                requestPermission()
+                    .then(token => {
+                        if (token) {
+                            console.log('✅ Push notifications enabled successfully');
+                        } else {
+                            console.log('ℹ️ Push notifications not enabled');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('❌ Error requesting notification permission:', error);
+                    });
+            }, 5000); // Wait 5 seconds after page load
+        } else if (currentPermission === 'granted') {
+            // Permission already granted, just get the token
+            console.log('✅ Notification permission already granted');
+            
+            requestPermission()
+                .then(token => {
+                    if (token) {
+                        console.log('✅ FCM token refreshed');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Error refreshing FCM token:', error);
+                });
+        } else {
+            console.log('ℹ️ Notification permission denied, skipping auto-request');
+        }
+
+    } catch (error) {
+        // Catch any errors to prevent breaking the page
+        console.error('❌ Firebase Cloud Messaging initialization failed:', error);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
+        console.warn('⚠️ App will continue without push notifications');
+        
+        // Ensure the app continues to work
+        // Set dummy functions to prevent errors if code tries to use them
+        if (window.Arradea && !window.Arradea.notification) {
+            window.Arradea.notification = {
+                request: async () => {
+                    console.warn('⚠️ FCM not available');
+                    return null;
+                },
+                isSupported: () => false
+            };
+        }
+    }
+}
+
+// Initialize FCM after DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        // Add small delay to ensure everything else is loaded first
+        setTimeout(initializeFirebaseMessaging, 1000);
+    });
+} else {
+    // DOM already loaded
+    setTimeout(initializeFirebaseMessaging, 1000);
+}
+
 console.log('🚀 Arradea Marketplace - Modern UI Loaded');

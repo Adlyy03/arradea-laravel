@@ -39,6 +39,7 @@ class User extends Authenticatable
         'payment_name',
         'payment_type',
         'payment_number',
+        'fcm_token',
     ];
 
     protected $hidden = [

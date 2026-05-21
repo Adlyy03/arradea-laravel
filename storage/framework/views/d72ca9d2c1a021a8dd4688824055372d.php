@@ -922,4 +922,4 @@ function handleComplaintSubmit(e) {
 <script defer src="/js/pwa.js"></script>
 </body>
 </html>
-<?php /**PATH C:\laragon\www\arradeaaaa\resources\views/layouts/dashboard.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\laragon\www\arradea-laravel\resources\views/layouts/dashboard.blade.php ENDPATH**/ ?>

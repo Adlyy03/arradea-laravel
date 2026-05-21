@@ -10,16 +10,17 @@
     
     // Cache hanya IDs produk terbaru (5 menit), fetch models fresh - ambil 5 saja
     $productIds = Cache::remember('home:products:latest:ids', 300, function () {
-        return \App\Models\Product::whereHas('store.user', function ($userQuery) {
-            $userQuery->where('is_seller', true);
-        })
-        ->whereHas('store', function ($storeQuery) {
-            $storeQuery->where('status', 'active');
-        })
-        ->latest()
-        ->take(5)
-        ->pluck('id')
-        ->toArray();
+        return \App\Models\Product::where('is_active', true)
+            ->whereHas('store.user', function ($userQuery) {
+                $userQuery->where('is_seller', true);
+            })
+            ->whereHas('store', function ($storeQuery) {
+                $storeQuery->where('status', 'active');
+            })
+            ->latest()
+            ->take(5)
+            ->pluck('id')
+            ->toArray();
     });
     $products = \App\Models\Product::with(['store:id,name', 'category:id,name'])
         ->whereIn('id', $productIds)
@@ -27,17 +28,18 @@
     
     // Cache hanya IDs produk dengan diskon (5 menit), fetch models fresh - ambil 5 saja
     $discountedIds = Cache::remember('home:products:discounted:ids', 300, function () {
-        return \App\Models\Product::whereHas('store.user', function ($userQuery) {
-            $userQuery->where('is_seller', true);
-        })
-        ->whereHas('store', function ($storeQuery) {
-            $storeQuery->where('status', 'active');
-        })
-        ->where('discount_percent', '>', 0)
-        ->orderBy('discount_percent', 'desc')
-        ->take(5)
-        ->pluck('id')
-        ->toArray();
+        return \App\Models\Product::where('is_active', true)
+            ->whereHas('store.user', function ($userQuery) {
+                $userQuery->where('is_seller', true);
+            })
+            ->whereHas('store', function ($storeQuery) {
+                $storeQuery->where('status', 'active');
+            })
+            ->where('discount_percent', '>', 0)
+            ->orderBy('discount_percent', 'desc')
+            ->take(5)
+            ->pluck('id')
+            ->toArray();
     });
     $discountedProducts = \App\Models\Product::with(['store:id,name', 'category:id,name'])
         ->whereIn('id', $discountedIds)
@@ -45,18 +47,19 @@
     
     // Cache hanya IDs produk populer (10 menit), fetch models fresh - ambil 5 saja
     $popularIds = Cache::remember('home:products:popular:ids', 600, function () {
-        return \App\Models\Product::whereHas('store.user', function ($userQuery) {
-            $userQuery->where('is_seller', true);
-        })
-        ->whereHas('store', function ($storeQuery) {
-            $storeQuery->where('status', 'active');
-        })
-        ->withCount('orders')
-        ->having('orders_count', '>', 0)
-        ->orderBy('orders_count', 'desc')
-        ->take(5)
-        ->pluck('id')
-        ->toArray();
+        return \App\Models\Product::where('is_active', true)
+            ->whereHas('store.user', function ($userQuery) {
+                $userQuery->where('is_seller', true);
+            })
+            ->whereHas('store', function ($storeQuery) {
+                $storeQuery->where('status', 'active');
+            })
+            ->withCount('orders')
+            ->having('orders_count', '>', 0)
+            ->orderBy('orders_count', 'desc')
+            ->take(5)
+            ->pluck('id')
+            ->toArray();
     });
     $popularProducts = \App\Models\Product::with(['store:id,name', 'category:id,name'])
         ->whereIn('id', $popularIds)
@@ -774,4 +777,4 @@
 <?php endif; ?>
 <?php $__env->stopSection(); ?>
 
-<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\arradeaaaa\resources\views/welcome.blade.php ENDPATH**/ ?>
+<?php echo $__env->make('layouts.app', array_diff_key(get_defined_vars(), ['__data' => 1, '__path' => 1]))->render(); ?><?php /**PATH C:\laragon\www\arradea-laravel\resources\views/welcome.blade.php ENDPATH**/ ?>

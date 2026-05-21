@@ -25,13 +25,13 @@
         ];
     @endphp
 
-    {{-- Debug Info (hanya untuk development) --}}
+    <!-- {{-- Debug Info (hanya untuk development) --}}
     @if(config('app.debug'))
     <div class="bg-blue-50 border border-blue-200 rounded-2xl p-4">
         <p class="font-black text-blue-900 text-xs mb-2">🔍 DEBUG INFO:</p>
         <pre class="text-[10px] text-blue-700 overflow-auto">{{ json_encode($debugInfo, JSON_PRETTY_PRINT) }}</pre>
     </div>
-    @endif
+    @endif -->
 
     {{-- Error Messages --}}
     @if($errors->any())

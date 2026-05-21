@@ -44,7 +44,23 @@ class Product extends Model
     // Default image fallback
     public function getImageAttribute($value)
     {
-        return $value ?? 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&h=500';
+        // If no image, return fallback
+        if (!$value) {
+            return 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?auto=format&fit=crop&w=500&h=500';
+        }
+
+        // If already a full URL (http/https), return as is
+        if (str_starts_with($value, 'http://') || str_starts_with($value, 'https://')) {
+            return $value;
+        }
+
+        // If it already starts with /storage/, convert to asset URL
+        if (str_starts_with($value, '/storage/')) {
+            return asset($value);
+        }
+
+        // If it's a relative storage path (e.g., "products/abc.jpg"), add storage prefix
+        return asset('storage/' . $value);
     }
 
     // ─── Relations ──────────────────────────────────────────────────────────────

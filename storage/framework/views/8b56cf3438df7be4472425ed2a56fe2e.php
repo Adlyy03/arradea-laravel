@@ -125,4 +125,4 @@ $canSwitchToSeller = $user->canSwitchToSellerMode();
     <?php endif; ?>
 
 </div>
-<?php /**PATH C:\laragon\www\arradeaaaa\resources\views/components/bottom-sheet-switcher.blade.php ENDPATH**/ ?>
+<?php /**PATH C:\laragon\www\arradea-laravel\resources\views/components/bottom-sheet-switcher.blade.php ENDPATH**/ ?>

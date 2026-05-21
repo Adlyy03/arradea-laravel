@@ -102,6 +102,13 @@ class ProductController extends Controller
      */
     public function show(Product $product)
     {
+        if (!$product->is_active) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Produk tidak tersedia.',
+            ], 404);
+        }
+
         $productData = \Illuminate\Support\Facades\Cache::remember(
             "api:product:{$product->id}",
             300, // 5 minutes
@@ -109,7 +116,7 @@ class ProductController extends Controller
                 return Product::with([
                     'store:id,name,address,user_id',
                     'category:id,name,slug'
-                ])->find($product->id);
+                ])->where('is_active', true)->find($product->id);
             }
         );
 
@@ -143,7 +150,8 @@ class ProductController extends Controller
             'stock',
             'image',
             'updated_at',
-        ])->with('store:id,name');
+        ])->with('store:id,name')
+        ->where('is_active', true);
 
         if (!empty($validated['ids'])) {
             $query->whereIn('id', $validated['ids']);
