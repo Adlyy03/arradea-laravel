@@ -8,6 +8,7 @@
     "require": {
         "php": "^8.3",
         "ext-gd": "*",
+        "kreait/laravel-firebase": "^7.2",
         "ladumor/laravel-pwa": "^1.0",
         "laravel/framework": "^13.0",
         "laravel/reverb": "^1.10",

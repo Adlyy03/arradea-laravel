@@ -99,6 +99,12 @@ class User extends Authenticatable
         return $this->hasMany(Cart::class);
     }
 
+    /** A user has many FCM tokens */
+    public function fcmTokens()
+    {
+        return $this->hasMany(FcmToken::class);
+    }
+
     public function accessCode()
     {
         return $this->belongsTo(AccessCode::class);

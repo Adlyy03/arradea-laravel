@@ -177,6 +177,7 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
     Route::middleware('role:admin')->prefix('admin')->group(function () {
         Route::get('/dashboard', fn() => view('admin.dashboard'));
         Route::get('/sellers',   fn() => view('admin.sellers'));
+        Route::get('/notifications', fn() => view('admin.notifications'))->name('admin.notifications');
         
         // Categories Management
         Route::resource('categories', \App\Http\Controllers\CategoryController::class)
@@ -999,5 +1000,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/{complaint}', [\App\Http\Controllers\ComplaintController::class, 'show'])->name('show');
     });
     Route::get('/mode/info', [\App\Http\Controllers\ModeController::class, 'info'])->name('mode.info');
+
+    // ─── Push Notifications ─────────────────────────────────────────────────
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::post('/token/store', [\App\Http\Controllers\PushNotificationController::class, 'storeToken'])->name('token.store');
+        Route::post('/token/delete', [\App\Http\Controllers\PushNotificationController::class, 'deleteToken'])->name('token.delete');
+        Route::post('/test', [\App\Http\Controllers\PushNotificationController::class, 'sendTest'])->name('test');
+        Route::get('/tokens', [\App\Http\Controllers\PushNotificationController::class, 'getTokens'])->name('tokens');
+        Route::get('/settings', [\App\Http\Controllers\PushNotificationController::class, 'settings'])->name('settings');
+        Route::get('/test-page', [\App\Http\Controllers\PushNotificationController::class, 'testPage'])->name('test-page');
+    });
+
+    // Admin only notification routes
+    Route::middleware('role:admin')->prefix('admin/notifications')->name('admin.notifications.')->group(function () {
+        Route::post('/send-to-user', [\App\Http\Controllers\PushNotificationController::class, 'sendToUser'])->name('send-to-user');
+        Route::post('/send-to-all', [\App\Http\Controllers\PushNotificationController::class, 'sendToAll'])->name('send-to-all');
+    });
 });
 
