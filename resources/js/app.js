@@ -47,7 +47,7 @@ if (!window.alpineStarted) {
 // Initialize AOS (Animate On Scroll) - Disabled on mobile for performance
 document.addEventListener('DOMContentLoaded', () => {
     const isMobile = window.innerWidth < 768;
-    
+
     AOS.init({
         duration: 800,
         easing: 'ease-in-out',
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         delay: 100,
         disable: isMobile, // Disable on mobile for better performance
     });
-    
+
     // Refresh AOS on dynamic content
     if (!isMobile) {
         setTimeout(() => AOS.refresh(), 500);
@@ -72,14 +72,14 @@ window.Arradea = {
         show(message, type = 'success', duration = 4000) {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            
+
             const icon = {
                 success: '✅',
-                error: '❌', 
+                error: '❌',
                 warning: '⚠️',
                 info: 'ℹ️'
             }[type] || '✅';
-            
+
             toast.innerHTML = `
                 <div class="flex items-center gap-3">
                     <span class="text-lg">${icon}</span>
@@ -91,15 +91,15 @@ window.Arradea = {
                     </button>
                 </div>
             `;
-            
+
             document.body.appendChild(toast);
-            
+
             // Trigger show animation with GSAP
-            gsap.fromTo(toast, 
+            gsap.fromTo(toast,
                 { x: 100, opacity: 0 },
                 { x: 0, opacity: 1, duration: 0.3, ease: 'power2.out' }
             );
-            
+
             // Auto remove
             setTimeout(() => {
                 gsap.to(toast, {
@@ -111,13 +111,13 @@ window.Arradea = {
                 });
             }, duration);
         },
-        
+
         success(message) { this.show(message, 'success'); },
         error(message) { this.show(message, 'error'); },
         warning(message) { this.show(message, 'warning'); },
         info(message) { this.show(message, 'info'); }
     },
-    
+
     // Enhanced Loading States
     loading: {
         show(element, text = 'Loading...') {
@@ -131,13 +131,13 @@ window.Arradea = {
                 ${text}
             `;
         },
-        
+
         hide(element) {
             element.disabled = false;
             element.textContent = element.dataset.originalText || 'Submit';
         }
     },
-    
+
     // Smooth Page Transitions
     pageTransition: {
         init() {
@@ -151,7 +151,7 @@ window.Arradea = {
             });
         }
     },
-    
+
     // Scroll to top with animation
     scrollToTop() {
         gsap.to(window, {
@@ -172,7 +172,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const errorMsg = document.querySelector('meta[name="flash-error"]');
     const warningMsg = document.querySelector('meta[name="flash-warning"]');
     const infoMsg = document.querySelector('meta[name="flash-info"]');
-    
+
     if (successMsg) window.Arradea.toast.success(successMsg.content);
     if (errorMsg) window.Arradea.toast.error(errorMsg.content);
     if (warningMsg) window.Arradea.toast.warning(warningMsg.content);
@@ -183,10 +183,10 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('submit', (e) => {
     const form = e.target;
     const submitBtn = form.querySelector('button[type="submit"]');
-    
+
     if (submitBtn && !submitBtn.disabled) {
         window.Arradea.loading.show(submitBtn);
-        
+
         // Reset loading state if form submission fails
         setTimeout(() => {
             if (submitBtn.disabled) {
@@ -206,7 +206,7 @@ document.addEventListener('keydown', (e) => {
             sidebarToggle.sideOpen = !sidebarToggle.sideOpen;
         }
     }
-    
+
     // Escape to close modals
     if (e.key === 'Escape') {
         const modals = document.querySelectorAll('[x-data]');
@@ -250,7 +250,7 @@ const createScrollTopButton = () => {
     `;
     button.onclick = () => window.Arradea.scrollToTop();
     document.body.appendChild(button);
-    
+
     // Show/hide on scroll
     window.addEventListener('scroll', () => {
         if (window.scrollY > 300) {
@@ -279,14 +279,18 @@ if (document.readyState === 'loading') {
 async function initializeFirebaseMessaging() {
     try {
         console.log('🔔 Initializing Firebase Cloud Messaging...');
-        
-        // Check if user is authenticated
-        const isAuthenticated = document.querySelector('meta[name="user-authenticated"]')?.content === 'true';
-        
-        if (!isAuthenticated) {
-            console.log('ℹ️ User not authenticated, skipping FCM initialization');
-            return;
-        }
+
+        // ============================================================================
+        // ⚠️ IMPORTANT: FCM ALWAYS RUNS - Auth check removed for debugging
+        // ============================================================================
+        // Debug: tampilkan info auth dari meta tag (TIDAK MEMBLOKIR FCM)
+        const authMeta = document.querySelector('meta[name="user-authenticated"]');
+        const isAuthenticated = authMeta?.content === 'true';
+        console.log('🔍 [FCM Debug] meta[user-authenticated]:', authMeta?.content ?? 'NOT FOUND');
+        console.log('🔍 [FCM Debug] window.Laravel?.user:', window.Laravel?.user ?? 'undefined');
+        console.log('🔍 [FCM Debug] isAuthenticated (frontend check):', isAuthenticated);
+        console.log('✅ [FCM] Continuing initialization regardless of auth status...');
+        // ⚠️ NO RETURN HERE - FCM tetap berjalan meskipun auth frontend tidak terdeteksi
 
         // Check browser support first (before importing)
         if (!('serviceWorker' in navigator)) {
@@ -301,11 +305,11 @@ async function initializeFirebaseMessaging() {
 
         // Dynamically import Firebase module (code splitting)
         const firebaseModule = await import('./firebase.js');
-        
-        const { 
-            requestPermission, 
-            setupForegroundMessageHandler, 
-            isNotificationSupported 
+
+        const {
+            requestPermission,
+            setupForegroundMessageHandler,
+            isNotificationSupported
         } = firebaseModule;
 
         // Check if notifications are supported
@@ -324,15 +328,16 @@ async function initializeFirebaseMessaging() {
         };
 
         console.log('✅ Firebase Cloud Messaging initialized successfully');
+        console.log('🎉 FCM is ready! You can now request notification permission.');
 
         // Auto-request permission after a delay (optional, only if not already set)
         const currentPermission = Notification.permission;
-        
+
         if (currentPermission === 'default') {
             // Only auto-request if user hasn't made a choice yet
             setTimeout(() => {
                 console.log('⏰ Auto-requesting notification permission...');
-                
+
                 requestPermission()
                     .then(token => {
                         if (token) {
@@ -348,7 +353,7 @@ async function initializeFirebaseMessaging() {
         } else if (currentPermission === 'granted') {
             // Permission already granted, just get the token
             console.log('✅ Notification permission already granted');
-            
+
             requestPermission()
                 .then(token => {
                     if (token) {
@@ -371,7 +376,7 @@ async function initializeFirebaseMessaging() {
             stack: error.stack
         });
         console.warn('⚠️ App will continue without push notifications');
-        
+
         // Ensure the app continues to work
         // Set dummy functions to prevent errors if code tries to use them
         if (window.Arradea && !window.Arradea.notification) {
