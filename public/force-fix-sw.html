@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Force Fix Service Worker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: monospace;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            background: #252526;
+            border: 2px solid #f48771;
+            border-radius: 12px;
+            padding: 40px;
+            text-align: center;
+        }
+        h1 { color: #f48771; margin-bottom: 20px; font-size: 24px; }
+        .btn {
+            background: #f48771;
+            color: #1e1e1e;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 10px;
+        }
+        .btn:hover { background: #ff6b5a; }
+        .log {
+            background: #1e1e1e;
+            border: 1px solid #3e3e42;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            text-align: left;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+        .log-entry.success { color: #4ec9b0; }
+        .log-entry.error { color: #f48771; }
+        .log-entry.warning { color: #dcdcaa; }
+        .log-entry.info { color: #9cdcfe; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>⚠️ FORCE FIX SERVICE WORKER</h1>
+        <p style="margin-bottom: 30px; color: #9cdcfe;">
+            This will forcefully unregister ALL service workers<br>
+            and close all tabs to ensure clean state.
+        </p>
+        
+        <button type="button" class="btn" onclick="forceFix()">
+            🔥 FORCE FIX NOW
+        </button>
+        
+        <div class="log" id="log"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logBox = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+            console.log(message);
+        }
+
+        async function forceFix() {
+            log('🔥 Starting FORCE FIX...', 'warning');
+            log('='.repeat(60), 'info');
+
+            try {
+                // Step 1: Get all registrations
+                log('Step 1: Getting all service workers...', 'info');
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                log(`Found ${registrations.length} registration(s)`, 'info');
+
+                if (registrations.length === 0) {
+                    log('✅ No service workers to unregister', 'success');
+                    log('Registering Firebase SW...', 'info');
+                    await registerFirebaseSW();
+                    return;
+                }
+
+                // Step 2: Unregister ALL
+                log('Step 2: Unregistering ALL service workers...', 'warning');
+                
+                for (const reg of registrations) {
+                    const scriptURL = reg.active?.scriptURL || 'Unknown';
+                    log(`Unregistering: ${scriptURL}`, 'warning');
+                    
+                    try {
+                        const success = await reg.unregister();
+                        if (success) {
+                            log(`  ✅ Unregistered successfully`, 'success');
+                        } else {
+                            log(`  ❌ Failed to unregister`, 'error');
+                        }
+                    } catch (error) {
+                        log(`  ❌ Error: ${error.message}`, 'error');
+                    }
+                }
+
+                log('✅ All service workers unregistered', 'success');
+
+                // Step 3: Clear caches
+                log('Step 3: Clearing all caches...', 'warning');
+                const cacheNames = await caches.keys();
+                log(`Found ${cacheNames.length} cache(s)`, 'info');
+                
+                for (const cacheName of cacheNames) {
+                    await caches.delete(cacheName);
+                    log(`  Deleted cache: ${cacheName}`, 'info');
+                }
+
+                log('✅ All caches cleared', 'success');
+
+                // Step 4: Wait a bit
+                log('Step 4: Waiting for cleanup...', 'info');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                // Step 5: Register Firebase SW
+                log('Step 5: Registering Firebase SW...', 'info');
+                await registerFirebaseSW();
+
+                // Step 6: Reload
+                log('='.repeat(60), 'info');
+                log('🎉 SUCCESS! Page will reload in 3 seconds...', 'success');
+                log('='.repeat(60), 'info');
+
+                setTimeout(() => {
+                    window.location.href = '/debug-fcm-live.html';
+                }, 3000);
+
+            } catch (error) {
+                log('='.repeat(60), 'error');
+                log(`❌ ERROR: ${error.message}`, 'error');
+                log('='.repeat(60), 'error');
+                console.error(error);
+            }
+        }
+
+        async function registerFirebaseSW() {
+            try {
+                log('Registering /firebase-messaging-sw.js...', 'info');
+                
+                const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                    scope: '/',
+                    updateViaCache: 'none'
+                });
+
+                log('  Registration initiated', 'info');
+                log(`  Scope: ${registration.scope}`, 'info');
+
+                // Wait for SW to be ready
+                log('  Waiting for activation...', 'info');
+                
+                // Set timeout for activation
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Activation timeout')), 10000);
+                });
+
+                const readyPromise = navigator.serviceWorker.ready;
+
+                await Promise.race([readyPromise, timeoutPromise]);
+
+                const activeScript = registration.active?.scriptURL || 'Unknown';
+                log(`  ✅ Active: ${activeScript}`, 'success');
+
+                if (activeScript.includes('firebase-messaging-sw.js')) {
+                    log('✅ Firebase SW registered successfully!', 'success');
+                } else {
+                    log('⚠️ Unexpected SW script', 'warning');
+                }
+
+            } catch (error) {
+                if (error.message === 'Activation timeout') {
+                    log('⚠️ Activation timeout - SW may still be installing', 'warning');
+                    log('Try refreshing the page manually', 'info');
+                } else {
+                    throw error;
+                }
+            }
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', async () => {
+            log('Checking current state...', 'info');
+            
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                
+                if (registrations.length === 0) {
+                    log('ℹ️ No service workers registered', 'info');
+                } else {
+                    registrations.forEach((reg, i) => {
+                        const scriptURL = reg.active?.scriptURL || 'N/A';
+                        if (scriptURL.includes('firebase-messaging-sw.js')) {
+                            log(`✅ Firebase SW already registered: ${scriptURL}`, 'success');
+                        } else if (scriptURL.includes('sw.js')) {
+                            log(`❌ Wrong SW registered: ${scriptURL}`, 'error');
+                            log('Click "FORCE FIX NOW" to fix it', 'warning');
+                        } else {
+                            log(`ℹ️ SW ${i+1}: ${scriptURL}`, 'info');
+                        }
+                    });
+                }
+            } catch (error) {
+                log(`Error checking SW: ${error.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

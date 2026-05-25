@@ -27,14 +27,60 @@ class NotificationController extends Controller
                 ], 401);
             }
 
-            // Save FCM token to user
-            $user->update([
-                'fcm_token' => $request->fcm_token
+            // Get device info from request
+            $deviceName = $request->input('device_name', 'Web Browser');
+            $deviceType = $request->input('device_type', 'web');
+
+            // IMPORTANT: Deactivate ALL old tokens for this user
+            // This ensures we only send to the latest token
+            \App\Models\FcmToken::where('user_id', $user->id)
+                ->where('token', '!=', $request->fcm_token)
+                ->update(['is_active' => false]);
+
+            Log::info('Deactivated old FCM tokens for user', [
+                'user_id' => $user->id
             ]);
 
-            Log::info('FCM token saved', [
-                'user_id' => $user->id,
-                'token' => substr($request->fcm_token, 0, 20) . '...'
+            // Check if token already exists for this user
+            $existingToken = \App\Models\FcmToken::where('user_id', $user->id)
+                ->where('token', $request->fcm_token)
+                ->first();
+
+            if ($existingToken) {
+                // Update existing token
+                $existingToken->update([
+                    'device_name' => $deviceName,
+                    'device_type' => $deviceType,
+                    'is_active' => true,
+                    'last_used_at' => now()
+                ]);
+
+                Log::info('FCM token updated', [
+                    'user_id' => $user->id,
+                    'token_id' => $existingToken->id,
+                    'token' => substr($request->fcm_token, 0, 20) . '...'
+                ]);
+            } else {
+                // Create new token
+                $fcmToken = \App\Models\FcmToken::create([
+                    'user_id' => $user->id,
+                    'token' => $request->fcm_token,
+                    'device_name' => $deviceName,
+                    'device_type' => $deviceType,
+                    'is_active' => true,
+                    'last_used_at' => now()
+                ]);
+
+                Log::info('FCM token created', [
+                    'user_id' => $user->id,
+                    'token_id' => $fcmToken->id,
+                    'token' => substr($request->fcm_token, 0, 20) . '...'
+                ]);
+            }
+
+            // Also save to users.fcm_token for backward compatibility
+            $user->update([
+                'fcm_token' => $request->fcm_token
             ]);
 
             return response()->json([
@@ -43,7 +89,8 @@ class NotificationController extends Controller
             ]);
         } catch (\Exception $e) {
             Log::error('Error saving FCM token', [
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([
@@ -71,21 +118,25 @@ class NotificationController extends Controller
                 $userIds = [$userIds];
             }
 
-            // Get FCM tokens for users
-            $users = \App\Models\User::whereIn('id', $userIds)
-                ->whereNotNull('fcm_token')
-                ->get(['id', 'fcm_token', 'name']);
+            // Get active FCM tokens for users
+            $fcmTokens = \App\Models\FcmToken::whereIn('user_id', $userIds)
+                ->where('is_active', true)
+                ->pluck('token')
+                ->toArray();
 
-            if ($users->isEmpty()) {
-                Log::warning('No users with FCM tokens found', ['user_ids' => $userIds]);
+            if (empty($fcmTokens)) {
+                Log::warning('No active FCM tokens found', ['user_ids' => $userIds]);
                 return [
                     'success' => false,
-                    'message' => 'Tidak ada user dengan FCM token',
+                    'message' => 'Tidak ada user dengan FCM token aktif',
                     'sent_count' => 0
                 ];
             }
 
-            $fcmTokens = $users->pluck('fcm_token')->toArray();
+            // Update last_used_at for these tokens
+            \App\Models\FcmToken::whereIn('user_id', $userIds)
+                ->where('is_active', true)
+                ->update(['last_used_at' => now()]);
             $serverKey = env('FCM_SERVER_KEY');
 
             if (!$serverKey) {

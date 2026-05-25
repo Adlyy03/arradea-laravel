@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Complete FCM Test - Arradea</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: #667eea; 
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        .subtitle { 
+            color: #666; 
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+        .btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .btn-danger { background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); }
+        .status {
+            padding: 12px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+        .log-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #667eea;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Complete FCM Test</h1>
+        <p class="subtitle">Fix service worker and test notifications</p>
+        
+        <!-- Step 1: Fix Service Worker -->
+        <div class="section">
+            <h2><span class="step-number">1</span>Fix Service Worker</h2>
+            <button type="button" class="btn" onclick="fixServiceWorker()">
+                🔧 Fix Service Worker Now
+            </button>
+            <div id="fixStatus"></div>
+        </div>
+
+        <!-- Step 2: Check Status -->
+        <div class="section">
+            <h2><span class="step-number">2</span>Check Current Status</h2>
+            <button type="button" class="btn btn-success" onclick="checkStatus()">
+                🔍 Check Status
+            </button>
+            <div id="statusCheck"></div>
+        </div>
+
+        <!-- Step 3: Request Permission -->
+        <div class="section">
+            <h2><span class="step-number">3</span>Request Notification Permission</h2>
+            <button type="button" class="btn btn-success" onclick="requestNotificationPermission()">
+                🔔 Request Permission
+            </button>
+            <div id="permissionStatus"></div>
+        </div>
+
+        <!-- Step 4: Test Notification -->
+        <div class="section">
+            <h2><span class="step-number">4</span>Test Browser Notification</h2>
+            <button type="button" class="btn btn-success" onclick="testBrowserNotification()">
+                🧪 Test Browser Notification
+            </button>
+            <div id="testStatus"></div>
+        </div>
+
+        <!-- Console Log -->
+        <div class="section">
+            <h2>📋 Console Log</h2>
+            <div class="log-box" id="consoleLog">
+                <div style="color: #4ec9b0;">Ready to start testing...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logBox = document.getElementById('consoleLog');
+            const entry = document.createElement('div');
+            const colors = {
+                success: '#4ec9b0',
+                error: '#f48771',
+                warning: '#dcdcaa',
+                info: '#9cdcfe'
+            };
+            entry.style.color = colors[type] || colors.info;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+            console.log(message);
+        }
+
+        function addStatus(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            const status = document.createElement('div');
+            status.className = `status ${type}`;
+            status.textContent = message;
+            container.appendChild(status);
+        }
+
+        function clearStatus(containerId) {
+            document.getElementById(containerId).innerHTML = '';
+        }
+
+        async function fixServiceWorker() {
+            clearStatus('fixStatus');
+            log('='.repeat(60), 'info');
+            log('🔧 Starting service worker fix...', 'info');
+
+            try {
+                // Step 1: Check current
+                log('Step 1: Checking current service workers...', 'info');
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                log(`Found ${registrations.length} service worker(s)`, 'info');
+
+                registrations.forEach((reg, i) => {
+                    const scriptURL = reg.active?.scriptURL || 'N/A';
+                    if (scriptURL.includes('sw.js') && !scriptURL.includes('firebase')) {
+                        log(`  ❌ Wrong SW: ${scriptURL}`, 'error');
+                        addStatus('fixStatus', `❌ Wrong SW found: ${scriptURL}`, 'error');
+                    } else {
+                        log(`  SW ${i+1}: ${scriptURL}`, 'info');
+                    }
+                });
+
+                // Step 2: Unregister all
+                if (registrations.length > 0) {
+                    log('Step 2: Unregistering all service workers...', 'warning');
+                    addStatus('fixStatus', 'Unregistering old service workers...', 'warning');
+                    
+                    for (const reg of registrations) {
+                        const scriptURL = reg.active?.scriptURL || 'Unknown';
+                        const success = await reg.unregister();
+                        
+                        if (success) {
+                            log(`  ✅ Unregistered: ${scriptURL}`, 'success');
+                        }
+                    }
+                }
+
+                // Wait for cleanup
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Step 3: Register Firebase SW
+                log('Step 3: Registering firebase-messaging-sw.js...', 'info');
+                addStatus('fixStatus', 'Registering firebase-messaging-sw.js...', 'info');
+                
+                const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                    scope: '/',
+                    updateViaCache: 'none'
+                });
+
+                log('  ✅ Registration initiated', 'success');
+
+                // Wait for SW to be ready
+                log('Step 4: Waiting for activation...', 'info');
+                await navigator.serviceWorker.ready;
+
+                const activeScript = registration.active?.scriptURL || 'Unknown';
+                log(`  ✅ Active: ${activeScript}`, 'success');
+
+                // Verify
+                if (activeScript.includes('firebase-messaging-sw.js')) {
+                    log('🎉 SUCCESS! Firebase SW is now active!', 'success');
+                    addStatus('fixStatus', '✅ SUCCESS! Firebase SW registered and active!', 'success');
+                    addStatus('fixStatus', 'Page will reload in 2 seconds...', 'warning');
+                    
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                } else {
+                    log('⚠️ Unexpected SW script', 'warning');
+                    addStatus('fixStatus', `⚠️ Unexpected SW: ${activeScript}`, 'warning');
+                }
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                addStatus('fixStatus', `❌ Error: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function checkStatus() {
+            clearStatus('statusCheck');
+            log('='.repeat(60), 'info');
+            log('🔍 Checking status...', 'info');
+
+            try {
+                // Check service worker
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                log(`Service Workers: ${registrations.length}`, 'info');
+                
+                let hasFirebaseSW = false;
+                registrations.forEach((reg, i) => {
+                    const scriptURL = reg.active?.scriptURL || 'N/A';
+                    log(`  SW ${i+1}: ${scriptURL}`, 'info');
+                    
+                    if (scriptURL.includes('firebase-messaging-sw.js')) {
+                        hasFirebaseSW = true;
+                        addStatus('statusCheck', `✅ Firebase SW registered: ${scriptURL}`, 'success');
+                    } else if (scriptURL.includes('sw.js')) {
+                        addStatus('statusCheck', `❌ Wrong SW: ${scriptURL}`, 'error');
+                    }
+                });
+
+                if (!hasFirebaseSW && registrations.length === 0) {
+                    addStatus('statusCheck', '⚠️ No service worker registered', 'warning');
+                }
+
+                // Check notification permission
+                const permission = Notification.permission;
+                log(`Notification permission: ${permission}`, 'info');
+                
+                if (permission === 'granted') {
+                    addStatus('statusCheck', `✅ Notification permission: ${permission}`, 'success');
+                } else if (permission === 'denied') {
+                    addStatus('statusCheck', `❌ Notification permission: ${permission}`, 'error');
+                } else {
+                    addStatus('statusCheck', `⚠️ Notification permission: ${permission}`, 'warning');
+                }
+
+                // Check if page is controlled
+                if (navigator.serviceWorker.controller) {
+                    const controllerURL = navigator.serviceWorker.controller.scriptURL;
+                    log(`Page controlled by: ${controllerURL}`, 'info');
+                    addStatus('statusCheck', `✅ Page controlled by SW`, 'success');
+                } else {
+                    log('Page NOT controlled by SW', 'warning');
+                    addStatus('statusCheck', `⚠️ Page not controlled by SW (refresh may be needed)`, 'warning');
+                }
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                addStatus('statusCheck', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function requestNotificationPermission() {
+            clearStatus('permissionStatus');
+            log('='.repeat(60), 'info');
+            log('🔔 Requesting notification permission...', 'info');
+
+            try {
+                const currentPermission = Notification.permission;
+                log(`Current permission: ${currentPermission}`, 'info');
+
+                if (currentPermission === 'granted') {
+                    log('✅ Permission already granted', 'success');
+                    addStatus('permissionStatus', '✅ Permission already granted', 'success');
+                    return;
+                }
+
+                if (currentPermission === 'denied') {
+                    log('❌ Permission denied by user', 'error');
+                    addStatus('permissionStatus', '❌ Permission denied. Enable in browser settings.', 'error');
+                    return;
+                }
+
+                log('Requesting permission...', 'info');
+                addStatus('permissionStatus', 'Requesting permission...', 'info');
+                
+                const permission = await Notification.requestPermission();
+                log(`Permission result: ${permission}`, 'info');
+
+                if (permission === 'granted') {
+                    log('✅ Permission granted!', 'success');
+                    addStatus('permissionStatus', '✅ Permission granted!', 'success');
+                } else {
+                    log('❌ Permission denied', 'error');
+                    addStatus('permissionStatus', '❌ Permission denied', 'error');
+                }
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                addStatus('permissionStatus', `❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testBrowserNotification() {
+            clearStatus('testStatus');
+            log('='.repeat(60), 'info');
+            log('🧪 Testing browser notification...', 'info');
+
+            try {
+                // Check permission
+                if (Notification.permission !== 'granted') {
+                    log('❌ Permission not granted', 'error');
+                    addStatus('testStatus', '❌ Permission not granted. Request permission first.', 'error');
+                    return;
+                }
+
+                log('Creating notification...', 'info');
+                addStatus('testStatus', 'Creating notification...', 'info');
+
+                const notification = new Notification('🎉 Test Notification', {
+                    body: 'This is a test notification from Arradea!',
+                    icon: '/icons/logo-arradea.png',
+                    badge: '/icons/logo-arradea.png',
+                    tag: 'test-notification',
+                    requireInteraction: false,
+                    vibrate: [200, 100, 200]
+                });
+
+                log('✅ Notification created!', 'success');
+                addStatus('testStatus', '✅ Notification created! Check if it appeared.', 'success');
+
+                notification.onclick = () => {
+                    log('🖱️ Notification clicked!', 'info');
+                    addStatus('testStatus', '✅ Notification clicked!', 'success');
+                    notification.close();
+                };
+
+                // Auto close after 5 seconds
+                setTimeout(() => {
+                    notification.close();
+                    log('⏰ Notification auto-closed', 'info');
+                }, 5000);
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                addStatus('testStatus', `❌ Error: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        // Auto-check status on load
+        window.addEventListener('load', () => {
+            setTimeout(checkStatus, 500);
+        });
+    </script>
+</body>
+</html>

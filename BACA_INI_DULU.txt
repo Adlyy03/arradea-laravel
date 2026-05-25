@@ -1,0 +1,123 @@
+================================================================================
+                    FCM NOTIFICATION - CARA PALING MUDAH
+================================================================================
+
+MASALAH KAMU:
+- Permission kembali ke "default" (bukan "granted")
+- Ini terjadi karena browser baru / cache di-clear / incognito mode
+
+SOLUSI (3 LANGKAH SIMPLE):
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  1. DOUBLE-CLICK FILE INI:                                                  │
+│     FIX_NOTIF_SEKARANG.bat                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│  2. DI BROWSER YANG TERBUKA:                                                │
+│                                                                             │
+│     STEP 1: Klik tombol "🔔 Izinkan Notifikasi"                            │
+│             ↓                                                               │
+│             Browser akan muncul popup permission                            │
+│             ↓                                                               │
+│             KLIK "ALLOW" / "IZINKAN" !!!                                    │
+│             ↓                                                               │
+│             Muncul "✅ Permission granted!"                                 │
+│                                                                             │
+│     STEP 2: Klik tombol "🧪 Test Notifikasi Manual"                        │
+│             ↓                                                               │
+│             Notifikasi HARUS muncul di pojok kanan bawah                    │
+│             ↓                                                               │
+│             Jika TIDAK muncul = masalah di Windows settings (lihat bawah)   │
+│                                                                             │
+│     STEP 3: Klik tombol "🚀 Kirim Notifikasi FCM"                          │
+│             ↓                                                               │
+│             Notifikasi dari server HARUS muncul                             │
+│             ↓                                                               │
+│             SELESAI! ✅                                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+                         TROUBLESHOOTING
+================================================================================
+
+❌ JIKA STEP 1 TIDAK MUNCUL POPUP:
+   → Permission sudah di-block sebelumnya
+   → Solusi:
+     1. Klik icon 🔒 di address bar (sebelah kiri URL)
+     2. Klik "Site settings"
+     3. Notifications → Change to "Allow"
+     4. Refresh page
+
+❌ JIKA STEP 2 TIDAK MUNCUL NOTIFIKASI:
+   → Masalah di Windows atau browser settings
+   → Solusi:
+     
+     Windows Settings:
+     1. Tekan Win + I
+     2. System → Notifications
+     3. Pastikan "Notifications" ON
+     4. Scroll ke bawah, cari "Google Chrome"
+     5. Pastikan Chrome notifications ON
+     6. Pastikan "Focus assist" OFF
+     
+     Chrome Settings:
+     1. Buka chrome://settings/content/notifications
+     2. Pastikan "Sites can ask to send notifications" ON
+     3. Check "Allowed" list, pastikan localhost ada
+     4. Jika di "Blocked", pindahkan ke "Allowed"
+
+❌ JIKA STEP 3 TIDAK MUNCUL NOTIFIKASI:
+   → Masalah di FCM token
+   → Solusi:
+     1. Refresh page (Ctrl+R)
+     2. Ulangi dari Step 1
+     3. Token baru akan di-generate
+
+================================================================================
+                         KENAPA PERMISSION JADI "DEFAULT"?
+================================================================================
+
+Permission bisa kembali ke "default" karena:
+1. Browser baru dibuka (belum pernah grant permission)
+2. Incognito/Private mode
+3. Browser cache/cookies di-clear
+4. Browser settings di-reset
+5. Chrome profile baru
+
+Solusi: Tinggal grant permission lagi (Step 1)
+
+================================================================================
+                         QUICK CHECK
+================================================================================
+
+Sebelum mulai, pastikan:
+☑ Laravel server running (php artisan serve)
+☑ Browser = Chrome/Edge (bukan Firefox/Safari)
+☑ Bukan incognito mode
+☑ Windows notifications ON
+
+================================================================================
+                         MASIH GAGAL?
+================================================================================
+
+Jika sudah ikuti semua langkah tapi masih gagal:
+
+1. Buka browser console (F12)
+2. Screenshot error yang muncul
+3. Check file: storage/logs/laravel.log
+4. Provide info:
+   - Browser version
+   - Windows version
+   - Error message di console
+
+================================================================================
+
+TL;DR:
+1. Double-click: FIX_NOTIF_SEKARANG.bat
+2. Klik "Izinkan Notifikasi" → Klik "Allow"
+3. Klik "Test Notifikasi Manual" → Harus muncul
+4. Klik "Kirim Notifikasi FCM" → Harus muncul
+5. DONE! ✅
+
+================================================================================

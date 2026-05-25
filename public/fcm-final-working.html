@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCM Final Working Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #000;
+            color: #0f0;
+            padding: 20px;
+            font-size: 14px;
+        }
+        h1 { 
+            color: #0f0; 
+            margin-bottom: 20px;
+            font-size: 24px;
+            text-align: center;
+        }
+        .status {
+            background: #111;
+            border: 2px solid #0f0;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        .status-line {
+            margin: 8px 0;
+            display: flex;
+            justify-content: space-between;
+        }
+        .status-value { font-weight: bold; }
+        .ok { color: #0f0; }
+        .error { color: #f00; }
+        .warning { color: #ff0; }
+        .log {
+            background: #111;
+            border: 1px solid #333;
+            padding: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+            border-radius: 8px;
+        }
+        .log-line {
+            margin: 4px 0;
+            line-height: 1.6;
+        }
+        .log-line.message {
+            color: #ff0;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .btn {
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 8px;
+            margin: 10px 5px;
+        }
+        .btn:hover { background: #0c0; }
+    </style>
+</head>
+<body>
+    <h1>🎯 FCM FINAL WORKING TEST</h1>
+    
+    <div class="status">
+        <div class="status-line">
+            <span>Service Worker:</span>
+            <span class="status-value" id="sw">Checking...</span>
+        </div>
+        <div class="status-line">
+            <span>Permission:</span>
+            <span class="status-value" id="perm">Checking...</span>
+        </div>
+        <div class="status-line">
+            <span>FCM Token:</span>
+            <span class="status-value" id="token">Checking...</span>
+        </div>
+        <div class="status-line">
+            <span>Messages Received:</span>
+            <span class="status-value ok" id="count">0</span>
+        </div>
+    </div>
+
+    <div style="text-align: center; margin-bottom: 20px;">
+        <button class="btn" onclick="location.reload()">🔄 Refresh</button>
+        <button class="btn" onclick="testManual()">🧪 Test Manual</button>
+    </div>
+
+    <div class="log" id="log"></div>
+
+    <script type="module">
+        let msgCount = 0;
+
+        function log(msg, cls = '') {
+            const div = document.createElement('div');
+            div.className = 'log-line ' + cls;
+            div.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            document.getElementById('log').appendChild(div);
+            document.getElementById('log').scrollTop = 999999;
+            console.log(msg);
+        }
+
+        function status(id, val, cls) {
+            const el = document.getElementById(id);
+            el.textContent = val;
+            el.className = 'status-value ' + cls;
+        }
+
+        window.testManual = function() {
+            if (Notification.permission === 'granted') {
+                new Notification('Manual Test', { body: 'Manual notification works!' });
+                log('✅ Manual notification sent', 'ok');
+            } else {
+                log('❌ Permission not granted', 'error');
+            }
+        };
+
+        async function init() {
+            try {
+                log('='.repeat(60));
+                log('🚀 Initializing FCM...');
+                log('='.repeat(60));
+
+                // Check SW
+                const regs = await navigator.serviceWorker.getRegistrations();
+                log(`Service Workers: ${regs.length}`);
+                
+                let hasFCM = false;
+                for (const reg of regs) {
+                    const url = reg.active?.scriptURL || 'N/A';
+                    log(`  SW: ${url}`);
+                    if (url.includes('firebase-messaging-sw.js')) {
+                        hasFCM = true;
+                        status('sw', 'OK', 'ok');
+                    }
+                }
+
+                if (!hasFCM) {
+                    status('sw', 'MISSING', 'error');
+                    log('❌ Firebase SW not found!', 'error');
+                    log('Registering now...', 'warning');
+                    
+                    await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                        scope: '/',
+                        updateViaCache: 'none'
+                    });
+                    
+                    await navigator.serviceWorker.ready;
+                    log('✅ Firebase SW registered', 'ok');
+                    status('sw', 'OK', 'ok');
+                }
+
+                // Check permission
+                let perm = Notification.permission;
+                log(`Permission: ${perm}`);
+
+                if (perm !== 'granted') {
+                    log('Requesting permission...', 'warning');
+                    perm = await Notification.requestPermission();
+                }
+
+                if (perm === 'granted') {
+                    status('perm', 'GRANTED', 'ok');
+                    log('✅ Permission granted', 'ok');
+                } else {
+                    status('perm', 'DENIED', 'error');
+                    log('❌ Permission denied', 'error');
+                    return;
+                }
+
+                // Import Firebase
+                log('Loading Firebase SDK...');
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
+
+                const app = initializeApp({
+                    apiKey: "AIzaSyDr3GsRZJgSjw6dVSF_dqUXi1osHxIRmQo",
+                    authDomain: "arradea-marketplace.firebaseapp.com",
+                    projectId: "arradea-marketplace",
+                    storageBucket: "arradea-marketplace.firebasestorage.app",
+                    messagingSenderId: "574490534147",
+                    appId: "1:574490534147:web:175e9ba85a2e4100b70936"
+                });
+
+                log('✅ Firebase app initialized', 'ok');
+
+                const messaging = getMessaging(app);
+                log('✅ Messaging initialized', 'ok');
+
+                // CRITICAL: Setup handler BEFORE getting token
+                log('Setting up message handler...');
+                
+                onMessage(messaging, (payload) => {
+                    msgCount++;
+                    document.getElementById('count').textContent = msgCount;
+
+                    log('='.repeat(60), 'message');
+                    log('📬 FOREGROUND MESSAGE RECEIVED!', 'message');
+                    log('='.repeat(60), 'message');
+                    log(`Title: ${payload.notification?.title}`, 'ok');
+                    log(`Body: ${payload.notification?.body}`, 'ok');
+                    log(`Data: ${JSON.stringify(payload.data)}`, '');
+                    log('='.repeat(60), 'message');
+
+                    // Show notification
+                    try {
+                        const n = new Notification(payload.notification.title, {
+                            body: payload.notification.body,
+                            icon: '/icons/logo-arradea.png',
+                            tag: 'fcm-' + Date.now()
+                        });
+                        log('✅ Notification displayed!', 'ok');
+                        
+                        n.onclick = () => {
+                            log('🖱️ Notification clicked!');
+                            n.close();
+                        };
+                    } catch (e) {
+                        log('❌ Error showing notification: ' + e.message, 'error');
+                    }
+                });
+
+                log('✅ Message handler registered', 'ok');
+
+                // Get token
+                log('Getting FCM token...');
+                const swReg = await navigator.serviceWorker.ready;
+                
+                const token = await getToken(messaging, {
+                    vapidKey: 'BIxSwfnWuLkFS5RpKwj-AJKqx6HAHQBLifRuG_1VoMn08Ag9jkqNCYqoHUI02rUMdIwg1U69nFRsTXgTrBE7sCA',
+                    serviceWorkerRegistration: swReg
+                });
+
+                if (token) {
+                    log('✅ Token: ' + token.substring(0, 30) + '...', 'ok');
+                    status('token', 'OK', 'ok');
+                } else {
+                    log('❌ No token obtained', 'error');
+                    status('token', 'FAILED', 'error');
+                    return;
+                }
+
+                log('='.repeat(60), 'ok');
+                log('🎉 FCM READY!', 'ok');
+                log('='.repeat(60), 'ok');
+                log('📡 Listening for messages...', 'ok');
+                log('💡 Keep this tab ACTIVE (foreground)', 'warning');
+                log('💡 Run: php test-fcm-final.php', 'warning');
+                log('='.repeat(60), 'ok');
+
+            } catch (error) {
+                log('='.repeat(60), 'error');
+                log('❌ ERROR: ' + error.message, 'error');
+                log('Stack: ' + error.stack, 'error');
+                log('='.repeat(60), 'error');
+            }
+        }
+
+        // Prevent page from going to background
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                log('⚠️ Tab went to background', 'warning');
+                log('Messages will go to service worker', 'warning');
+            } else {
+                log('✅ Tab is active again', 'ok');
+            }
+        });
+
+        window.addEventListener('load', () => {
+            setTimeout(init, 500);
+        });
+    </script>
+</body>
+</html>

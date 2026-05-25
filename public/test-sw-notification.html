@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Service Worker Notification</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #333; margin-bottom: 30px; }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .log-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry { margin-bottom: 5px; }
+        .log-entry.success { color: #4ec9b0; }
+        .log-entry.error { color: #f48771; }
+        .log-entry.info { color: #9cdcfe; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Service Worker Notification Debug</h1>
+        
+        <button class="btn" onclick="test1()">
+            Test 1: Check SW Registration
+        </button>
+        <button class="btn" onclick="test2()">
+            Test 2: SW showNotification (Simple)
+        </button>
+        <button class="btn" onclick="test3()">
+            Test 3: SW showNotification (Full Options)
+        </button>
+        <button class="btn" onclick="test4()">
+            Test 4: Check SW Permissions
+        </button>
+        
+        <div class="log-box" id="logBox"></div>
+    </div>
+
+    <script>
+        function log(message, type = 'info') {
+            const logBox = document.getElementById('logBox');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+            console.log(message);
+        }
+
+        async function test1() {
+            log('='.repeat(50), 'info');
+            log('TEST 1: Check SW Registration', 'info');
+            log('='.repeat(50), 'info');
+
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                log(`Found ${registrations.length} registration(s)`, 'success');
+
+                registrations.forEach((reg, i) => {
+                    log(`SW ${i+1}:`, 'info');
+                    log(`  Scope: ${reg.scope}`, 'info');
+                    log(`  Active: ${reg.active ? 'Yes' : 'No'}`, reg.active ? 'success' : 'error');
+                    log(`  State: ${reg.active?.state || 'N/A'}`, 'info');
+                    log(`  Script: ${reg.active?.scriptURL || 'N/A'}`, 'info');
+                });
+
+                if (navigator.serviceWorker.controller) {
+                    log('✅ Page is controlled by SW', 'success');
+                    log(`   Controller: ${navigator.serviceWorker.controller.scriptURL}`, 'info');
+                } else {
+                    log('⚠️ Page NOT controlled by SW', 'error');
+                    log('   Try refreshing the page', 'info');
+                }
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function test2() {
+            log('='.repeat(50), 'info');
+            log('TEST 2: SW showNotification (Simple)', 'info');
+            log('='.repeat(50), 'info');
+
+            if (Notification.permission !== 'granted') {
+                log('❌ Permission not granted', 'error');
+                return;
+            }
+
+            try {
+                log('Getting SW registration...', 'info');
+                const registration = await navigator.serviceWorker.ready;
+                log('✅ SW ready', 'success');
+
+                log('Calling showNotification()...', 'info');
+                await registration.showNotification('Simple Test', {
+                    body: 'This is a simple test notification'
+                });
+
+                log('✅ showNotification() called successfully!', 'success');
+                log('   Check if notification appeared', 'info');
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                log(`   Name: ${error.name}`, 'error');
+                log(`   Stack: ${error.stack}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function test3() {
+            log('='.repeat(50), 'info');
+            log('TEST 3: SW showNotification (Full Options)', 'info');
+            log('='.repeat(50), 'info');
+
+            if (Notification.permission !== 'granted') {
+                log('❌ Permission not granted', 'error');
+                return;
+            }
+
+            try {
+                log('Getting SW registration...', 'info');
+                const registration = await navigator.serviceWorker.ready;
+                log('✅ SW ready', 'success');
+
+                const options = {
+                    body: 'This is a full test with all options',
+                    icon: '/icons/logo-arradea.png',
+                    badge: '/icons/logo-arradea.png',
+                    tag: 'full-test',
+                    requireInteraction: false,
+                    vibrate: [200, 100, 200],
+                    data: {
+                        url: 'http://localhost:8000',
+                        type: 'test'
+                    }
+                };
+
+                log('Options:', 'info');
+                log(JSON.stringify(options, null, 2), 'info');
+
+                log('Calling showNotification()...', 'info');
+                await registration.showNotification('Full Test 🔥', options);
+
+                log('✅ showNotification() called successfully!', 'success');
+                log('   Check if notification appeared', 'info');
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                log(`   Name: ${error.name}`, 'error');
+                log(`   Stack: ${error.stack}`, 'error');
+                console.error(error);
+            }
+        }
+
+        async function test4() {
+            log('='.repeat(50), 'info');
+            log('TEST 4: Check SW Permissions', 'info');
+            log('='.repeat(50), 'info');
+
+            log(`Notification.permission: ${Notification.permission}`, 
+                Notification.permission === 'granted' ? 'success' : 'error');
+
+            log(`'Notification' in window: ${'Notification' in window}`, 'info');
+            log(`'serviceWorker' in navigator: ${'serviceWorker' in navigator}`, 'info');
+
+            if ('serviceWorker' in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.ready;
+                    log('✅ SW ready', 'success');
+
+                    // Check if showNotification exists
+                    if (typeof registration.showNotification === 'function') {
+                        log('✅ showNotification() method exists', 'success');
+                    } else {
+                        log('❌ showNotification() method NOT found', 'error');
+                    }
+
+                    // Check SW state
+                    if (registration.active) {
+                        log(`SW state: ${registration.active.state}`, 'success');
+                    } else {
+                        log('❌ No active SW', 'error');
+                    }
+
+                } catch (error) {
+                    log(`❌ Error: ${error.message}`, 'error');
+                }
+            }
+        }
+
+        // Auto-run test 1 on load
+        window.addEventListener('load', () => {
+            setTimeout(test1, 500);
+        });
+    </script>
+</body>
+</html>

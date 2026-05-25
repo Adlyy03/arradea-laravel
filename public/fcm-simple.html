@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCM Test - Simple</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: rgba(0,0,0,0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        h1 { 
+            font-size: 42px;
+            margin-bottom: 20px;
+            color: #4ec9b0;
+        }
+        .step {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+        }
+        .step h2 {
+            font-size: 24px;
+            margin-bottom: 15px;
+            color: #9cdcfe;
+        }
+        .step p {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            color: #d4d4d4;
+        }
+        .btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(17, 153, 142, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        .status {
+            font-size: 18px;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        .status.success {
+            background: rgba(78, 201, 176, 0.2);
+            border: 2px solid #4ec9b0;
+            color: #4ec9b0;
+        }
+        .status.error {
+            background: rgba(244, 135, 113, 0.2);
+            border: 2px solid #f48771;
+            color: #f48771;
+        }
+        .status.info {
+            background: rgba(156, 220, 254, 0.2);
+            border: 2px solid #9cdcfe;
+            color: #9cdcfe;
+        }
+        .hidden { display: none; }
+        .permission-popup {
+            background: rgba(255, 193, 7, 0.2);
+            border: 2px solid #ffc107;
+            color: #ffc107;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            font-size: 16px;
+            line-height: 1.6;
+        }
+        .permission-popup strong {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 FCM Test</h1>
+
+        <!-- Step 1: Request Permission -->
+        <div class="step" id="step1">
+            <h2>Step 1: Izinkan Notifikasi</h2>
+            <p>Klik tombol di bawah untuk mengizinkan notifikasi browser.</p>
+            <div class="permission-popup">
+                <strong>⚠️ PENTING!</strong>
+                Browser akan menampilkan popup permission.<br>
+                Klik <strong>"Allow"</strong> atau <strong>"Izinkan"</strong>!
+            </div>
+            <button class="btn" onclick="requestPermission()">
+                🔔 Izinkan Notifikasi
+            </button>
+            <div id="permStatus" class="status hidden"></div>
+        </div>
+
+        <!-- Step 2: Test Manual -->
+        <div class="step hidden" id="step2">
+            <h2>Step 2: Test Browser</h2>
+            <p>Test apakah browser bisa menampilkan notifikasi.</p>
+            <button class="btn btn-warning" onclick="testManual()">
+                🧪 Test Notifikasi Manual
+            </button>
+            <div id="manualStatus" class="status hidden"></div>
+        </div>
+
+        <!-- Step 3: Test FCM -->
+        <div class="step hidden" id="step3">
+            <h2>Step 3: Test FCM</h2>
+            <p>Kirim notifikasi dari server menggunakan FCM.</p>
+            <button class="btn" onclick="testFCM()" id="fcmBtn">
+                🚀 Kirim Notifikasi FCM
+            </button>
+            <div id="fcmStatus" class="status hidden"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        let messaging = null;
+        let fcmToken = null;
+
+        function showStatus(elementId, message, type) {
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.className = `status ${type}`;
+            el.classList.remove('hidden');
+        }
+
+        function showStep(stepNumber) {
+            document.getElementById(`step${stepNumber}`).classList.remove('hidden');
+        }
+
+        window.requestPermission = async function() {
+            try {
+                console.log('Current permission:', Notification.permission);
+                
+                if (Notification.permission === 'granted') {
+                    showStatus('permStatus', '✅ Permission sudah granted sebelumnya!', 'success');
+                    showStep(2);
+                    showStep(3);
+                    await initFCM();
+                    return;
+                }
+
+                if (Notification.permission === 'denied') {
+                    showStatus('permStatus', 
+                        '❌ Permission di-block! Buka Settings → Site Settings → Notifications → Allow', 
+                        'error'
+                    );
+                    return;
+                }
+
+                // Request permission
+                showStatus('permStatus', '⏳ Menunggu permission... Klik "Allow" di popup!', 'info');
+                
+                const permission = await Notification.requestPermission();
+                console.log('Permission result:', permission);
+
+                if (permission === 'granted') {
+                    showStatus('permStatus', '✅ Permission granted! Lanjut ke step 2...', 'success');
+                    showStep(2);
+                    showStep(3);
+                    
+                    // Auto-init FCM
+                    setTimeout(async () => {
+                        await initFCM();
+                    }, 1000);
+                } else if (permission === 'denied') {
+                    showStatus('permStatus', 
+                        '❌ Permission ditolak! Refresh page dan coba lagi, atau check browser settings.', 
+                        'error'
+                    );
+                } else {
+                    showStatus('permStatus', 
+                        '⚠️ Permission dismissed. Klik tombol lagi untuk retry.', 
+                        'error'
+                    );
+                }
+
+            } catch (error) {
+                console.error('Permission error:', error);
+                showStatus('permStatus', '❌ Error: ' + error.message, 'error');
+            }
+        };
+
+        window.testManual = function() {
+            try {
+                if (Notification.permission !== 'granted') {
+                    showStatus('manualStatus', '❌ Permission belum granted!', 'error');
+                    return;
+                }
+
+                new Notification('🧪 Test Manual', {
+                    body: 'Jika kamu lihat notifikasi ini, berarti browser OK!',
+                    icon: '/icons/logo-arradea.png',
+                    badge: '/icons/logo-arradea.png'
+                });
+
+                showStatus('manualStatus', 
+                    '✅ Notifikasi manual dikirim! Cek pojok kanan bawah atau notification center.', 
+                    'success'
+                );
+
+            } catch (error) {
+                console.error('Manual test error:', error);
+                showStatus('manualStatus', '❌ Error: ' + error.message, 'error');
+            }
+        };
+
+        window.testFCM = async function() {
+            const btn = document.getElementById('fcmBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Mengirim...';
+
+            try {
+                showStatus('fcmStatus', '📤 Mengirim notifikasi dari server...', 'info');
+
+                const response = await fetch('/api/test-notification-public', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                console.log('Backend response:', data);
+
+                if (data.success) {
+                    showStatus('fcmStatus', 
+                        `✅ Notifikasi terkirim ke ${data.total} device! Cek browser untuk notifikasi.`, 
+                        'success'
+                    );
+                } else {
+                    showStatus('fcmStatus', '❌ Gagal: ' + data.message, 'error');
+                }
+
+            } catch (error) {
+                console.error('FCM test error:', error);
+                showStatus('fcmStatus', '❌ Error: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 Kirim Notifikasi FCM';
+            }
+        };
+
+        async function initFCM() {
+            try {
+                console.log('Initializing FCM...');
+
+                // Register service worker
+                if ('serviceWorker' in navigator) {
+                    let registration = await navigator.serviceWorker.getRegistration('/');
+                    
+                    if (!registration || !registration.active?.scriptURL.includes('firebase-messaging-sw.js')) {
+                        console.log('Registering service worker...');
+                        registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                            scope: '/',
+                            updateViaCache: 'none'
+                        });
+                        await navigator.serviceWorker.ready;
+                    }
+                    console.log('Service worker ready');
+                }
+
+                // Load Firebase
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
+
+                const app = initializeApp({
+                    apiKey: "AIzaSyDr3GsRZJgSjw6dVSF_dqUXi1osHxIRmQo",
+                    authDomain: "arradea-marketplace.firebaseapp.com",
+                    projectId: "arradea-marketplace",
+                    storageBucket: "arradea-marketplace.firebasestorage.app",
+                    messagingSenderId: "574490534147",
+                    appId: "1:574490534147:web:175e9ba85a2e4100b70936"
+                });
+
+                messaging = getMessaging(app);
+                console.log('Firebase initialized');
+
+                // Setup message handler
+                onMessage(messaging, (payload) => {
+                    console.log('📬 FCM Message received:', payload);
+                    
+                    const title = payload.notification?.title || 'New Notification';
+                    const body = payload.notification?.body || '';
+                    
+                    // Show notification
+                    new Notification(title, {
+                        body: body,
+                        icon: '/icons/logo-arradea.png',
+                        badge: '/icons/logo-arradea.png'
+                    });
+
+                    showStatus('fcmStatus', 
+                        `📬 NOTIFIKASI DITERIMA! Title: "${title}"`, 
+                        'success'
+                    );
+                });
+
+                // Get token
+                const swReg = await navigator.serviceWorker.ready;
+                fcmToken = await getToken(messaging, {
+                    vapidKey: 'BIxSwfnWuLkFS5RpKwj-AJKqx6HAHQBLifRuG_1VoMn08Ag9jkqNCYqoHUI02rUMdIwg1U69nFRsTXgTrBE7sCA',
+                    serviceWorkerRegistration: swReg
+                });
+
+                if (fcmToken) {
+                    console.log('FCM Token:', fcmToken);
+                    
+                    // Save token
+                    await fetch('/save-fcm-token', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': 'test'
+                        },
+                        body: JSON.stringify({ fcm_token: fcmToken })
+                    });
+
+                    console.log('✅ FCM ready!');
+                }
+
+            } catch (error) {
+                console.error('FCM init error:', error);
+            }
+        }
+
+        // Auto-check permission on load
+        window.addEventListener('load', () => {
+            console.log('Page loaded. Permission:', Notification.permission);
+            
+            if (Notification.permission === 'granted') {
+                showStatus('permStatus', '✅ Permission sudah granted!', 'success');
+                showStep(2);
+                showStep(3);
+                initFCM();
+            }
+        });
+    </script>
+</body>
+</html>

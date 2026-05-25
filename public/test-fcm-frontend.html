@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCM Frontend Test - Arradea</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #667eea; margin-bottom: 30px; }
+        .test-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .test-section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        .btn:hover { opacity: 0.9; }
+        .log-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 15px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+        .log-entry { margin-bottom: 5px; line-height: 1.5; }
+        .log-entry.success { color: #4ec9b0; }
+        .log-entry.error { color: #f48771; }
+        .log-entry.warning { color: #dcdcaa; }
+        .log-entry.info { color: #9cdcfe; }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .status-badge.success { background: #d4edda; color: #155724; }
+        .status-badge.error { background: #f8d7da; color: #721c24; }
+        .status-badge.warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 FCM Frontend Comprehensive Test</h1>
+        
+        <!-- Test 1: Check Service Worker -->
+        <div class="test-section">
+            <h2>Test 1: Service Worker Status <span id="sw-badge" class="status-badge warning">Checking...</span></h2>
+            <button type="button" class="btn" onclick="checkServiceWorker()">Check Service Worker</button>
+            <button type="button" class="btn" onclick="fixServiceWorker()">Fix Service Worker</button>
+            <div id="sw-log"></div>
+        </div>
+
+        <!-- Test 2: Notification Permission -->
+        <div class="test-section">
+            <h2>Test 2: Notification Permission <span id="perm-badge" class="status-badge warning">Checking...</span></h2>
+            <button type="button" class="btn" onclick="checkPermission()">Check Permission</button>
+            <button type="button" class="btn" onclick="requestPermission()">Request Permission</button>
+            <div id="perm-log"></div>
+        </div>
+
+        <!-- Test 3: Manual Notification -->
+        <div class="test-section">
+            <h2>Test 3: Manual Browser Notification</h2>
+            <button type="button" class="btn" onclick="testManualNotification()">Test Manual Notification</button>
+            <div id="manual-log"></div>
+        </div>
+
+        <!-- Test 4: Service Worker Notification -->
+        <div class="test-section">
+            <h2>Test 4: Service Worker Notification</h2>
+            <button type="button" class="btn" onclick="testSWNotification()">Test SW Notification</button>
+            <div id="sw-notif-log"></div>
+        </div>
+
+        <!-- Test 5: Firebase Messaging -->
+        <div class="test-section">
+            <h2>Test 5: Firebase Cloud Messaging</h2>
+            <button type="button" class="btn" onclick="testFirebaseMessaging()">Initialize Firebase</button>
+            <button type="button" class="btn" onclick="sendTestFromBackend()">Send Test from Backend</button>
+            <div id="fcm-log"></div>
+        </div>
+
+        <!-- Console Log -->
+        <div class="test-section">
+            <h2>📋 Console Log</h2>
+            <div class="log-box" id="consoleLog">
+                <div class="log-entry info">Ready to start testing...</div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        function log(message, type = 'info') {
+            const logBox = document.getElementById('consoleLog');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function addLog(containerId, message, type = 'info') {
+            const container = document.getElementById(containerId);
+            if (!container.querySelector('.log-box')) {
+                const logBox = document.createElement('div');
+                logBox.className = 'log-box';
+                container.appendChild(logBox);
+            }
+            const logBox = container.querySelector('.log-box');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = message;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function updateBadge(badgeId, status, text) {
+            const badge = document.getElementById(badgeId);
+            badge.className = `status-badge ${status}`;
+            badge.textContent = text;
+        }
+
+        // Test 1: Check Service Worker
+        window.checkServiceWorker = async function() {
+            log('='.repeat(60), 'info');
+            log('Checking Service Worker...', 'info');
+            addLog('sw-log', '='.repeat(60), 'info');
+
+            try {
+                if (!('serviceWorker' in navigator)) {
+                    log('❌ Service Worker not supported', 'error');
+                    addLog('sw-log', '❌ Service Worker not supported', 'error');
+                    updateBadge('sw-badge', 'error', 'Not Supported');
+                    return;
+                }
+
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                log(`Found ${registrations.length} registration(s)`, 'info');
+                addLog('sw-log', `Found ${registrations.length} registration(s)`, 'info');
+
+                let hasFirebaseSW = false;
+                let hasWrongSW = false;
+
+                registrations.forEach((reg, i) => {
+                    const scriptURL = reg.active?.scriptURL || 'N/A';
+                    log(`SW ${i+1}: ${scriptURL}`, 'info');
+                    addLog('sw-log', `SW ${i+1}: ${scriptURL}`, 'info');
+
+                    if (scriptURL.includes('firebase-messaging-sw.js')) {
+                        hasFirebaseSW = true;
+                        log('  ✅ Firebase SW found!', 'success');
+                        addLog('sw-log', '  ✅ Firebase SW found!', 'success');
+                    } else if (scriptURL.includes('sw.js')) {
+                        hasWrongSW = true;
+                        log('  ❌ Wrong SW (sw.js)', 'error');
+                        addLog('sw-log', '  ❌ Wrong SW (sw.js)', 'error');
+                    }
+                });
+
+                if (hasFirebaseSW && !hasWrongSW) {
+                    log('✅ Service Worker OK', 'success');
+                    addLog('sw-log', '✅ Service Worker OK', 'success');
+                    updateBadge('sw-badge', 'success', 'OK');
+                } else if (hasWrongSW) {
+                    log('❌ Wrong SW registered', 'error');
+                    addLog('sw-log', '❌ Wrong SW registered - Click "Fix Service Worker"', 'error');
+                    updateBadge('sw-badge', 'error', 'Wrong SW');
+                } else if (!hasFirebaseSW) {
+                    log('⚠️ No Firebase SW', 'warning');
+                    addLog('sw-log', '⚠️ No Firebase SW - Click "Fix Service Worker"', 'warning');
+                    updateBadge('sw-badge', 'warning', 'Not Registered');
+                }
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                addLog('sw-log', `❌ Error: ${error.message}`, 'error');
+                updateBadge('sw-badge', 'error', 'Error');
+            }
+        };
+
+        // Test 1b: Fix Service Worker
+        window.fixServiceWorker = async function() {
+            log('='.repeat(60), 'info');
+            log('Fixing Service Worker...', 'info');
+            addLog('sw-log', '='.repeat(60), 'info');
+            addLog('sw-log', 'Fixing Service Worker...', 'info');
+
+            try {
+                // Unregister all
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (const reg of registrations) {
+                    await reg.unregister();
+                    log(`Unregistered: ${reg.active?.scriptURL}`, 'warning');
+                    addLog('sw-log', `Unregistered: ${reg.active?.scriptURL}`, 'warning');
+                }
+
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Register Firebase SW
+                const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                    scope: '/',
+                    updateViaCache: 'none'
+                });
+
+                await navigator.serviceWorker.ready;
+
+                log('✅ Firebase SW registered!', 'success');
+                addLog('sw-log', '✅ Firebase SW registered!', 'success');
+                updateBadge('sw-badge', 'success', 'Fixed');
+
+                setTimeout(() => window.location.reload(), 2000);
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                addLog('sw-log', `❌ Error: ${error.message}`, 'error');
+            }
+        };
+
+        // Test 2: Check Permission
+        window.checkPermission = function() {
+            log('='.repeat(60), 'info');
+            log('Checking Notification Permission...', 'info');
+            addLog('perm-log', '='.repeat(60), 'info');
+
+            const permission = Notification.permission;
+            log(`Permission: ${permission}`, 'info');
+            addLog('perm-log', `Permission: ${permission}`, 'info');
+
+            if (permission === 'granted') {
+                log('✅ Permission granted', 'success');
+                addLog('perm-log', '✅ Permission granted', 'success');
+                updateBadge('perm-badge', 'success', 'Granted');
+            } else if (permission === 'denied') {
+                log('❌ Permission denied', 'error');
+                addLog('perm-log', '❌ Permission denied - Enable in browser settings', 'error');
+                updateBadge('perm-badge', 'error', 'Denied');
+            } else {
+                log('⚠️ Permission not requested', 'warning');
+                addLog('perm-log', '⚠️ Permission not requested - Click "Request Permission"', 'warning');
+                updateBadge('perm-badge', 'warning', 'Not Requested');
+            }
+        };
+
+        // Test 2b: Request Permission
+        window.requestPermission = async function() {
+            log('='.repeat(60), 'info');
+            log('Requesting Notification Permission...', 'info');
+            addLog('perm-log', '='.repeat(60), 'info');
+            addLog('perm-log', 'Requesting permission...', 'info');
+
+            try {
+                const permission = await Notification.requestPermission();
+                log(`Result: ${permission}`, 'info');
+                addLog('perm-log', `Result: ${permission}`, 'info');
+
+                if (permission === 'granted') {
+                    log('✅ Permission granted!', 'success');
+                    addLog('perm-log', '✅ Permission granted!', 'success');
+                    updateBadge('perm-badge', 'success', 'Granted');
+                } else {
+                    log('❌ Permission denied', 'error');
+                    addLog('perm-log', '❌ Permission denied', 'error');
+                    updateBadge('perm-badge', 'error', 'Denied');
+                }
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                addLog('perm-log', `❌ Error: ${error.message}`, 'error');
+            }
+        };
+
+        // Test 3: Manual Notification
+        window.testManualNotification = function() {
+            log('='.repeat(60), 'info');
+            log('Testing Manual Notification...', 'info');
+            addLog('manual-log', '='.repeat(60), 'info');
+
+            if (Notification.permission !== 'granted') {
+                log('❌ Permission not granted', 'error');
+                addLog('manual-log', '❌ Permission not granted', 'error');
+                return;
+            }
+
+            try {
+                const notification = new Notification('🧪 Manual Test', {
+                    body: 'This is a manual browser notification test',
+                    icon: '/icons/logo-arradea.png',
+                    badge: '/icons/logo-arradea.png',
+                    tag: 'manual-test',
+                    requireInteraction: false
+                });
+
+                log('✅ Notification created!', 'success');
+                addLog('manual-log', '✅ Notification created! Check if it appeared.', 'success');
+
+                notification.onclick = () => {
+                    log('🖱️ Notification clicked!', 'info');
+                    addLog('manual-log', '✅ Notification clicked!', 'success');
+                    notification.close();
+                };
+
+                setTimeout(() => notification.close(), 5000);
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                addLog('manual-log', `❌ Error: ${error.message}`, 'error');
+            }
+        };
+
+        // Test 4: SW Notification
+        window.testSWNotification = async function() {
+            log('='.repeat(60), 'info');
+            log('Testing Service Worker Notification...', 'info');
+            addLog('sw-notif-log', '='.repeat(60), 'info');
+
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                log('✅ SW ready', 'success');
+                addLog('sw-notif-log', '✅ SW ready', 'success');
+
+                await registration.showNotification('🧪 SW Test', {
+                    body: 'This is a service worker notification test',
+                    icon: '/icons/logo-arradea.png',
+                    badge: '/icons/logo-arradea.png',
+                    tag: 'sw-test',
+                    requireInteraction: false
+                });
+
+                log('✅ SW notification shown!', 'success');
+                addLog('sw-notif-log', '✅ SW notification shown! Check if it appeared.', 'success');
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                addLog('sw-notif-log', `❌ Error: ${error.message}`, 'error');
+            }
+        };
+
+        // Test 5: Firebase Messaging
+        window.testFirebaseMessaging = async function() {
+            log('='.repeat(60), 'info');
+            log('Testing Firebase Messaging...', 'info');
+            addLog('fcm-log', '='.repeat(60), 'info');
+            addLog('fcm-log', 'Initializing Firebase...', 'info');
+
+            try {
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
+
+                const firebaseConfig = {
+                    apiKey: "AIzaSyDr3GsRZJgSjw6dVSF_dqUXi1osHxIRmQo",
+                    authDomain: "arradea-marketplace.firebaseapp.com",
+                    projectId: "arradea-marketplace",
+                    storageBucket: "arradea-marketplace.firebasestorage.app",
+                    messagingSenderId: "574490534147",
+                    appId: "1:574490534147:web:175e9ba85a2e4100b70936"
+                };
+
+                const app = initializeApp(firebaseConfig);
+                log('✅ Firebase initialized', 'success');
+                addLog('fcm-log', '✅ Firebase initialized', 'success');
+
+                const messaging = getMessaging(app);
+                log('✅ Messaging initialized', 'success');
+                addLog('fcm-log', '✅ Messaging initialized', 'success');
+
+                // Setup foreground handler
+                onMessage(messaging, (payload) => {
+                    log('📬 FOREGROUND MESSAGE RECEIVED!', 'success');
+                    log(`Title: ${payload.notification?.title}`, 'info');
+                    log(`Body: ${payload.notification?.body}`, 'info');
+                    addLog('fcm-log', '📬 FOREGROUND MESSAGE RECEIVED!', 'success');
+                    addLog('fcm-log', `Title: ${payload.notification?.title}`, 'info');
+                    addLog('fcm-log', `Body: ${payload.notification?.body}`, 'info');
+
+                    // Show notification
+                    if (Notification.permission === 'granted') {
+                        new Notification(payload.notification.title, {
+                            body: payload.notification.body,
+                            icon: '/icons/logo-arradea.png'
+                        });
+                    }
+                });
+
+                log('✅ Foreground handler setup', 'success');
+                addLog('fcm-log', '✅ Foreground handler setup', 'success');
+
+                // Get token
+                const registration = await navigator.serviceWorker.ready;
+                const token = await getToken(messaging, {
+                    vapidKey: 'BIxSwfnWuLkFS5RpKwj-AJKqx6HAHQBLifRuG_1VoMn08Ag9jkqNCYqoHUI02rUMdIwg1U69nFRsTXgTrBE7sCA',
+                    serviceWorkerRegistration: registration
+                });
+
+                if (token) {
+                    log('✅ FCM Token obtained!', 'success');
+                    log(`Token: ${token.substring(0, 30)}...`, 'info');
+                    addLog('fcm-log', '✅ FCM Token obtained!', 'success');
+                    addLog('fcm-log', `Token: ${token.substring(0, 30)}...`, 'info');
+                } else {
+                    log('⚠️ No token obtained', 'warning');
+                    addLog('fcm-log', '⚠️ No token obtained', 'warning');
+                }
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                addLog('fcm-log', `❌ Error: ${error.message}`, 'error');
+                console.error(error);
+            }
+        };
+
+        // Test 5b: Send from Backend
+        window.sendTestFromBackend = async function() {
+            log('='.repeat(60), 'info');
+            log('Sending test from backend...', 'info');
+            addLog('fcm-log', '='.repeat(60), 'info');
+            addLog('fcm-log', 'Triggering backend test...', 'info');
+
+            try {
+                const response = await fetch('/api/test-notification-public', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                log('Backend response:', 'info');
+                log(JSON.stringify(data, null, 2), 'info');
+                addLog('fcm-log', 'Backend response: ' + JSON.stringify(data), 'info');
+
+                if (data.success) {
+                    log('✅ Backend sent notification!', 'success');
+                    addLog('fcm-log', '✅ Backend sent notification! Check browser.', 'success');
+                    addLog('fcm-log', `Sent: ${data.successful}/${data.total}`, 'success');
+                } else {
+                    log('❌ Backend failed', 'error');
+                    addLog('fcm-log', '❌ Backend failed: ' + data.message, 'error');
+                }
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+                addLog('fcm-log', `❌ Error: ${error.message}`, 'error');
+            }
+        };
+
+        // Auto-run checks on load
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                checkServiceWorker();
+                checkPermission();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

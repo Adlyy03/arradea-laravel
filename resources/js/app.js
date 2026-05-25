@@ -278,7 +278,9 @@ if (document.readyState === 'loading') {
  */
 async function initializeFirebaseMessaging() {
     try {
-        console.log('🔔 Initializing Firebase Cloud Messaging...');
+        console.log('='.repeat(80));
+        console.log('🔔 [FCM] Initializing Firebase Cloud Messaging...');
+        console.log('='.repeat(80));
 
         // ============================================================================
         // ⚠️ IMPORTANT: FCM ALWAYS RUNS - Auth check removed for debugging
@@ -293,18 +295,26 @@ async function initializeFirebaseMessaging() {
         // ⚠️ NO RETURN HERE - FCM tetap berjalan meskipun auth frontend tidak terdeteksi
 
         // Check browser support first (before importing)
+        console.log('🔍 [FCM] Checking browser support...');
+        console.log('  - ServiceWorker in navigator:', 'serviceWorker' in navigator);
+        console.log('  - Notification in window:', 'Notification' in window);
+        
         if (!('serviceWorker' in navigator)) {
-            console.warn('⚠️ Service Worker not supported in this browser');
+            console.warn('⚠️ [FCM] Service Worker not supported in this browser');
             return;
         }
 
         if (!('Notification' in window)) {
-            console.warn('⚠️ Notifications not supported in this browser');
+            console.warn('⚠️ [FCM] Notifications not supported in this browser');
             return;
         }
 
+        console.log('✅ [FCM] Browser supports notifications');
+
         // Dynamically import Firebase module (code splitting)
+        console.log('📦 [FCM] Loading Firebase module...');
         const firebaseModule = await import('./firebase.js');
+        console.log('✅ [FCM] Firebase module loaded');
 
         const {
             requestPermission,
@@ -314,12 +324,16 @@ async function initializeFirebaseMessaging() {
 
         // Check if notifications are supported
         if (!isNotificationSupported()) {
-            console.warn('⚠️ Push notifications are not fully supported in this browser');
+            console.warn('⚠️ [FCM] Push notifications are not fully supported in this browser');
             return;
         }
 
+        console.log('✅ [FCM] Notifications fully supported');
+
         // Setup foreground message handler
+        console.log('📬 [FCM] Setting up foreground message handler...');
         setupForegroundMessageHandler();
+        console.log('✅ [FCM] Foreground message handler setup complete');
 
         // Make FCM functions available globally
         window.Arradea.notification = {
@@ -327,62 +341,71 @@ async function initializeFirebaseMessaging() {
             isSupported: isNotificationSupported
         };
 
-        console.log('✅ Firebase Cloud Messaging initialized successfully');
-        console.log('🎉 FCM is ready! You can now request notification permission.');
+        console.log('='.repeat(80));
+        console.log('✅ [FCM] Firebase Cloud Messaging initialized successfully!');
+        console.log('='.repeat(80));
+        console.log('🎉 [FCM] FCM is ready! You can now request notification permission.');
+        console.log('   Call: window.Arradea.notification.request()');
+        console.log('='.repeat(80));
 
         // Auto-request permission after a delay (optional, only if not already set)
         const currentPermission = Notification.permission;
+        console.log('📋 [FCM] Current notification permission:', currentPermission);
 
         if (currentPermission === 'default') {
             // Only auto-request if user hasn't made a choice yet
+            console.log('⏰ [FCM] Will auto-request permission in 5 seconds...');
             setTimeout(() => {
-                console.log('⏰ Auto-requesting notification permission...');
+                console.log('⏰ [FCM] Auto-requesting notification permission...');
 
                 requestPermission()
                     .then(token => {
                         if (token) {
-                            console.log('✅ Push notifications enabled successfully');
+                            console.log('✅ [FCM] Push notifications enabled successfully');
                         } else {
-                            console.log('ℹ️ Push notifications not enabled');
+                            console.log('ℹ️ [FCM] Push notifications not enabled');
                         }
                     })
                     .catch(error => {
-                        console.error('❌ Error requesting notification permission:', error);
+                        console.error('❌ [FCM] Error requesting notification permission:', error);
                     });
             }, 5000); // Wait 5 seconds after page load
         } else if (currentPermission === 'granted') {
             // Permission already granted, just get the token
-            console.log('✅ Notification permission already granted');
+            console.log('✅ [FCM] Notification permission already granted');
+            console.log('🔄 [FCM] Refreshing FCM token...');
 
             requestPermission()
                 .then(token => {
                     if (token) {
-                        console.log('✅ FCM token refreshed');
+                        console.log('✅ [FCM] FCM token refreshed successfully');
                     }
                 })
                 .catch(error => {
-                    console.error('❌ Error refreshing FCM token:', error);
+                    console.error('❌ [FCM] Error refreshing FCM token:', error);
                 });
         } else {
-            console.log('ℹ️ Notification permission denied, skipping auto-request');
+            console.log('ℹ️ [FCM] Notification permission denied, skipping auto-request');
+            console.log('   User can manually enable via: window.Arradea.notification.request()');
         }
 
     } catch (error) {
         // Catch any errors to prevent breaking the page
-        console.error('❌ Firebase Cloud Messaging initialization failed:', error);
-        console.error('Error details:', {
-            name: error.name,
-            message: error.message,
-            stack: error.stack
-        });
-        console.warn('⚠️ App will continue without push notifications');
+        console.error('='.repeat(80));
+        console.error('❌ [FCM] Firebase Cloud Messaging initialization failed');
+        console.error('='.repeat(80));
+        console.error('Error name:', error.name);
+        console.error('Error message:', error.message);
+        console.error('Error stack:', error.stack);
+        console.error('='.repeat(80));
+        console.warn('⚠️ [FCM] App will continue without push notifications');
 
         // Ensure the app continues to work
         // Set dummy functions to prevent errors if code tries to use them
         if (window.Arradea && !window.Arradea.notification) {
             window.Arradea.notification = {
                 request: async () => {
-                    console.warn('⚠️ FCM not available');
+                    console.warn('⚠️ [FCM] FCM not available');
                     return null;
                 },
                 isSupported: () => false

@@ -3,15 +3,10 @@
 namespace App\Notifications;
 
 use App\Models\Order;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
 
-class NewOrderNotification extends Notification implements ShouldQueue
+class NewOrderNotification extends Notification
 {
-    use Queueable;
-
     public $order;
 
     public function __construct(Order $order)
@@ -26,11 +21,17 @@ class NewOrderNotification extends Notification implements ShouldQueue
 
     public function toArray(object $notifiable): array
     {
+        $this->order->loadMissing('user:id,name', 'product:id,name');
+
         return [
             'type' => 'new_order',
             'order_id' => $this->order->id,
-            'message' => 'Pesanan baru masuk dari ' . ($this->order->user ? $this->order->user->name : 'Pembeli'),
-            'url' => route('seller.orders')
+            'buyer_name' => $this->order->user?->name ?? 'Pembeli',
+            'total_price' => (float) $this->order->total_price,
+            'ordered_at' => optional($this->order->created_at)->toDateTimeString(),
+            'product_name' => $this->order->product?->name,
+            'message' => 'Pesanan baru masuk dari ' . ($this->order->user?->name ?? 'Pembeli'),
+            'url' => route('seller.orders'),
         ];
     }
 }

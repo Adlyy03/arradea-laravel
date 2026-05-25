@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Notification Display - Arradea</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { color: #333; margin-bottom: 10px; }
+        .subtitle { color: #666; margin-bottom: 30px; font-size: 14px; }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .btn:active { transform: translateY(0); }
+        .btn-success { background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%); }
+        .btn-danger { background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); }
+        .log-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+        .log-entry { margin-bottom: 5px; }
+        .log-entry.success { color: #4ec9b0; }
+        .log-entry.error { color: #f48771; }
+        .log-entry.warning { color: #dcdcaa; }
+        .log-entry.info { color: #9cdcfe; }
+        .section { margin-bottom: 30px; }
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+        .status-box {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #e0e0e0;
+        }
+        .status-item:last-child { border-bottom: none; }
+        .status-value {
+            font-family: 'Courier New', monospace;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+        .status-value.success { background: #d4edda; color: #155724; }
+        .status-value.error { background: #f8d7da; color: #721c24; }
+        .status-value.warning { background: #fff3cd; color: #856404; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔔 Test Notification Display</h1>
+        <p class="subtitle">Comprehensive notification rendering test</p>
+        
+        <div class="section">
+            <div class="section-title">System Status</div>
+            <div class="status-box">
+                <div class="status-item">
+                    <span>Notification Permission:</span>
+                    <span class="status-value" id="permission">Checking...</span>
+                </div>
+                <div class="status-item">
+                    <span>Service Worker:</span>
+                    <span class="status-value" id="sw-status">Checking...</span>
+                </div>
+                <div class="status-item">
+                    <span>Page Visibility:</span>
+                    <span class="status-value" id="visibility">Checking...</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Test Actions</div>
+            <button class="btn btn-success" onclick="testManualNotification()">
+                🧪 Test 1: Manual Browser Notification
+            </button>
+            <button class="btn" onclick="testFCMForeground()">
+                📬 Test 2: Simulate FCM Foreground Message
+            </button>
+            <button class="btn" onclick="testFCMBackground()">
+                🌙 Test 3: Simulate FCM Background Message
+            </button>
+            <button class="btn btn-danger" onclick="clearLogs()">
+                🗑️ Clear Logs
+            </button>
+        </div>
+        
+        <div class="section">
+            <div class="section-title">Debug Log</div>
+            <div class="log-box" id="logBox"></div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize
+        window.addEventListener('load', () => {
+            checkStatus();
+            log('✅ Page loaded', 'success');
+            log('🔍 Checking notification system...', 'info');
+        });
+
+        // Logging function
+        function log(message, type = 'info') {
+            const logBox = document.getElementById('logBox');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+            console.log(message);
+        }
+
+        function clearLogs() {
+            document.getElementById('logBox').innerHTML = '';
+            log('🗑️ Logs cleared', 'info');
+        }
+
+        // Check system status
+        function checkStatus() {
+            // Permission
+            const permission = Notification.permission;
+            const permEl = document.getElementById('permission');
+            permEl.textContent = permission;
+            permEl.className = `status-value ${permission === 'granted' ? 'success' : permission === 'denied' ? 'error' : 'warning'}`;
+            log(`📋 Notification permission: ${permission}`, permission === 'granted' ? 'success' : 'warning');
+
+            // Service Worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(regs => {
+                    const swEl = document.getElementById('sw-status');
+                    if (regs.length > 0) {
+                        swEl.textContent = `Active (${regs.length})`;
+                        swEl.className = 'status-value success';
+                        log(`✅ Service Worker: ${regs.length} registration(s)`, 'success');
+                        regs.forEach((reg, i) => {
+                            log(`  SW ${i+1}: ${reg.scope}`, 'info');
+                        });
+                    } else {
+                        swEl.textContent = 'Not registered';
+                        swEl.className = 'status-value warning';
+                        log('⚠️ No service worker registered', 'warning');
+                    }
+                });
+            } else {
+                document.getElementById('sw-status').textContent = 'Not supported';
+                document.getElementById('sw-status').className = 'status-value error';
+                log('❌ Service Worker not supported', 'error');
+            }
+
+            // Visibility
+            const visibility = document.visibilityState;
+            const visEl = document.getElementById('visibility');
+            visEl.textContent = visibility;
+            visEl.className = `status-value ${visibility === 'visible' ? 'success' : 'warning'}`;
+            log(`👁️ Page visibility: ${visibility}`, 'info');
+        }
+
+        // Test 1: Manual notification
+        function testManualNotification() {
+            log('='.repeat(50), 'info');
+            log('🧪 TEST 1: Manual Browser Notification', 'info');
+            log('='.repeat(50), 'info');
+
+            if (Notification.permission !== 'granted') {
+                log('❌ Permission not granted', 'error');
+                log('   Please allow notifications first', 'warning');
+                return;
+            }
+
+            try {
+                log('🔔 Creating manual notification...', 'info');
+                
+                const notification = new Notification('🔥 Manual Test Notification', {
+                    body: 'If you see this, browser notifications are working!',
+                    icon: '/icons/logo-arradea.png',
+                    badge: '/icons/logo-arradea.png',
+                    tag: 'manual-test',
+                    requireInteraction: false,
+                    vibrate: [200, 100, 200]
+                });
+
+                log('✅ Manual notification created successfully!', 'success');
+                log('   If you see the notification, display is working', 'success');
+
+                notification.onclick = () => {
+                    log('🖱️ Manual notification clicked', 'info');
+                    notification.close();
+                };
+
+                setTimeout(() => {
+                    notification.close();
+                    log('⏰ Manual notification auto-closed', 'info');
+                }, 5000);
+
+            } catch (error) {
+                log('❌ Error creating manual notification:', 'error');
+                log(`   ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        // Test 2: Simulate FCM foreground
+        function testFCMForeground() {
+            log('='.repeat(50), 'info');
+            log('📬 TEST 2: Simulate FCM Foreground Message', 'info');
+            log('='.repeat(50), 'info');
+
+            if (Notification.permission !== 'granted') {
+                log('❌ Permission not granted', 'error');
+                return;
+            }
+
+            // Simulate FCM payload
+            const payload = {
+                notification: {
+                    title: '📬 FCM Foreground Test',
+                    body: 'This simulates an FCM message in foreground',
+                    icon: '/icons/logo-arradea.png'
+                },
+                data: {
+                    type: 'test',
+                    click_action: 'http://localhost:8000'
+                }
+            };
+
+            log('📦 Simulated payload:', 'info');
+            log(JSON.stringify(payload, null, 2), 'info');
+
+            try {
+                log('🔔 Creating notification from payload...', 'info');
+                
+                const notification = new Notification(payload.notification.title, {
+                    body: payload.notification.body,
+                    icon: payload.notification.icon,
+                    badge: '/icons/logo-arradea.png',
+                    tag: 'fcm-foreground-test',
+                    data: payload.data
+                });
+
+                log('✅ FCM foreground notification created!', 'success');
+
+                notification.onclick = () => {
+                    log('🖱️ FCM foreground notification clicked', 'info');
+                    if (payload.data.click_action) {
+                        log(`   Opening: ${payload.data.click_action}`, 'info');
+                    }
+                    notification.close();
+                };
+
+                setTimeout(() => notification.close(), 5000);
+
+            } catch (error) {
+                log('❌ Error:', 'error');
+                log(`   ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        // Test 3: Simulate FCM background
+        async function testFCMBackground() {
+            log('='.repeat(50), 'info');
+            log('🌙 TEST 3: Simulate FCM Background Message', 'info');
+            log('='.repeat(50), 'info');
+
+            if (Notification.permission !== 'granted') {
+                log('❌ Permission not granted', 'error');
+                return;
+            }
+
+            try {
+                const registration = await navigator.serviceWorker.ready;
+                log('✅ Service Worker ready', 'success');
+
+                const payload = {
+                    notification: {
+                        title: '🌙 FCM Background Test',
+                        body: 'This simulates an FCM background message',
+                        icon: '/icons/logo-arradea.png'
+                    },
+                    data: {
+                        type: 'test',
+                        url: 'http://localhost:8000'
+                    }
+                };
+
+                log('📦 Simulated payload:', 'info');
+                log(JSON.stringify(payload, null, 2), 'info');
+
+                log('🔔 Showing notification via Service Worker...', 'info');
+                
+                await registration.showNotification(payload.notification.title, {
+                    body: payload.notification.body,
+                    icon: payload.notification.icon,
+                    badge: '/icons/logo-arradea.png',
+                    tag: 'fcm-background-test',
+                    data: payload.data,
+                    requireInteraction: false,
+                    vibrate: [200, 100, 200]
+                });
+
+                log('✅ FCM background notification shown!', 'success');
+                log('   Check Windows notification center', 'success');
+
+            } catch (error) {
+                log('❌ Error:', 'error');
+                log(`   ${error.message}`, 'error');
+                console.error(error);
+            }
+        }
+
+        // Monitor visibility changes
+        document.addEventListener('visibilitychange', () => {
+            const visibility = document.visibilityState;
+            log(`👁️ Visibility changed: ${visibility}`, 'info');
+            document.getElementById('visibility').textContent = visibility;
+        });
+    </script>
+</body>
+</html>

@@ -4,12 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Notifications\OrderPaymentNotification;
+use App\Services\PushNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class PaymentWebController extends Controller
 {
+    protected $pushNotification;
+
+    public function __construct(PushNotificationService $pushNotification)
+    {
+        $this->pushNotification = $pushNotification;
+    }
+
     public function index(Request $request)
     {
         $user = $request->user();
@@ -58,6 +66,20 @@ class PaymentWebController extends Controller
         $seller = $order->store?->user;
         if ($seller) {
             $seller->notify(new OrderPaymentNotification($order, 'submitted'));
+            
+            // Send Push Notification to Seller
+            $this->pushNotification->sendToUser(
+                $seller,
+                '💳 Bukti Pembayaran Diterima',
+                "Pembeli {$order->user->name} telah mengunggah bukti pembayaran untuk pesanan #{$order->id}",
+                [
+                    'type' => 'payment_submitted',
+                    'order_id' => (string)$order->id,
+                    'buyer_name' => $order->user->name
+                ],
+                asset('icons/logo-arradea.png'),
+                url('/seller/payments')
+            );
         }
 
         return back()->with('success', 'Bukti pembayaran berhasil diunggah dan menunggu konfirmasi seller.');
@@ -90,6 +112,19 @@ class PaymentWebController extends Controller
 
         if ($order->user) {
             $order->user->notify(new OrderPaymentNotification($order, 'approved'));
+            
+            // Send Push Notification to Buyer
+            $this->pushNotification->sendToUser(
+                $order->user,
+                '✅ Pembayaran Dikonfirmasi!',
+                "Pembayaran Anda untuk pesanan #{$order->id} telah dikonfirmasi. Pesanan sedang diproses.",
+                [
+                    'type' => 'payment_approved',
+                    'order_id' => (string)$order->id,
+                ],
+                asset('icons/logo-arradea.png'),
+                url('/buyer/orders/' . $order->id)
+            );
         }
 
         return back()->with('success', 'Pembayaran berhasil dikonfirmasi.');
@@ -126,6 +161,21 @@ class PaymentWebController extends Controller
 
         if ($order->user) {
             $order->user->notify(new OrderPaymentNotification($order, 'rejected'));
+            
+            // Send Push Notification to Buyer
+            $reason = $validated['rejected_reason'] ?? 'Silakan upload ulang bukti pembayaran yang valid';
+            $this->pushNotification->sendToUser(
+                $order->user,
+                '❌ Pembayaran Ditolak',
+                "Bukti pembayaran untuk pesanan #{$order->id} ditolak. {$reason}",
+                [
+                    'type' => 'payment_rejected',
+                    'order_id' => (string)$order->id,
+                    'reason' => $validated['rejected_reason'] ?? 'Tidak ada alasan'
+                ],
+                asset('icons/logo-arradea.png'),
+                url('/buyer/payments')
+            );
         }
 
         return back()->with('success', 'Pembayaran ditolak. Pembeli dapat mengunggah ulang bukti pembayaran.');
@@ -194,6 +244,20 @@ class PaymentWebController extends Controller
         $seller = $order->store?->user;
         if ($seller) {
             $seller->notify(new OrderPaymentNotification($order, 'resubmitted'));
+            
+            // Send Push Notification to Seller
+            $this->pushNotification->sendToUser(
+                $seller,
+                '🔄 Bukti Pembayaran Diupload Ulang',
+                "Pembeli {$order->user->name} telah mengunggah ulang bukti pembayaran untuk pesanan #{$order->id}",
+                [
+                    'type' => 'payment_resubmitted',
+                    'order_id' => (string)$order->id,
+                    'buyer_name' => $order->user->name
+                ],
+                asset('icons/logo-arradea.png'),
+                url('/seller/payments')
+            );
         }
 
         return redirect()->route('buyer.payments')->with('success', 'Bukti pembayaran baru berhasil diunggah dan dikirim ke seller via chat.');

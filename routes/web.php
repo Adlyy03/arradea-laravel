@@ -213,6 +213,54 @@ Route::middleware(['auth', 'arradea.access', 'phone.verified', SyncSellerStoreSc
     // 🏪 SELLER
     Route::middleware('role:seller')->prefix('seller')->group(function () {
         Route::get('/dashboard', fn() => view('seller.dashboard'))->name('seller.dashboard');
+        Route::get('/notifications', function (Request $request) {
+            $notifications = $request->user()
+                ->unreadNotifications()
+                ->latest()
+                ->limit(10)
+                ->get()
+                ->map(function ($notification) {
+                    $data = $notification->data;
+
+                    return [
+                        'id' => $notification->id,
+                        'type' => $data['type'] ?? 'notification',
+                        'order_id' => $data['order_id'] ?? null,
+                        'buyer_name' => $data['buyer_name'] ?? null,
+                        'total_price' => $data['total_price'] ?? null,
+                        'ordered_at' => $data['ordered_at'] ?? null,
+                        'message' => $data['message'] ?? 'Notifikasi baru',
+                        'url' => $data['url'] ?? route('seller.orders'),
+                        'created_at' => $notification->created_at?->toDateTimeString(),
+                        'created_at_human' => $notification->created_at?->diffForHumans(),
+                    ];
+                });
+
+            return response()->json([
+                'success' => true,
+                'unread_count' => $request->user()->unreadNotifications()->count(),
+                'notifications' => $notifications,
+            ]);
+        })->name('seller.notifications.index');
+        Route::post('/notifications/read', function (Request $request) {
+            $ids = collect($request->input('ids', []))
+                ->filter()
+                ->values()
+                ->all();
+
+            $query = $request->user()->unreadNotifications();
+
+            if (! empty($ids)) {
+                $query->whereIn('id', $ids);
+            }
+
+            $query->update(['read_at' => now()]);
+
+            return response()->json([
+                'success' => true,
+                'unread_count' => $request->user()->unreadNotifications()->count(),
+            ]);
+        })->name('seller.notifications.read');
         Route::post('/store-status', [AuthWebController::class, 'toggleStoreStatus'])->name('seller.store-status');
         Route::post('/store-schedule', [AuthWebController::class, 'updateStoreSchedule'])->name('seller.store-schedule');
         
@@ -1026,4 +1074,169 @@ Route::middleware('auth')->group(function () {
 // ─────────────────────────────────────────────────────────────────────────────
 // FIREBASE CLOUD MESSAGING (FCM) - Push Notifications
 // ─────────────────────────────────────────────────────────────────────────────
+
+// Public route for testing (no auth required)
+Route::post('/save-fcm-token-public', function (\Illuminate\Http\Request $request) {
+    $request->validate([
+        'fcm_token' => ['required', 'string'],
+    ]);
+
+    try {
+        // Get or create test user (user_id = 25 from logs)
+        $user = \App\Models\User::find(25);
+        
+        if (!$user) {
+            // Create test user if not exists
+            $user = \App\Models\User::first();
+        }
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No user found in database'
+            ], 404);
+        }
+
+        // Deactivate ALL old tokens for this user
+        \App\Models\FcmToken::where('user_id', $user->id)
+            ->where('token', '!=', $request->fcm_token)
+            ->update(['is_active' => false]);
+
+        \Illuminate\Support\Facades\Log::info('Deactivated old FCM tokens for user (public)', [
+            'user_id' => $user->id
+        ]);
+
+        // Check if token already exists
+        $existingToken = \App\Models\FcmToken::where('user_id', $user->id)
+            ->where('token', $request->fcm_token)
+            ->first();
+
+        if ($existingToken) {
+            // Update existing token
+            $existingToken->update([
+                'device_name' => 'Web Browser (Test)',
+                'device_type' => 'web',
+                'is_active' => true,
+                'last_used_at' => now()
+            ]);
+
+            \Illuminate\Support\Facades\Log::info('FCM token updated (public)', [
+                'user_id' => $user->id,
+                'token_id' => $existingToken->id,
+                'token' => substr($request->fcm_token, 0, 20) . '...'
+            ]);
+        } else {
+            // Create new token
+            $fcmToken = \App\Models\FcmToken::create([
+                'user_id' => $user->id,
+                'token' => $request->fcm_token,
+                'device_name' => 'Web Browser (Test)',
+                'device_type' => 'web',
+                'is_active' => true,
+                'last_used_at' => now()
+            ]);
+
+            \Illuminate\Support\Facades\Log::info('FCM token created (public)', [
+                'user_id' => $user->id,
+                'token_id' => $fcmToken->id,
+                'token' => substr($request->fcm_token, 0, 20) . '...'
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'FCM token berhasil disimpan',
+            'user_id' => $user->id
+        ]);
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('Error saving FCM token (public)', [
+            'error' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Gagal menyimpan FCM token: ' . $e->getMessage()
+        ], 500);
+    }
+});
+
 Route::middleware('auth')->post('/save-fcm-token', [\App\Http\Controllers\NotificationController::class, 'saveFCMToken'])->name('fcm.save-token');
+
+Route::middleware('auth')->get('/test-notification', function (\Illuminate\Http\Request $request) {
+    $user = $request->user();
+
+    if (!$user) {
+        return response()->json(['success' => false, 'message' => 'User tidak ditemukan.'], 401);
+    }
+
+    // Cari token: cek di kolom fcm_token User ATAU di tabel fcm_tokens
+    $token = $user->fcm_token;
+
+    if (!$token) {
+        // Fallback: cari token aktif di tabel fcm_tokens
+        $fcmTokenRecord = \App\Models\FcmToken::where('user_id', $user->id)
+            ->where('is_active', true)
+            ->latest()
+            ->first();
+        $token = $fcmTokenRecord?->token;
+    }
+
+    if (!$token) {
+        \Illuminate\Support\Facades\Log::error('FCM Test: Token kosong', ['user_id' => $user->id]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Token FCM kosong. Silakan ijinkan notifikasi browser terlebih dahulu.',
+            'user_id' => $user->id,
+        ], 400);
+    }
+
+    try {
+        $messaging = app(\Kreait\Firebase\Contract\Messaging::class);
+
+        // ⚡ PENTING: Kirim KEDUANYA - notification + data
+        // Foreground (onMessage) hanya dipanggil jika ada field 'data'
+        // Background (onBackgroundMessage SW) menggunakan 'notification'
+        $message = \Kreait\Firebase\Messaging\CloudMessage::new()
+            ->withToken($token)
+            ->withNotification(
+                \Kreait\Firebase\Messaging\Notification::create(
+                    'Test Notifikasi 🔥',
+                    'FCM berhasil bekerja! Tab aktif = foreground, tab tidak aktif = background.'
+                )
+            )
+            ->withData([
+                'title' => 'Test Notifikasi 🔥',
+                'body'  => 'FCM berhasil bekerja! Tab aktif = foreground, tab tidak aktif = background.',
+                'icon'  => '/icons/logo-arradea.png',
+                'url'   => '/',
+            ]);
+
+        $result = $messaging->send($message);
+
+        \Illuminate\Support\Facades\Log::info('FCM Test: Notifikasi berhasil dikirim', [
+            'user_id' => $user->id,
+            'token'   => substr($token, 0, 20) . '...',
+            'result'  => $result,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Notifikasi berhasil dikirim! Cek pojok kanan bawah Windows atau browser console.',
+            'token_preview' => substr($token, 0, 20) . '...',
+        ]);
+
+    } catch (\Kreait\Firebase\Exception\Messaging\InvalidMessage $e) {
+        \Illuminate\Support\Facades\Log::error('FCM Test: Invalid token/message - ' . $e->getMessage(), ['user_id' => $user->id]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Token tidak valid: ' . $e->getMessage()
+        ], 400);
+    } catch (\Exception $e) {
+        \Illuminate\Support\Facades\Log::error('FCM Test: Firebase Error - ' . $e->getMessage(), ['user_id' => $user->id]);
+        return response()->json([
+            'success' => false,
+            'message' => 'Firebase Error: ' . $e->getMessage()
+        ], 500);
+    }
+});

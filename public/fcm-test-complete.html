@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="test">
+    <title>FCM Complete Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        h1 { 
+            font-size: 32px;
+            margin-bottom: 30px;
+            text-align: center;
+            color: #4ec9b0;
+        }
+        .status {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px;
+            margin-bottom: 8px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        .status-value {
+            font-weight: bold;
+        }
+        .ok { color: #4ec9b0; }
+        .error { color: #f48771; }
+        .warning { color: #dcdcaa; }
+        .btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s;
+        }
+        .btn:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(17, 153, 142, 0.4);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+        .log-box {
+            background: #1e1e1e;
+            border-radius: 12px;
+            padding: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 20px;
+            font-size: 13px;
+        }
+        .log-entry {
+            margin-bottom: 6px;
+            line-height: 1.6;
+        }
+        .log-entry.success { color: #4ec9b0; }
+        .log-entry.error { color: #f48771; }
+        .log-entry.warning { color: #dcdcaa; }
+        .log-entry.info { color: #9cdcfe; }
+        .log-entry.message { 
+            color: #ce9178; 
+            font-weight: bold;
+            font-size: 16px;
+            background: rgba(206, 145, 120, 0.1);
+            padding: 8px;
+            border-radius: 4px;
+            margin: 8px 0;
+        }
+        .instructions {
+            background: rgba(78, 201, 176, 0.1);
+            border-left: 4px solid #4ec9b0;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .instructions h3 {
+            color: #4ec9b0;
+            margin-bottom: 10px;
+        }
+        .instructions ol {
+            margin-left: 20px;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 FCM Complete Test</h1>
+        
+        <div class="instructions">
+            <h3>📋 Instructions:</h3>
+            <ol>
+                <li>Wait for "FCM READY" status below</li>
+                <li>Click "Send Test Notification" button</li>
+                <li>Notification will appear immediately!</li>
+            </ol>
+        </div>
+
+        <div class="status">
+            <div class="status-item">
+                <span>🔧 Service Worker:</span>
+                <span class="status-value warning" id="sw-status">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span>🔔 Permission:</span>
+                <span class="status-value warning" id="perm-status">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span>🔑 FCM Token:</span>
+                <span class="status-value warning" id="token-status">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span>📬 Handler:</span>
+                <span class="status-value warning" id="handler-status">Checking...</span>
+            </div>
+            <div class="status-item">
+                <span>📨 Messages Received:</span>
+                <span class="status-value ok" id="msg-count">0</span>
+            </div>
+        </div>
+
+        <button type="button" class="btn" id="testBtn" onclick="sendTestNotification()" disabled>
+            🚀 Send Test Notification
+        </button>
+
+        <button type="button" class="btn btn-danger" onclick="testManual()">
+            🧪 Test Manual Notification
+        </button>
+
+        <div class="log-box" id="logBox"></div>
+    </div>
+
+    <script type="module">
+        let messageCount = 0;
+        let messaging = null;
+        let fcmToken = null;
+
+        function log(message, type = 'info') {
+            const logBox = document.getElementById('logBox');
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] ${message}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function updateStatus(id, value, className) {
+            const el = document.getElementById(id);
+            el.textContent = value;
+            el.className = `status-value ${className}`;
+        }
+
+        window.testManual = function() {
+            if (Notification.permission === 'granted') {
+                new Notification('🧪 Manual Test', {
+                    body: 'Manual notification works!',
+                    icon: '/icons/logo-arradea.png'
+                });
+                log('✅ Manual notification sent', 'success');
+            } else {
+                log('❌ Permission not granted', 'error');
+            }
+        };
+
+        window.sendTestNotification = async function() {
+            const btn = document.getElementById('testBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Sending...';
+
+            try {
+                log('='.repeat(60), 'info');
+                log('🚀 Sending test notification via backend...', 'info');
+
+                const response = await fetch('/api/test-notification-public', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+                
+                log('Backend response:', 'info');
+                log(JSON.stringify(data, null, 2), 'info');
+
+                if (data.success) {
+                    log('✅ Backend sent notification successfully!', 'success');
+                    log(`Sent to ${data.total} device(s)`, 'success');
+                    log('Waiting for notification to appear...', 'warning');
+                } else {
+                    log('❌ Backend failed: ' + data.message, 'error');
+                }
+
+            } catch (error) {
+                log('❌ Error: ' + error.message, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 Send Test Notification';
+            }
+        };
+
+        async function init() {
+            try {
+                log('='.repeat(60), 'info');
+                log('🚀 Initializing FCM...', 'info');
+                log('='.repeat(60), 'info');
+
+                // Check/Register SW
+                log('Checking service worker...', 'info');
+                let registration = await navigator.serviceWorker.getRegistration('/');
+                
+                if (!registration || !registration.active?.scriptURL.includes('firebase-messaging-sw.js')) {
+                    log('Registering firebase-messaging-sw.js...', 'warning');
+                    registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                        scope: '/',
+                        updateViaCache: 'none'
+                    });
+                    await navigator.serviceWorker.ready;
+                }
+
+                log('✅ Service worker ready', 'success');
+                updateStatus('sw-status', 'OK ✅', 'ok');
+
+                // Check permission
+                let permission = Notification.permission;
+                if (permission !== 'granted') {
+                    log('Requesting permission...', 'warning');
+                    permission = await Notification.requestPermission();
+                }
+
+                if (permission === 'granted') {
+                    log('✅ Permission granted', 'success');
+                    updateStatus('perm-status', 'GRANTED ✅', 'ok');
+                } else {
+                    log('❌ Permission denied', 'error');
+                    updateStatus('perm-status', 'DENIED ❌', 'error');
+                    return;
+                }
+
+                // Import Firebase
+                log('Loading Firebase SDK...', 'info');
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
+
+                const app = initializeApp({
+                    apiKey: "AIzaSyDr3GsRZJgSjw6dVSF_dqUXi1osHxIRmQo",
+                    authDomain: "arradea-marketplace.firebaseapp.com",
+                    projectId: "arradea-marketplace",
+                    storageBucket: "arradea-marketplace.firebasestorage.app",
+                    messagingSenderId: "574490534147",
+                    appId: "1:574490534147:web:175e9ba85a2e4100b70936"
+                });
+
+                log('✅ Firebase initialized', 'success');
+
+                messaging = getMessaging(app);
+                log('✅ Messaging initialized', 'success');
+
+                // Setup handler
+                log('Setting up message handler...', 'info');
+                onMessage(messaging, (payload) => {
+                    messageCount++;
+                    document.getElementById('msg-count').textContent = messageCount;
+
+                    log('='.repeat(60), 'message');
+                    log('📬 NOTIFICATION RECEIVED!!!', 'message');
+                    log('='.repeat(60), 'message');
+                    log(`Title: ${payload.notification?.title}`, 'success');
+                    log(`Body: ${payload.notification?.body}`, 'success');
+                    log(`Data: ${JSON.stringify(payload.data)}`, 'info');
+                    log('='.repeat(60), 'message');
+
+                    // Show notification
+                    new Notification(payload.notification.title, {
+                        body: payload.notification.body,
+                        icon: '/icons/logo-arradea.png',
+                        badge: '/icons/logo-arradea.png'
+                    });
+
+                    log('✅ Notification displayed!', 'success');
+                });
+
+                log('✅ Handler setup complete', 'success');
+                updateStatus('handler-status', 'ACTIVE ✅', 'ok');
+
+                // Get token
+                log('Getting FCM token...', 'info');
+                const swReg = await navigator.serviceWorker.ready;
+                fcmToken = await getToken(messaging, {
+                    vapidKey: 'BIxSwfnWuLkFS5RpKwj-AJKqx6HAHQBLifRuG_1VoMn08Ag9jkqNCYqoHUI02rUMdIwg1U69nFRsTXgTrBE7sCA',
+                    serviceWorkerRegistration: swReg
+                });
+
+                if (fcmToken) {
+                    log('✅ Token: ' + fcmToken.substring(0, 30) + '...', 'success');
+                    updateStatus('token-status', 'OK ✅', 'ok');
+                } else {
+                    log('❌ No token obtained', 'error');
+                    updateStatus('token-status', 'FAILED ❌', 'error');
+                    return;
+                }
+
+                log('='.repeat(60), 'success');
+                log('🎉 FCM READY!', 'success');
+                log('='.repeat(60), 'success');
+                log('✅ Click "Send Test Notification" button above!', 'success');
+                log('='.repeat(60), 'success');
+
+                document.getElementById('testBtn').disabled = false;
+
+            } catch (error) {
+                log('='.repeat(60), 'error');
+                log('❌ ERROR: ' + error.message, 'error');
+                log('Stack: ' + error.stack, 'error');
+                log('='.repeat(60), 'error');
+            }
+        }
+
+        window.addEventListener('load', () => {
+            setTimeout(init, 500);
+        });
+    </script>
+</body>
+</html>

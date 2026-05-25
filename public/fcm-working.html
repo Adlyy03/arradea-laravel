@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCM Working Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(0,0,0,0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        h1 { 
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #4ec9b0;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 16px;
+            margin-bottom: 30px;
+            color: #9cdcfe;
+        }
+        .btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            padding: 25px 50px;
+            border-radius: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s;
+        }
+        .btn:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(17, 153, 142, 0.5);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .result {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 100px;
+            font-size: 18px;
+            line-height: 1.8;
+        }
+        .success { color: #4ec9b0; }
+        .error { color: #f48771; }
+        .info { color: #9cdcfe; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 FCM Working Test</h1>
+        <div class="subtitle">Klik tombol untuk kirim notifikasi</div>
+
+        <button type="button" class="btn" id="testBtn" onclick="sendNotification()">
+            🚀 KIRIM NOTIFIKASI SEKARANG
+        </button>
+
+        <div class="result" id="result">
+            <div class="info">Menunggu...</div>
+        </div>
+    </div>
+
+    <script>
+        let fcmToken = null;
+
+        function showResult(message, type = 'info') {
+            const result = document.getElementById('result');
+            result.innerHTML = `<div class="${type}">${message}</div>`;
+        }
+
+        window.sendNotification = async function() {
+            const btn = document.getElementById('testBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Mengirim...';
+
+            try {
+                showResult('📤 Mengirim notifikasi...', 'info');
+
+                const response = await fetch('/api/test-notification-public', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showResult(`
+                        ✅ <strong>NOTIFIKASI TERKIRIM!</strong><br><br>
+                        📊 Total device: ${data.total}<br>
+                        ✅ Berhasil: ${data.successful}<br>
+                        ❌ Gagal: ${data.failed}<br><br>
+                        💡 <strong>Cek notifikasi di browser Anda!</strong><br>
+                        (Lihat pojok kanan bawah atau notification center)
+                    `, 'success');
+                } else {
+                    showResult(`❌ Gagal: ${data.message}`, 'error');
+                }
+
+            } catch (error) {
+                showResult(`❌ Error: ${error.message}`, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 KIRIM NOTIFIKASI SEKARANG';
+            }
+        };
+
+        // Initialize FCM in background
+        async function initFCM() {
+            try {
+                // Register service worker
+                if ('serviceWorker' in navigator) {
+                    let registration = await navigator.serviceWorker.getRegistration('/');
+                    
+                    if (!registration || !registration.active?.scriptURL.includes('firebase-messaging-sw.js')) {
+                        registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                            scope: '/',
+                            updateViaCache: 'none'
+                        });
+                        await navigator.serviceWorker.ready;
+                    }
+                }
+
+                // Request permission
+                if (Notification.permission !== 'granted') {
+                    await Notification.requestPermission();
+                }
+
+                if (Notification.permission === 'granted') {
+                    // Import Firebase
+                    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                    const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
+
+                    const app = initializeApp({
+                        apiKey: "AIzaSyDr3GsRZJgSjw6dVSF_dqUXi1osHxIRmQo",
+                        authDomain: "arradea-marketplace.firebaseapp.com",
+                        projectId: "arradea-marketplace",
+                        storageBucket: "arradea-marketplace.firebasestorage.app",
+                        messagingSenderId: "574490534147",
+                        appId: "1:574490534147:web:175e9ba85a2e4100b70936"
+                    });
+
+                    const messaging = getMessaging(app);
+
+                    // Setup foreground handler
+                    onMessage(messaging, (payload) => {
+                        console.log('📬 Foreground message received:', payload);
+                        
+                        // Show notification manually
+                        const title = payload.notification?.title || payload.data?.title || 'New Notification';
+                        const body = payload.notification?.body || payload.data?.body || '';
+                        
+                        new Notification(title, {
+                            body: body,
+                            icon: '/icons/logo-arradea.png',
+                            badge: '/icons/logo-arradea.png'
+                        });
+
+                        showResult(`
+                            📬 <strong>NOTIFIKASI DITERIMA!</strong><br><br>
+                            📝 Title: ${title}<br>
+                            📝 Body: ${body}<br><br>
+                            ✅ Notifikasi berhasil ditampilkan!
+                        `, 'success');
+                    });
+
+                    // Get token
+                    const swReg = await navigator.serviceWorker.ready;
+                    fcmToken = await getToken(messaging, {
+                        vapidKey: 'BIxSwfnWuLkFS5RpKwj-AJKqx6HAHQBLifRuG_1VoMn08Ag9jkqNCYqoHUI02rUMdIwg1U69nFRsTXgTrBE7sCA',
+                        serviceWorkerRegistration: swReg
+                    });
+
+                    if (fcmToken) {
+                        // Save token
+                        await fetch('/save-fcm-token', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json',
+                                'X-CSRF-TOKEN': 'test'
+                            },
+                            body: JSON.stringify({ fcm_token: fcmToken })
+                        });
+
+                        showResult('✅ FCM siap! Klik tombol untuk kirim notifikasi.', 'success');
+                    }
+                } else {
+                    showResult('⚠️ Permission ditolak. Aktifkan notifikasi di browser settings.', 'error');
+                }
+
+            } catch (error) {
+                console.error('FCM init error:', error);
+                showResult(`⚠️ FCM init error: ${error.message}<br>Tapi notifikasi background masih bisa jalan!`, 'info');
+            }
+        }
+
+        // Auto-init on load
+        window.addEventListener('load', () => {
+            setTimeout(initFCM, 500);
+        });
+    </script>
+</body>
+</html>

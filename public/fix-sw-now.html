@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fix Service Worker NOW - Arradea</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 { 
+            color: #eb3349; 
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        .subtitle { 
+            color: #666; 
+            margin-bottom: 30px;
+            font-size: 18px;
+        }
+        .problem {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .problem h3 { 
+            color: #856404; 
+            margin-bottom: 10px;
+            font-size: 20px;
+        }
+        .problem p { 
+            color: #856404; 
+            line-height: 1.6;
+            margin-bottom: 8px;
+        }
+        .problem code {
+            background: rgba(0,0,0,0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .btn {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+            border: none;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(235, 51, 73, 0.4);
+        }
+        .btn:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(235, 51, 73, 0.6);
+        }
+        .btn:active {
+            transform: translateY(-1px);
+        }
+        .status {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            min-height: 100px;
+        }
+        .status-item {
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .status-item.success {
+            background: #d4edda;
+            color: #155724;
+            border-left: 4px solid #28a745;
+        }
+        .status-item.error {
+            background: #f8d7da;
+            color: #721c24;
+            border-left: 4px solid #dc3545;
+        }
+        .status-item.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        .status-item.warning {
+            background: #fff3cd;
+            color: #856404;
+            border-left: 4px solid #ffc107;
+        }
+        .next-steps {
+            background: #d4edda;
+            border-left: 5px solid #28a745;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+            display: none;
+        }
+        .next-steps.show { display: block; }
+        .next-steps h3 {
+            color: #155724;
+            margin-bottom: 15px;
+        }
+        .next-steps ol {
+            color: #155724;
+            margin-left: 20px;
+        }
+        .next-steps li {
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Fix Service Worker</h1>
+        <p class="subtitle">One-click fix for FCM notifications</p>
+        
+        <div class="problem">
+            <h3>⚠️ Problem Detected</h3>
+            <p><strong>Wrong Service Worker:</strong> <code>sw.js</code> is registered</p>
+            <p><strong>Should be:</strong> <code>firebase-messaging-sw.js</code></p>
+            <p><strong>Impact:</strong> FCM background messages are NOT received</p>
+        </div>
+        
+        <button type="button" class="btn" onclick="fixNow()">
+            🚀 FIX NOW (One Click)
+        </button>
+        
+        <div class="status" id="status">
+            <div class="status-item info">Click the button above to fix the service worker</div>
+        </div>
+
+        <div class="next-steps" id="nextSteps">
+            <h3>✅ Service Worker Fixed!</h3>
+            <ol>
+                <li><strong>Login to main app:</strong> <a href="/login" target="_blank">http://localhost:8000/login</a></li>
+                <li><strong>Allow notifications</strong> when prompted</li>
+                <li><strong>Check console</strong> for FCM token generation</li>
+                <li><strong>Test notification:</strong> Run <code>php test-send-notification.php</code></li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        function addStatus(message, type = 'info') {
+            const statusBox = document.getElementById('status');
+            const item = document.createElement('div');
+            item.className = `status-item ${type}`;
+            item.textContent = message;
+            statusBox.appendChild(item);
+            statusBox.scrollTop = statusBox.scrollHeight;
+            console.log(`[${type.toUpperCase()}] ${message}`);
+        }
+
+        function clearStatus() {
+            document.getElementById('status').innerHTML = '';
+        }
+
+        async function fixNow() {
+            clearStatus();
+            addStatus('🔄 Starting fix process...', 'info');
+
+            try {
+                // Step 1: Check current state
+                addStatus('Step 1: Checking current service workers...', 'info');
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                addStatus(`Found ${registrations.length} service worker(s)`, 'info');
+
+                let hasWrongSW = false;
+                registrations.forEach((reg, i) => {
+                    const scriptURL = reg.active?.scriptURL || 'N/A';
+                    if (scriptURL.includes('sw.js') && !scriptURL.includes('firebase')) {
+                        addStatus(`  ❌ Wrong SW found: ${scriptURL}`, 'error');
+                        hasWrongSW = true;
+                    } else {
+                        addStatus(`  SW ${i+1}: ${scriptURL}`, 'info');
+                    }
+                });
+
+                // Step 2: Unregister all
+                if (registrations.length > 0) {
+                    addStatus('Step 2: Unregistering all service workers...', 'warning');
+                    
+                    for (const reg of registrations) {
+                        const scriptURL = reg.active?.scriptURL || 'Unknown';
+                        const success = await reg.unregister();
+                        
+                        if (success) {
+                            addStatus(`  ✅ Unregistered: ${scriptURL}`, 'success');
+                        } else {
+                            addStatus(`  ❌ Failed to unregister: ${scriptURL}`, 'error');
+                        }
+                    }
+                } else {
+                    addStatus('Step 2: No service workers to unregister', 'info');
+                }
+
+                // Wait a bit for cleanup
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Step 3: Register Firebase SW
+                addStatus('Step 3: Registering firebase-messaging-sw.js...', 'info');
+                
+                const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                    scope: '/',
+                    updateViaCache: 'none'
+                });
+
+                addStatus('  ✅ Registration initiated', 'success');
+
+                // Wait for SW to be ready
+                addStatus('Step 4: Waiting for service worker to activate...', 'info');
+                await navigator.serviceWorker.ready;
+
+                const activeScript = registration.active?.scriptURL || 'Unknown';
+                addStatus(`  ✅ Service worker active: ${activeScript}`, 'success');
+
+                // Step 4: Verify
+                addStatus('Step 5: Verifying fix...', 'info');
+                
+                if (activeScript.includes('firebase-messaging-sw.js')) {
+                    addStatus('🎉 SUCCESS! Firebase SW is now active!', 'success');
+                    addStatus('✅ FCM background messages will now work!', 'success');
+                    
+                    // Show next steps
+                    document.getElementById('nextSteps').classList.add('show');
+                    
+                    // Reload after 3 seconds
+                    addStatus('⏳ Page will reload in 3 seconds...', 'warning');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 3000);
+                } else {
+                    addStatus('⚠️ Warning: Unexpected service worker script', 'warning');
+                    addStatus(`Got: ${activeScript}`, 'warning');
+                }
+
+            } catch (error) {
+                addStatus(`❌ Error: ${error.message}`, 'error');
+                console.error('Fix error:', error);
+            }
+        }
+
+        // Auto-check on load
+        window.addEventListener('load', async () => {
+            try {
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                
+                if (registrations.length === 0) {
+                    addStatus('ℹ️ No service workers registered', 'info');
+                    addStatus('Click the button to register Firebase SW', 'info');
+                } else {
+                    registrations.forEach((reg, i) => {
+                        const scriptURL = reg.active?.scriptURL || 'N/A';
+                        if (scriptURL.includes('firebase-messaging-sw.js')) {
+                            addStatus(`✅ Firebase SW already registered: ${scriptURL}`, 'success');
+                            document.getElementById('nextSteps').classList.add('show');
+                        } else if (scriptURL.includes('sw.js')) {
+                            addStatus(`❌ Wrong SW registered: ${scriptURL}`, 'error');
+                            addStatus('Click the button to fix it', 'warning');
+                        } else {
+                            addStatus(`ℹ️ SW ${i+1}: ${scriptURL}`, 'info');
+                        }
+                    });
+                }
+            } catch (error) {
+                addStatus(`Error checking SW: ${error.message}`, 'error');
+            }
+        });
+    </script>
+</body>
+</html>

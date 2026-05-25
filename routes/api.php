@@ -20,6 +20,35 @@ Route::get('/products/search', [ProductController::class, 'search']);
 Route::get('/products/updates', [ProductController::class, 'updates']);
 Route::get('/products/{product}', [ProductController::class, 'show']);
 
+// Public test notification endpoint (no auth required)
+Route::post('/test-notification-public', function () {
+    $pushService = app(\App\Services\PushNotificationService::class);
+    
+    // Get first user with active token
+    $token = \App\Models\FcmToken::active()->with('user')->first();
+    
+    if (!$token) {
+        return response()->json([
+            'success' => false,
+            'message' => 'No active FCM tokens found'
+        ]);
+    }
+    
+    $result = $pushService->sendToUser(
+        $token->user,
+        '🎉 Test Notification',
+        'This is a test notification from the web interface!',
+        [
+            'type' => 'web_test',
+            'timestamp' => now()->toIso8601String()
+        ],
+        asset('icons/logo-arradea.png'),
+        url('/')
+    );
+    
+    return response()->json($result);
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Protected Routes — require auth:sanctum
 // ─────────────────────────────────────────────────────────────────────────────
@@ -46,6 +75,34 @@ Route::middleware(['auth:sanctum', 'arradea.access'])->group(function () {
     Route::post('/notifications/mark-read', function (\Illuminate\Http\Request $request) {
         $request->user()->unreadNotifications->markAsRead();
         return response()->json(['success' => true, 'message' => 'Semua notifikasi telah ditandai sebagai telah dibaca']);
+    });
+    
+    // Test notification endpoint (authenticated)
+    Route::post('/test-notification', function (\Illuminate\Http\Request $request) {
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'User not authenticated'
+            ], 401);
+        }
+        
+        $pushService = app(\App\Services\PushNotificationService::class);
+        
+        $result = $pushService->sendToUser(
+            $user,
+            '🧪 API Test Notification',
+            'This is a test notification from API endpoint',
+            [
+                'type' => 'api_test',
+                'timestamp' => now()->toIso8601String()
+            ],
+            asset('icons/logo-arradea.png'),
+            url('/')
+        );
+        
+        return response()->json($result);
     });
 
     // ─── Seller Routes ────────────────────────────────────────────────────────

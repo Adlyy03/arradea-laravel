@@ -573,6 +573,39 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
+            @if(Auth::user()->canSwitchToSellerMode() && Auth::user()->isInSellerMode())
+                @php $sellerUnreadNotifications = Auth::user()->unreadNotifications()->count(); @endphp
+                <div class="relative" id="seller-notification-widget">
+                    <button type="button"
+                            id="seller-notification-toggle"
+                            class="relative w-8 h-8 lg:w-7 lg:h-7 rounded-lg bg-white border border-gray-200/70 flex items-center justify-center text-gray-600 hover:text-sage hover:border-sage/40 transition shadow-sm"
+                            aria-label="Notifikasi seller">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.4-1.4A2 2 0 0118 14.2V11a6 6 0 00-4-5.7V5a2 2 0 10-4 0v.3A6 6 0 006 11v3.2c0 .5-.2 1-.6 1.4L4 17h5m6 0a3 3 0 01-6 0m6 0H9"/>
+                        </svg>
+                        <span id="seller-notification-count"
+                              class="{{ $sellerUnreadNotifications > 0 ? '' : 'hidden' }} absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-black leading-4 text-center border border-white">
+                            {{ $sellerUnreadNotifications > 9 ? '9+' : $sellerUnreadNotifications }}
+                        </span>
+                    </button>
+                    <div id="seller-notification-dropdown"
+                         class="hidden absolute right-0 mt-2 w-[300px] sm:w-[340px] bg-white border border-gray-100 rounded-2xl shadow-2xl overflow-hidden z-50">
+                        <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                            <div>
+                                <p class="text-sm font-black text-gray-900">Notifikasi</p>
+                                <p class="text-[11px] text-gray-400">Pesanan baru realtime</p>
+                            </div>
+                            <button type="button" id="seller-notification-read"
+                                    class="text-[11px] font-bold text-sage hover:text-green-700 transition">
+                                Tandai dibaca
+                            </button>
+                        </div>
+                        <div id="seller-notification-list" class="max-h-80 overflow-y-auto divide-y divide-gray-50">
+                            <div class="px-4 py-6 text-center text-sm text-gray-400">Memuat notifikasi...</div>
+                        </div>
+                    </div>
+                </div>
+            @endif
             <div class="w-8 h-8 lg:w-7 lg:h-7 rounded-lg flex items-center justify-center font-bold text-xs" style="background:rgba(114,191,119,.2);color:#3fa348">
                 {{ strtoupper(substr(Auth::user()->name,0,1)) }}
             </div>
@@ -800,6 +833,192 @@
     };
 })();
 </script>
+
+@if(Auth::check() && Auth::user()->canSwitchToSellerMode() && Auth::user()->isInSellerMode())
+<script>
+(function(){
+    const toggle = document.getElementById('seller-notification-toggle');
+    const dropdown = document.getElementById('seller-notification-dropdown');
+    const list = document.getElementById('seller-notification-list');
+    const countBadge = document.getElementById('seller-notification-count');
+    const readButton = document.getElementById('seller-notification-read');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    if (!toggle || !dropdown || !list || !countBadge) {
+        return;
+    }
+
+    let knownIds = new Set();
+    let firstLoad = true;
+    let latestNotifications = [];
+
+    function formatCurrency(value) {
+        const amount = Number(value || 0);
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            maximumFractionDigits: 0
+        }).format(amount);
+    }
+
+    function escapeHtml(value) {
+        const element = document.createElement('div');
+        element.textContent = value || '';
+        return element.innerHTML;
+    }
+
+    function escapeAttribute(value) {
+        return escapeHtml(value).replace(/"/g, '&quot;');
+    }
+
+    function updateCount(count) {
+        const unread = Number(count || 0);
+        countBadge.textContent = unread > 9 ? '9+' : String(unread);
+        countBadge.classList.toggle('hidden', unread <= 0);
+    }
+
+    function renderNotifications(notifications) {
+        latestNotifications = notifications || [];
+
+        if (!latestNotifications.length) {
+            list.innerHTML = '<div class="px-4 py-6 text-center text-sm text-gray-400">Belum ada notifikasi baru.</div>';
+            return;
+        }
+
+        list.innerHTML = latestNotifications.map((notification) => {
+            const orderLine = escapeHtml(notification.order_id ? `Order #${notification.order_id}` : 'Pesanan baru');
+            const buyer = escapeHtml(notification.buyer_name || 'Pembeli');
+            const total = notification.total_price ? formatCurrency(notification.total_price) : '';
+            const time = escapeHtml(notification.created_at_human || '');
+            const url = escapeAttribute(notification.url || '{{ route('seller.orders') }}');
+            const id = escapeAttribute(notification.id);
+            const message = escapeHtml(notification.message || 'Pesanan baru masuk!');
+
+            return `
+                <a href="${url}" data-notification-id="${id}" class="seller-notification-item block px-4 py-3 hover:bg-green-50 transition">
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-green-100 text-green-700 flex-shrink-0">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                            </svg>
+                        </div>
+                        <div class="min-w-0 flex-1">
+                            <div class="flex items-center justify-between gap-2">
+                                <p class="text-xs font-black text-gray-900">${orderLine}</p>
+                                <span class="text-[10px] text-gray-400 whitespace-nowrap">${time}</span>
+                            </div>
+                            <p class="text-xs text-gray-600 mt-0.5 truncate">Dari ${buyer}${total ? ` - ${total}` : ''}</p>
+                            <p class="text-[11px] text-gray-400 mt-1 truncate">${message}</p>
+                        </div>
+                    </div>
+                </a>
+            `;
+        }).join('');
+    }
+
+    function showNewOrderToast(notification) {
+        if (typeof Swal === 'undefined') {
+            return;
+        }
+
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'info',
+            title: 'Pesanan baru masuk!',
+            text: notification?.buyer_name ? `Dari ${notification.buyer_name}` : undefined,
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    }
+
+    async function fetchNotifications() {
+        try {
+            const response = await fetch('{{ route('seller.notifications.index') }}', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) {
+                return;
+            }
+
+            const payload = await response.json();
+            const notifications = payload.notifications || [];
+            const incomingIds = new Set(notifications.map((notification) => notification.id));
+
+            if (!firstLoad) {
+                notifications
+                    .filter((notification) => !knownIds.has(notification.id) && notification.type === 'new_order')
+                    .forEach(showNewOrderToast);
+            }
+
+            knownIds = incomingIds;
+            firstLoad = false;
+            updateCount(payload.unread_count);
+            renderNotifications(notifications);
+        } catch (error) {
+            console.warn('Seller notification polling failed:', error);
+        }
+    }
+
+    async function markAsRead(ids) {
+        try {
+            const response = await fetch('{{ route('seller.notifications.read') }}', {
+                method: 'POST',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({ ids: ids || [] })
+            });
+
+            if (response.ok) {
+                await fetchNotifications();
+            }
+        } catch (error) {
+            console.warn('Mark notification as read failed:', error);
+        }
+    }
+
+    toggle.addEventListener('click', function(event) {
+        event.stopPropagation();
+        dropdown.classList.toggle('hidden');
+    });
+
+    document.addEventListener('click', function(event) {
+        if (!dropdown.contains(event.target) && !toggle.contains(event.target)) {
+            dropdown.classList.add('hidden');
+        }
+    });
+
+    readButton?.addEventListener('click', function() {
+        markAsRead(latestNotifications.map((notification) => notification.id));
+    });
+
+    list.addEventListener('click', function(event) {
+        const item = event.target.closest('.seller-notification-item');
+        const id = item?.getAttribute('data-notification-id');
+
+        if (id) {
+            event.preventDefault();
+            const href = item.getAttribute('href');
+            markAsRead([id]).finally(function() {
+                window.location.href = href;
+            });
+        }
+    });
+
+    fetchNotifications();
+    setInterval(fetchNotifications, 5000);
+})();
+</script>
+@endif
 
 {{-- Floating Customer Service Button (Non-Admin Only) --}}
 @if(Auth::check() && Auth::user()->role !== 'admin')

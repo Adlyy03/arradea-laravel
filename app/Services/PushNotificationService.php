@@ -78,6 +78,17 @@ class PushNotificationService
     public function sendToTokens(array $tokens, string $title, string $body, ?array $data = [], ?string $icon = null, ?string $clickAction = null): array
     {
         try {
+            Log::info('='.str_repeat('=', 79));
+            Log::info('📤 SENDING FCM NOTIFICATION');
+            Log::info('='.str_repeat('=', 79));
+            Log::info('Title: ' . $title);
+            Log::info('Body: ' . $body);
+            Log::info('Icon: ' . ($icon ?? 'null'));
+            Log::info('Click Action: ' . ($clickAction ?? url('/')));
+            Log::info('Data payload: ' . json_encode($data));
+            Log::info('Number of tokens: ' . count($tokens));
+            Log::info('Tokens: ' . json_encode($tokens));
+            
             // Build notification
             $notification = Notification::create($title, $body);
             
@@ -91,26 +102,44 @@ class PushNotificationService
                 'timestamp' => now()->toIso8601String(),
             ]);
 
+            Log::info('Final data payload: ' . json_encode($dataPayload));
+
             // Build message
             $message = CloudMessage::new()
                 ->withNotification($notification)
                 ->withData($dataPayload);
 
+            Log::info('Message built successfully');
+            Log::info('Sending to FCM...');
+
             // Send to multiple tokens
             $report = $this->messaging->sendMulticast($message, $tokens);
+
+            Log::info('FCM Response:');
+            Log::info('  Total: ' . count($tokens));
+            Log::info('  Successful: ' . $report->successes()->count());
+            Log::info('  Failed: ' . $report->failures()->count());
 
             // Handle invalid tokens
             $invalidTokens = [];
             if ($report->hasFailures()) {
+                Log::warning('Some notifications failed:');
                 foreach ($report->failures()->getItems() as $failure) {
-                    $invalidTokens[] = $failure->target()->value();
+                    $token = $failure->target()->value();
+                    $invalidTokens[] = $token;
+                    Log::warning('  Failed token: ' . substr($token, 0, 20) . '...');
+                    Log::warning('  Error: ' . $failure->error()->getMessage());
                 }
 
                 // Deactivate invalid tokens
                 if (!empty($invalidTokens)) {
                     FcmToken::whereIn('token', $invalidTokens)->update(['is_active' => false]);
+                    Log::info('Deactivated ' . count($invalidTokens) . ' invalid tokens');
                 }
             }
+
+            Log::info('✅ Notification sent successfully');
+            Log::info('='.str_repeat('=', 79));
 
             return [
                 'success' => true,
@@ -121,7 +150,13 @@ class PushNotificationService
             ];
 
         } catch (\Exception $e) {
-            Log::error('Push notification error: ' . $e->getMessage());
+            Log::error('='.str_repeat('=', 79));
+            Log::error('❌ PUSH NOTIFICATION ERROR');
+            Log::error('='.str_repeat('=', 79));
+            Log::error('Error message: ' . $e->getMessage());
+            Log::error('Error code: ' . $e->getCode());
+            Log::error('Error trace: ' . $e->getTraceAsString());
+            Log::error('='.str_repeat('=', 79));
 
             return [
                 'success' => false,
@@ -147,9 +182,10 @@ class PushNotificationService
                 'timestamp' => now()->toIso8601String(),
             ]);
 
-            $message = CloudMessage::withTarget('topic', $topic)
+            $message = CloudMessage::new()
                 ->withNotification($notification)
-                ->withData($dataPayload);
+                ->withData($dataPayload)
+                ->withTopic($topic);
 
             $this->messaging->send($message);
 

@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FCM Final Fix</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            max-width: 700px;
+            width: 100%;
+            background: rgba(0,0,0,0.9);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        h1 { 
+            font-size: 42px;
+            margin-bottom: 10px;
+            color: #4ec9b0;
+        }
+        .subtitle {
+            font-size: 18px;
+            margin-bottom: 30px;
+            color: #9cdcfe;
+        }
+        .btn {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+            border: none;
+            padding: 30px 60px;
+            border-radius: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin: 10px 0;
+            transition: all 0.3s;
+        }
+        .btn:hover { 
+            transform: translateY(-3px);
+            box-shadow: 0 15px 40px rgba(17, 153, 142, 0.5);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+        .status {
+            background: rgba(255,255,255,0.1);
+            border-radius: 12px;
+            padding: 25px;
+            margin: 20px 0;
+            font-size: 18px;
+            line-height: 2;
+            text-align: left;
+        }
+        .status.success {
+            background: rgba(78, 201, 176, 0.2);
+            border: 3px solid #4ec9b0;
+        }
+        .status.error {
+            background: rgba(244, 135, 113, 0.2);
+            border: 3px solid #f48771;
+        }
+        .status.info {
+            background: rgba(156, 220, 254, 0.2);
+            border: 3px solid #9cdcfe;
+        }
+        .highlight {
+            color: #ffc107;
+            font-weight: bold;
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎯 FCM FINAL FIX</h1>
+        <div class="subtitle">Klik sekali, notifikasi langsung muncul!</div>
+
+        <button class="btn" onclick="fixAndTest()" id="mainBtn">
+            🚀 FIX & TEST SEKARANG
+        </button>
+
+        <div id="status" class="status info" style="display: none;"></div>
+    </div>
+
+    <script type="module">
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML = message;
+            statusEl.className = `status ${type}`;
+            statusEl.style.display = 'block';
+        }
+
+        window.fixAndTest = async function() {
+            const btn = document.getElementById('mainBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Processing...';
+
+            try {
+                showStatus('🔄 Step 1/6: Checking permission...', 'info');
+
+                // Step 1: Permission
+                if (Notification.permission !== 'granted') {
+                    const permission = await Notification.requestPermission();
+                    if (permission !== 'granted') {
+                        throw new Error('Permission denied');
+                    }
+                }
+
+                showStatus('✅ Step 1/6: Permission OK<br>🔄 Step 2/6: Cleaning old service workers...', 'info');
+
+                // Step 2: Clean old service workers
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for (let registration of registrations) {
+                    await registration.unregister();
+                }
+
+                showStatus('✅ Step 2/6: Cleaned<br>🔄 Step 3/6: Registering fresh service worker...', 'info');
+
+                // Step 3: Register fresh
+                const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js', {
+                    scope: '/',
+                    updateViaCache: 'none'
+                });
+                await navigator.serviceWorker.ready;
+
+                showStatus('✅ Step 3/6: Service worker ready<br>🔄 Step 4/6: Initializing Firebase...', 'info');
+
+                // Step 4: Firebase
+                const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js');
+                const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js');
+
+                const app = initializeApp({
+                    apiKey: "AIzaSyDr3GsRZJgSjw6dVSF_dqUXi1osHxIRmQo",
+                    authDomain: "arradea-marketplace.firebaseapp.com",
+                    projectId: "arradea-marketplace",
+                    storageBucket: "arradea-marketplace.firebasestorage.app",
+                    messagingSenderId: "574490534147",
+                    appId: "1:574490534147:web:175e9ba85a2e4100b70936"
+                });
+
+                const messaging = getMessaging(app);
+
+                // Setup handler FIRST
+                onMessage(messaging, (payload) => {
+                    console.log('📬 FCM Message received:', payload);
+                    
+                    const title = payload.notification?.title || 'New Notification';
+                    const body = payload.notification?.body || '';
+                    
+                    new Notification(title, {
+                        body: body,
+                        icon: '/icons/logo-arradea.png'
+                    });
+
+                    showStatus(`
+                        <span class="highlight">🎉 SUKSES! NOTIFIKASI MUNCUL!</span><br><br>
+                        ✅ Title: ${title}<br>
+                        ✅ Body: ${body}<br><br>
+                        <span class="highlight">FCM SUDAH BEKERJA DENGAN SEMPURNA!</span>
+                    `, 'success');
+                });
+
+                showStatus('✅ Step 4/6: Firebase ready<br>🔄 Step 5/6: Getting NEW token...', 'info');
+
+                // Step 5: Get token
+                const swReg = await navigator.serviceWorker.ready;
+                const newToken = await getToken(messaging, {
+                    vapidKey: 'BIxSwfnWuLkFS5RpKwj-AJKqx6HAHQBLifRuG_1VoMn08Ag9jkqNCYqoHUI02rUMdIwg1U69nFRsTXgTrBE7sCA',
+                    serviceWorkerRegistration: swReg
+                });
+
+                if (!newToken) {
+                    throw new Error('Failed to get FCM token');
+                }
+
+                console.log('New token:', newToken);
+
+                showStatus(`
+                    ✅ Step 5/6: Token generated!<br>
+                    Token: ${newToken.substring(0, 30)}...<br><br>
+                    🔄 Step 6/6: Saving token & sending notification...
+                `, 'info');
+
+                // Step 6: Save token (PUBLIC ROUTE - NO AUTH)
+                const saveResponse = await fetch('/save-fcm-token-public', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ fcm_token: newToken })
+                });
+
+                if (!saveResponse.ok) {
+                    const errorText = await saveResponse.text();
+                    console.error('Save token error:', errorText);
+                    throw new Error('Failed to save token: ' + errorText);
+                }
+
+                const saveData = await saveResponse.json();
+                console.log('Token saved:', saveData);
+
+                // Wait for token to be saved
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // Send test notification
+                const testResponse = await fetch('/api/test-notification-public', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const testData = await testResponse.json();
+                console.log('Test response:', testData);
+
+                if (testData.success) {
+                    showStatus(`
+                        ✅ Step 6/6: Notification sent!<br><br>
+                        <span class="highlight">⏰ TUNGGU 1-2 DETIK...</span><br><br>
+                        📊 Sent to: ${testData.total} device(s)<br>
+                        ✅ Successful: ${testData.successful}<br><br>
+                        💡 Notifikasi akan muncul di pojok kanan bawah!
+                    `, 'success');
+                } else {
+                    throw new Error('Backend failed: ' + testData.message);
+                }
+
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus(`
+                    ❌ ERROR: ${error.message}<br><br>
+                    Check console (F12) for details.
+                `, 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = '🚀 FIX & TEST SEKARANG';
+            }
+        };
+    </script>
+</body>
+</html>
